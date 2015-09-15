@@ -129,9 +129,21 @@ class LegModule(object):
         
         #rename ikRPcc
         pm.rename(self.ikRpPvChain.ikCtrl.control,nameUtils.getUniqueName(self.side,self.baseName + 'ik','cc'))
-        pm.rename(self.ikRpPvChain.ikCtrl.controlGrp,nameUtils.getUniqueName(self.side,self.baseName + 'ik','grp'))
+        pm.rename(self.ikRpPvChain.ikCtrl.controlGrp,nameUtils.getUniqueName(self.side,self.baseName + 'ik','grp'))        
         
-        #set ikflip
+        #set ik flip
+        PMAName = nameUtils.getUniqueName(self.side,self.baseName + '_noFlip','PMA')
+        self.ikRpChain.ikHandle.poleVectorX.set(-0.1)
+        self.ikRpChain.ikHandle.poleVectorY.set(0)
+        self.ikRpChain.ikHandle.poleVectorZ.set(0)
+        pm.addAttr(self.ikRpPvChain.ikCtrl.control, ln = 'knee_twist', at ="float",dv = 0,h = False,k = True )
+        pm.addAttr(self.ikRpPvChain.ikCtrl.control, ln = 'knee_offset', at ="float",dv = 0,h = False,k = True )
+        plusMinusAverageNode = pm.createNode('plusMinusAverage',n = PMAName)
+        self.ikRpPvChain.ikCtrl.control.knee_offset.connect(plusMinusAverageNode.input1D[0])
+        self.ikRpPvChain.ikCtrl.control.knee_twist.connect(plusMinusAverageNode.input1D[1])                
+        plusMinusAverageNode.output1D.connect(self.ikRpChain.ikHandle.twist)
+        self.ikRpPvChain.ikCtrl.control.knee_offset.set(-90)
+        self.ikRpPvChain.ikCtrl.control.knee_offset.lock(1)
         
         #add ik pv vis
         self.ikRpPvChain.ikCtrl.control.enable_PV.connect(self.ikRpPvChain.poleVectorCtrl.controlGrp.v)
