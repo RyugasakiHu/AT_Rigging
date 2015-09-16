@@ -37,7 +37,7 @@ class BoneChain(object):
         if autoOrient == 1:
             #pm.joint(self.chain[0].name(),e = 1,oj = 'yzx',secondaryAxisOrient = 'zup',ch = 1)
              
-            pm.joint(self.chain[0].name(),e = 1,oj = 'xzy',secondaryAxisOrient = 'ydown',ch = 1)
+            pm.joint(self.chain[0].name(),e = 1,oj = 'xyz',secondaryAxisOrient = 'zdown',ch = 1)
             #xzy -secondaryAxisOrient ydown -ch -zso;
              
         self.__zeroOrientJoint(self.chain[-1])
