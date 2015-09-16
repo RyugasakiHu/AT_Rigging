@@ -99,15 +99,15 @@ class LimbModule(object):
         self.blendData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikChain.chain,self.blendChain.chain,
                                                             self.config_node,'IKFK',self.baseName,self.side)
         
-        self.__setRibbonShoulderElbow()
-        self.__setRibbonElbowWrist()
+        self.__setRibbonUpper()
+        self.__setRibbonLower()
         self.__setRibbonSubMidCc()
         
         self.__cleanUp()
     
-    def __setRibbonShoulderElbow(self):
+    def __setRibbonUpper(self):
         '''
-        this function set ribbon for the ShoulderElbow 
+        this function set ribbon for the Upper 
         '''
         self.ribon = ribbon.Ribbon(RibbonName = 'ShoulderElbow',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5)
         self.ribon.construction()
@@ -117,9 +117,9 @@ class LimbModule(object):
         
         pm.parentConstraint(self.blendChain.chain[0],self.ribon.startloc,mo = 1)
         
-        self.__subCtrlShoulderElbow()
+        self.__subCtrlUpper()
         
-    def __subCtrlShoulderElbow(self):
+    def __subCtrlUpper(self):
         
         #create and align subCtrl
         #mid subCtrl
@@ -137,7 +137,7 @@ class LimbModule(object):
         self.subMidCtrlShoulderElbow.control.scaleY.connect(self.ribon.jj[2].scaleY)
         self.subMidCtrlShoulderElbow.control.scaleZ.connect(self.ribon.jj[2].scaleZ)
         
-    def __setRibbonElbowWrist(self):
+    def __setRibbonLower(self):
         '''
         this function set ribbon for the ShoulderElbow 
         '''
@@ -150,9 +150,9 @@ class LimbModule(object):
         
         pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endloc,mo = 1)
         
-        self.__subCtrlElbowWrist()
+        self.__subCtrlLower()
           
-    def __subCtrlElbowWrist(self):
+    def __subCtrlLower(self):
         
         #create sub ctrl
         self.subMidCtrlElbowWrist = control.Control(size = 1,baseName = self.ribbonData[1] + 'Mid_CC',side = self.side) 
@@ -310,10 +310,12 @@ class LimbModule(object):
         #ribbon hierarchy   
         self.ribon.main.setParent(self.hi.XTR)
         self.ribon45hp.main.setParent(self.hi.XTR)
+        self.ribon.main.v.set(0)
+        self.ribon45hp.main.v.set(0)
         
         #ik stretch loc vis
-        self.ikChain.startLoc.setParent(self.hi.SKL)
-        self.ikChain.startLoc.v.set(0)
+        self.ikChain.stretchStartLoc.setParent(self.hi.SKL)
+        self.ikChain.stretchStartLoc.v.set(0)
         self.ikChain.lockUpStartLoc.setParent(self.hi.SKL)
         self.ikChain.lockUpStartLoc.v.set(0)
         self.ikChain.ikHandle.setParent(self.hi.IK)
@@ -321,7 +323,7 @@ class LimbModule(object):
         self.guideGrp.setParent(self.hi.GUD)
         self.hi.GUD.v.set(0)
 
-        self.sklGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.startLoc,
+        self.sklGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.stretchStartLoc,
                                n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
 
         for b in (self.ikChain,self.fkChain,self.blendChain):
