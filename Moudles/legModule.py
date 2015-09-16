@@ -42,11 +42,10 @@ class LegModule(object):
         self.guides = None
         self.guideGrp = None
         
-        
-
-#         self.ribon = None
-#         self.ribon45hp = None
-#         
+        #ribon
+        self.ribon = None
+        self.ribon45hp = None
+         
 #         self.subMidCtrlThighKnee = None
 #         self.subMidCtrlKneeAnkle = None
 #         self.subMidCtrlKnee = None
@@ -84,7 +83,16 @@ class LegModule(object):
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(self.guides[0],n = name)
         self.guideGrp.v.set(0)
+        self.guideGrp.setParent(self.hi.GUD)
+    
+    
+    def test(self):
+        guidePos = [x.getTranslation(space = 'world') for x in self.guides]
+        guideRot = [x.getRotation(space = 'world') for x in self.guides]
         
+        self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.blendChain.fromList(guidePos,guideRot)
+            
     def build(self):
         
         guidePos = [x.getTranslation(space = 'world') for x in self.guides]
@@ -106,17 +114,28 @@ class LegModule(object):
         
         #ikset
         self.__ikSet()
+        
          
         #fk 
-#         self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
-#         self.fkChain.fromList(guidePos,guideRot)
-                        
+        self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
+        self.fkChain.fromList(guidePos,guideRot)
+        
+        #ori chain
+        self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.blendChain.fromList(guidePos,guideRot)
+        self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikBlendChain.chain,self.blendChain.chain,
+                                                                   self.config_node,'IKFK',self.baseName,self.side)
+        
+        self.__setRibbonUpper()
+        self.__setRibbonLower()
+        self.__setRibbonSubMidCc()        
+        
         self.__cleanUp()
     
     def __ikSet(self):
         
         #stretch loc reset
-        self.ikRpChain.endLoc.setParent(self.ikRpPvChain.ikCtrl.control)
+        self.ikRpChain.stretchEndLoc.setParent(self.ikRpPvChain.ikCtrl.control)
         
         #reset ik cc
         pm.delete(self.ikRpChain.ikCtrl.controlGrp)
@@ -132,10 +151,10 @@ class LegModule(object):
         pm.rename(self.ikRpPvChain.ikCtrl.controlGrp,nameUtils.getUniqueName(self.side,self.baseName + 'ik','grp'))        
         
         #set ik flip
-        PMAName = nameUtils.getUniqueName(self.side,self.baseName + '_noFlip','PMA')
         self.ikRpChain.ikHandle.poleVectorX.set(-0.1)
         self.ikRpChain.ikHandle.poleVectorY.set(0)
         self.ikRpChain.ikHandle.poleVectorZ.set(0)
+        PMAName = nameUtils.getUniqueName(self.side,self.baseName + '_noFlip','PMA')
         pm.addAttr(self.ikRpPvChain.ikCtrl.control, ln = 'knee_twist', at ="float",dv = 0,h = False,k = True )
         pm.addAttr(self.ikRpPvChain.ikCtrl.control, ln = 'knee_offset', at ="float",dv = 0,h = False,k = True )
         plusMinusAverageNode = pm.createNode('plusMinusAverage',n = PMAName)
@@ -147,23 +166,56 @@ class LegModule(object):
         
         #add ik pv vis
         self.ikRpPvChain.ikCtrl.control.enable_PV.connect(self.ikRpPvChain.poleVectorCtrl.controlGrp.v)
+        self.ikRpChain.ikHandle.v.set(0)
+        self.ikRpChain.stretchStartLoc.v.set(0)
+        self.ikRpPvChain.stretchStartLoc.v.set(0)
+    
+    #set ribbon    
+    def __setRibbonUpper(self):
+        '''
+        this function set ribbon for the Upper 
+        '''
+        self.ribon = ribbon.Ribbon(RibbonName = 'ShoulderElbow',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5)
+        self.ribon.construction()
+
+        pm.xform(self.ribon.startloc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
+        pm.xform(self.ribon.endloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
         
+        pm.parentConstraint(self.blendChain.chain[0],self.ribon.startloc,mo = 1)
+        
+        self.__subCtrlUpper()
+    
+    def __setRibbonLower(self):
+        pass
+    
+    def __setRibbonSubMidCc(self):
+        pass
+    
+    #set ribbon ctrl
+    def __subCtrlUpper(self):
+        pass
+    
     def __cleanUp(self):
         
         #jj grp
-        self.sklGrp = pm.group(self.ikRpChain.startLoc,self.ikRpPvChain.startLoc,self.ikRpPvChain.lockUpStartLoc,
+        self.sklGrp = pm.group(self.ikRpChain.stretchStartLoc,self.ikRpPvChain.stretchStartLoc,self.ikRpPvChain.lockUpStartLoc,
                                n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
 
-        for b in (self.ikRpChain,self.ikRpPvChain,self.ikBlendChain):
+        for b in (self.ikRpChain,self.ikRpPvChain,self.ikBlendChain,self.fkChain,self.blendChain):
             b.chain[0].setParent(self.sklGrp)
+        
+        self.sklGrp.setParent(self.hi.SKL)
             
         #cc grp
         self.ccGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp')) 
         self.config_node.setParent(self.ccGrp)
         self.ikRpPvChain.ikCtrl.controlGrp.setParent(self.ccGrp)
         self.ikRpPvChain.poleVectorCtrl.controlGrp.setParent(self.ccGrp)
+        self.ccGrp.setParent(self.hi.CC)
         
-        
+        #ik grp
+        self.ikRpChain.ikHandle.setParent(self.hi.IK)
+        self.ikRpPvChain.ikHandle.setParent(self.hi.IK)
         
         
         
