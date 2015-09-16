@@ -32,8 +32,8 @@ class IkChain(boneChain.BoneChain):
         self.ikEffector = None
         
         #stretch data
-        self.startLoc = None
-        self.endLoc = None
+        self.stretchStartLoc = None
+        self.stretchEndLoc = None
         self.stretchData = None
         self.stretchBlendcolorNode = None
         
@@ -149,8 +149,8 @@ class IkChain(boneChain.BoneChain):
         distanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_Stretch','dist')
         
         #set command
-        self.startLoc = pm.spaceLocator(n = startLocName)
-        self.endLoc = pm.spaceLocator(n = endLocName)
+        self.stretchStartLoc = pm.spaceLocator(n = startLocName)
+        self.stretchEndLoc = pm.spaceLocator(n = endLocName)
         ratioMultipleNode = pm.createNode('multiplyDivide',n = ratioMultipleNodeName)
         multipleNode = pm.createNode('multiplyDivide',n = multipleNodeName)
         conditionNode = pm.createNode('condition',n = conditionNodeName)
@@ -160,13 +160,13 @@ class IkChain(boneChain.BoneChain):
         #align loc
         startPos = self.chain[0].worldMatrix.get()
         endPos = self.chain[2].worldMatrix.get()
-        pm.xform(self.startLoc,matrix = startPos)
-        pm.xform(self.endLoc,matrix = endPos)
+        pm.xform(self.stretchStartLoc,matrix = startPos)
+        pm.xform(self.stretchEndLoc,matrix = endPos)
         
         #connect to the dist
         #base on trans
-        self.startLoc.worldPosition[0].connect(distBetweenNode.point1) 
-        self.endLoc.worldPosition[0].connect(distBetweenNode.point2) 
+        self.stretchStartLoc.worldPosition[0].connect(distBetweenNode.point1) 
+        self.stretchEndLoc.worldPosition[0].connect(distBetweenNode.point2) 
         distBetweenNode.distance.connect(ratioMultipleNode.input1X)
         ratioMultipleNode.input2X.set(self.chain[1].tx.get() + self.chain[2].tx.get())
         ratioMultipleNode.operation.set(2)
@@ -194,9 +194,9 @@ class IkChain(boneChain.BoneChain):
 #         stretchBlendcolorNode.outputG.connect(self.chain[2].tx)
         
         #clean the scene
-        self.endLoc.setParent(self.ikCtrl.control)
-        self.stretchData["startLoc"] = self.startLoc
-        self.stretchData["endLoc"] = self.endLoc
+        self.stretchEndLoc.setParent(self.ikCtrl.control)
+        self.stretchData["startLoc"] = self.stretchStartLoc
+        self.stretchData["endLoc"] = self.stretchEndLoc
         self.stretchData["stretchMulti"] = multipleNode
         self.stretchData["stretchCondition"] = conditionNode
         self.stretchData["stretchDist"]  = distBetweenNode
@@ -215,16 +215,16 @@ class IkChain(boneChain.BoneChain):
             downStartLocName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2] + 'Start','loc')
             downEndLocName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2] + 'End','loc')
             lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_' + self.armLockData[2],'BCN')
-            armElbowDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2],'dist')
-            elbowWristDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2],'dist')
+            upperDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2],'dist')
+            lowertDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2],'dist')
         elif self.baseName == 'leg':
             upStartLocName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2] + 'Start','loc')
             upEndLocName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2] + 'End','loc')
             downStartLocName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2] + 'Start','loc')
             downEndLocName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2] + 'End','loc')
             lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.legLockData[2],'BCN')
-            armElbowDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2],'dist')
-            elbowWristDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2],'dist')
+            upperDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2],'dist')
+            lowertDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2],'dist')
                 
         
         #set command
@@ -233,8 +233,8 @@ class IkChain(boneChain.BoneChain):
         lockDownStartLoc = pm.spaceLocator(n = downStartLocName)
         lockDownEndLoc = pm.spaceLocator(n = downEndLocName)
         lockBlendcolorNode = pm.createNode('blendColors',n = lockBlendcolorNodeName)
-        armElbowDistBetweenNode = pm.createNode('distanceBetween',n = armElbowDistanceBetweenNodeName)
-        elbowWristDistBetweenNode = pm.createNode('distanceBetween',n = elbowWristDistanceBetweenNodeName)    
+        upperDistBetweenNode = pm.createNode('distanceBetween',n = upperDistanceBetweenNodeName)
+        lowerDistBetweenNode = pm.createNode('distanceBetween',n = lowertDistanceBetweenNodeName)    
         
         #align loc and parent
         startPos = self.chain[0].worldMatrix.get()
@@ -252,14 +252,14 @@ class IkChain(boneChain.BoneChain):
         
         #connect loc to the dist
         #arm elbow dist
-        self.lockUpStartLoc.worldPosition[0].connect(armElbowDistBetweenNode.point1) 
-        self.lockUpEndLoc.worldPosition[0].connect(armElbowDistBetweenNode.point2) 
-        armElbowDistBetweenNode.distance.connect(lockBlendcolorNode.color1R)
+        self.lockUpStartLoc.worldPosition[0].connect(upperDistBetweenNode.point1) 
+        self.lockUpEndLoc.worldPosition[0].connect(upperDistBetweenNode.point2) 
+        upperDistBetweenNode.distance.connect(lockBlendcolorNode.color1R)
         
         #elbow wrist dist
-        lockDownStartLoc.worldPosition[0].connect(elbowWristDistBetweenNode.point1) 
-        lockDownEndLoc.worldPosition[0].connect(elbowWristDistBetweenNode.point2) 
-        elbowWristDistBetweenNode.distance.connect(lockBlendcolorNode.color1G)
+        lockDownStartLoc.worldPosition[0].connect(lowerDistBetweenNode.point1) 
+        lockDownEndLoc.worldPosition[0].connect(lowerDistBetweenNode.point2) 
+        lowerDistBetweenNode.distance.connect(lockBlendcolorNode.color1G)
         
         self.stretchData["stretchBlendcolorNode"].outputR.connect(lockBlendcolorNode.color2R)
         self.stretchData["stretchBlendcolorNode"].outputG.connect(lockBlendcolorNode.color2G)
@@ -272,6 +272,7 @@ class IkChain(boneChain.BoneChain):
         #clean the scene
         self.lockUpStartLoc.v.set(0)
         self.lockUpEndLoc.v.set(0)
+        self.stretchEndLoc.v.set(0)
         lockDownStartLoc.v.set(0)
         lockDownEndLoc.v.set(0)
         self.ikHandle.v.set(0)
