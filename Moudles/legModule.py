@@ -167,7 +167,7 @@ class LegModule(object):
         '''
         this function set ribbon for the Upper 
         '''
-        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1)
+        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side)
         self.ribon.construction()
         
         pm.xform(self.ribon.startloc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
@@ -192,7 +192,7 @@ class LegModule(object):
         this function set ribbon for the ShoulderElbow 
         '''
         
-        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1)
+        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side)
         self.ribon45hp.construction()
         
         pm.xform(self.ribon45hp.startloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
@@ -205,13 +205,128 @@ class LegModule(object):
     def __subCtrlLower(self):
         
         #connect scale for mid jj
-        self.subMidKneeAnkle = self.ribon45hp.subMidCtrl
-        self.subMidKneeAnkle.control.scaleX.connect(self.ribon45hp.jj[2].scaleX)
-        self.subMidKneeAnkle.control.scaleY.connect(self.ribon45hp.jj[2].scaleY)
-        self.subMidKneeAnkle.control.scaleZ.connect(self.ribon45hp.jj[2].scaleZ)
+        self.subMidCtrlKneeAnkle = self.ribon45hp.subMidCtrl
+        self.subMidCtrlKneeAnkle.control.scaleX.connect(self.ribon45hp.jj[2].scaleX)
+        self.subMidCtrlKneeAnkle.control.scaleY.connect(self.ribon45hp.jj[2].scaleY)
+        self.subMidCtrlKneeAnkle.control.scaleZ.connect(self.ribon45hp.jj[2].scaleZ)
 
     def __setRibbonSubMidCc(self):
-        pass
+                
+                
+        self.subMidCtrlKnee = control.Control(size = 1,baseName = self.ribbonData[2] + '_CC',side = self.side) 
+        self.subMidCtrlKnee.circleCtrl()
+        print type(self.subMidCtrlKnee.control)
+        elbolPos = pm.xform(self.blendChain.chain[1],query=1,ws=1,rp=1)
+        pm.move(self.subMidCtrlKnee.controlGrp,elbolPos[0],elbolPos[1],elbolPos[2],a=True)
+        
+        pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon45hp.startloc,mo = 1)
+        pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon.endloc,mo = 1)
+        pm.parentConstraint(self.blendChain.chain[1],self.subMidCtrlKnee.controlGrp,mo = 1)
+        
+        #name setting for the scale node for shoulderElbow Jj1
+        shoulderElbowScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'shoulderElbowScaleJj1','PMA')
+        
+        #create Node for  shoulderElbow Jj1
+        #ribbon name for robin
+        shoulderElbowScalePlusMinusAverageNodeJj1 = pm.createNode('plusMinusAverage',n = shoulderElbowScaleNodeNameJj1)
+        
+        #connect shoulderElbow scale for  shoulderElbow Jj1
+        self.subMidCtrlThighKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dx)
+        self.subMidCtrlKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dx)
+        self.subMidCtrlThighKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dy)
+        self.subMidCtrlKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dy)  
+        self.subMidCtrlThighKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dz)
+        self.subMidCtrlKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dz)     
+        shoulderElbowScalePlusMinusAverageNodeJj1.operation.set(3)
+        
+        #output scale to shoulderElbow Jj1
+        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dx.connect(self.ribon.jj[1].scaleX)
+        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dy.connect(self.ribon.jj[1].scaleY)
+        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dz.connect(self.ribon.jj[1].scaleZ)
+        
+        #name setting for the scale node for shoulderElbow Jj3
+        shoulderElbowScaleNodeNameJj3 = nameUtils.getUniqueName(self.side,self.baseName + 'shoulderElbowScaleJj3','PMA')
+        
+        #create Node for  shoulderElbow Jj3
+        shoulderElbowScalePlusMinusAverageNodeJj3 = pm.createNode('plusMinusAverage',n = shoulderElbowScaleNodeNameJj3)
+           
+        #connect shoulderElbow scale for  shoulderElbow Jj3
+        
+        self.subMidCtrlThighKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
+        self.blendChain.chain[1].scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
+        self.subMidCtrlThighKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
+        self.blendChain.chain[1].scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
+        self.subMidCtrlThighKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
+        self.blendChain.chain[1].scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
+        shoulderElbowScalePlusMinusAverageNodeJj3.operation.set(3)
+        
+        #output scale to shoulderElbow Jj3
+        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dx.connect(self.ribon.jj[3].scaleX)
+        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dy.connect(self.ribon.jj[3].scaleY)
+        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dz.connect(self.ribon.jj[3].scaleZ)
+        
+        #connect scale to shoulderElbow jj0
+        self.subMidCtrlKnee.control.scaleX.connect(self.ribon.jj[0].scaleX)
+        self.subMidCtrlKnee.control.scaleY.connect(self.ribon.jj[0].scaleY)
+        self.subMidCtrlKnee.control.scaleZ.connect(self.ribon.jj[0].scaleZ)
+        
+        #connect scale to shoulderElbow jj4
+        self.blendChain.chain[0].scaleX.connect(self.ribon.jj[4].scaleX)
+        self.blendChain.chain[0].scaleY.connect(self.ribon.jj[4].scaleY)
+        self.blendChain.chain[0].scaleZ.connect(self.ribon.jj[4].scaleZ)
+        
+        
+        
+        #name setting for the scale node for elbowWrist Jj1
+        elbowWristScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'elbowWristScaleJj1','PMA')
+        
+        #create Node for  elbowWrist jj1
+        elbowWristScalePlusMinusAverageNodeJj1 = pm.createNode('plusMinusAverage',n = elbowWristScaleNodeNameJj1)
+               
+        #connect elbowWrist scale for elbowWrist jj1
+        self.subMidCtrlKneeAnkle.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dx)
+        self.subMidCtrlKnee.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dx)
+        self.subMidCtrlKneeAnkle.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dy)
+        self.subMidCtrlKnee.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dy)  
+        self.subMidCtrlKneeAnkle.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dz)
+        self.subMidCtrlKnee.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dz)     
+        elbowWristScalePlusMinusAverageNodeJj1.operation.set(3)
+        
+        #output scale to elbowWrist jj1
+        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dx.connect(self.ribon45hp.jj[1].scaleX)
+        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dy.connect(self.ribon45hp.jj[1].scaleY)
+        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dz.connect(self.ribon45hp.jj[1].scaleZ)
+        
+        #name setting for the scale node for elbowWrist Jj3
+        elbowWristScaleNodeNameJj3 = nameUtils.getUniqueName(self.side,self.baseName + 'elbowWristScaleJj3','PMA')
+        
+        #create Node for  elbowWrist jj3
+        elbowWristScalePlusMinusAverageNodeJj3 = pm.createNode('plusMinusAverage',n = elbowWristScaleNodeNameJj3)
+               
+        #connect elbowWrist scale for elbowWrist jj3
+        self.subMidCtrlKneeAnkle.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
+        self.subMidCtrlKnee.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
+        self.subMidCtrlKneeAnkle.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
+        self.subMidCtrlKnee.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
+        self.subMidCtrlKneeAnkle.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
+        self.subMidCtrlKnee.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
+        elbowWristScalePlusMinusAverageNodeJj3.operation.set(3)
+        
+        #output scale to elbowWrist jj3
+        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dx.connect(self.ribon45hp.jj[3].scaleX)
+        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dy.connect(self.ribon45hp.jj[3].scaleY)
+        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dz.connect(self.ribon45hp.jj[3].scaleZ)
+        
+        #connect scale to elbowWrist jj4
+        self.subMidCtrlKnee.control.scaleX.connect(self.ribon45hp.jj[4].scaleX)
+        self.subMidCtrlKnee.control.scaleY.connect(self.ribon45hp.jj[4].scaleY)
+        self.subMidCtrlKnee.control.scaleZ.connect(self.ribon45hp.jj[4].scaleZ)
+        
+        #connect scale to elbowWrist jj0
+        self.blendChain.chain[2].scaleX.connect(self.ribon45hp.jj[0].scaleX)
+        self.blendChain.chain[2].scaleY.connect(self.ribon45hp.jj[0].scaleY)
+        self.blendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
+            
     
     def __cleanUp(self):
         
