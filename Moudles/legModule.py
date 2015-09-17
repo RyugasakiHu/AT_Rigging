@@ -46,9 +46,9 @@ class LegModule(object):
         self.ribon = None
         self.ribon45hp = None
          
-#         self.subMidCtrlThighKnee = None
-#         self.subMidCtrlKneeAnkle = None
-#         self.subMidCtrlKnee = None
+        self.subMidCtrlThighKnee = None
+        self.subMidCtrlKneeAnkle = None
+        self.subMidCtrlKnee = None
          
         self.ribbonData = ['ThighKnee','KneeAnkle','Knee']
         self.legnamelist = ['Thigh','Knee','Ankle']
@@ -84,14 +84,6 @@ class LegModule(object):
         self.guideGrp = pm.group(self.guides[0],n = name)
         self.guideGrp.v.set(0)
         self.guideGrp.setParent(self.hi.GUD)
-    
-    
-    def test(self):
-        guidePos = [x.getTranslation(space = 'world') for x in self.guides]
-        guideRot = [x.getRotation(space = 'world') for x in self.guides]
-        
-        self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.blendChain.fromList(guidePos,guideRot)
             
     def build(self):
         
@@ -175,24 +167,50 @@ class LegModule(object):
         '''
         this function set ribbon for the Upper 
         '''
-        self.ribon = ribbon.Ribbon(RibbonName = 'ShoulderElbow',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5)
+        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1)
         self.ribon.construction()
-
+        
         pm.xform(self.ribon.startloc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
         pm.xform(self.ribon.endloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
         
         pm.parentConstraint(self.blendChain.chain[0],self.ribon.startloc,mo = 1)
         
         self.__subCtrlUpper()
-    
-    def __setRibbonLower(self):
-        pass
-    
-    def __setRibbonSubMidCc(self):
-        pass
-    
+        
     #set ribbon ctrl
     def __subCtrlUpper(self):
+        
+        #connect scale for ShoulderElbow jj2
+        self.subMidCtrlThighKnee = self.ribon.subMidCtrl
+        self.subMidCtrlThighKnee.control.scaleX.connect(self.ribon.jj[2].scaleX)
+        self.subMidCtrlThighKnee.control.scaleY.connect(self.ribon.jj[2].scaleY)
+        self.subMidCtrlThighKnee.control.scaleZ.connect(self.ribon.jj[2].scaleZ)
+            
+    def __setRibbonLower(self):
+
+        '''
+        this function set ribbon for the ShoulderElbow 
+        '''
+        
+        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1)
+        self.ribon45hp.construction()
+        
+        pm.xform(self.ribon45hp.startloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon45hp.endloc,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
+        
+        pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endloc,mo = 1)
+                
+        self.__subCtrlLower()
+    
+    def __subCtrlLower(self):
+        
+        #connect scale for mid jj
+        self.subMidKneeAnkle = self.ribon45hp.subMidCtrl
+        self.subMidKneeAnkle.control.scaleX.connect(self.ribon45hp.jj[2].scaleX)
+        self.subMidKneeAnkle.control.scaleY.connect(self.ribon45hp.jj[2].scaleY)
+        self.subMidKneeAnkle.control.scaleZ.connect(self.ribon45hp.jj[2].scaleZ)
+
+    def __setRibbonSubMidCc(self):
         pass
     
     def __cleanUp(self):
