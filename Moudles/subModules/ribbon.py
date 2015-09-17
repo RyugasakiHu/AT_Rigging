@@ -5,7 +5,7 @@ from Modules import control
 class Ribbon(object):
 
 #     def __init__(self, RibbonName = 'Ribbon',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5):
-    def __init__(self, RibbonName,Width,Length,UVal,VVal,subMid = 0):        
+    def __init__(self, RibbonName,Width,Length,UVal,VVal,subMid = 0,side = 'c'):        
         '''
         initialize para
         '''
@@ -16,6 +16,7 @@ class Ribbon(object):
         self.UVal = UVal
         self.VVal = VVal
         self.subMid = subMid
+        self.side = side
         
         '''
         help para
@@ -235,13 +236,29 @@ class Ribbon(object):
 
     def __midCC(self):
         
-        self.subMidCtrl = control.Control(size = 1,baseName = 'Mid_CC',side = 'r') 
+        self.subMidCtrl = control.Control(size = 1,baseName = 'Mid_CC',side = self.side) 
         self.subMidCtrl.circleCtrl()
         pm.setAttr(self.subMidCtrl.controlGrp +'.ry',90)
         #add parent cnst for the mid jc
         pm.parentConstraint(self.subMidCtrl.control,self.midJc,mo = 1)
         #add parent cnst for sub grp 
         pm.parentConstraint(self.mpLocAim,self.subMidCtrl.controlGrp,mo = 1)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
        
