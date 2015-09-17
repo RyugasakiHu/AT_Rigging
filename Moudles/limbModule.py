@@ -109,7 +109,7 @@ class LimbModule(object):
         '''
         this function set ribbon for the Upper 
         '''
-        self.ribon = ribbon.Ribbon(RibbonName = 'ShoulderElbow',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5)
+        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1)
         self.ribon.construction()
 
         pm.xform(self.ribon.startloc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
@@ -120,19 +120,9 @@ class LimbModule(object):
         self.__subCtrlUpper()
         
     def __subCtrlUpper(self):
-        
-        #create and align subCtrl
-        #mid subCtrl
-        self.subMidCtrlShoulderElbow = control.Control(size = 1,baseName = self.ribbonData[0] + 'Mid_CC',side = self.side) 
-        self.subMidCtrlShoulderElbow.circleCtrl()
-#         pm.xform(self.subMidCtrlShoulderElbow.controlGrp,matrix = self.ribon45hp.midloc.worldMatrix.get())
-        midShoulderPos = pm.xform(self.ribon.midloc,query=1,ws=1,rp=1)
-        pm.move(self.subMidCtrlShoulderElbow.controlGrp,midShoulderPos[0],midShoulderPos[1],midShoulderPos[2],a=True)
-        #add parent cnst for the mid jc
-        pm.parentConstraint(self.subMidCtrlShoulderElbow.control,self.ribon.midJc,mo = 1)
-        #add parent cnst for sub grp 
-        pm.parentConstraint(self.ribon.mpLocAim,self.subMidCtrlShoulderElbow.controlGrp,mo = 1)
+
         #connect scale for ShoulderElbow jj2
+        self.subMidCtrlShoulderElbow = self.ribon.subMidCtrl
         self.subMidCtrlShoulderElbow.control.scaleX.connect(self.ribon.jj[2].scaleX)
         self.subMidCtrlShoulderElbow.control.scaleY.connect(self.ribon.jj[2].scaleY)
         self.subMidCtrlShoulderElbow.control.scaleZ.connect(self.ribon.jj[2].scaleZ)
@@ -142,7 +132,7 @@ class LimbModule(object):
         this function set ribbon for the ShoulderElbow 
         '''
         
-        self.ribon45hp = ribbon.Ribbon(RibbonName = 'ElbowWrist',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5)
+        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1)
         self.ribon45hp.construction()
 
         pm.xform(self.ribon45hp.startloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
@@ -153,19 +143,9 @@ class LimbModule(object):
         self.__subCtrlLower()
           
     def __subCtrlLower(self):
-        
-        #create sub ctrl
-        self.subMidCtrlElbowWrist = control.Control(size = 1,baseName = self.ribbonData[1] + 'Mid_CC',side = self.side) 
-        self.subMidCtrlElbowWrist.circleCtrl()
-#         pm.xform(self.subMidCtrlElbowWrist.controlGrp,matrix = self.ribon45hp.midloc.worldMatrix.get())
-        #find location 
-        midWristPos = pm.xform(self.ribon45hp.midloc,query=1,ws=1,rp=1)
-        pm.move(self.subMidCtrlElbowWrist.controlGrp,midWristPos[0],midWristPos[1],midWristPos[2],a=True)
-        #add parent cnst for the mid jc
-        pm.parentConstraint(self.subMidCtrlElbowWrist.control,self.ribon45hp.midJc,mo = 1)
-        #add parent cnst for sub grp 
-        pm.parentConstraint(self.ribon45hp.mpLocAim,self.subMidCtrlElbowWrist.controlGrp,mo = 1)
+
         #connect scale for mid jj
+        self.subMidCtrlElbowWrist = self.ribon45hp.subMidCtrl
         self.subMidCtrlElbowWrist.control.scaleX.connect(self.ribon45hp.jj[2].scaleX)
         self.subMidCtrlElbowWrist.control.scaleY.connect(self.ribon45hp.jj[2].scaleY)
         self.subMidCtrlElbowWrist.control.scaleZ.connect(self.ribon45hp.jj[2].scaleZ)
