@@ -270,13 +270,25 @@ class LimbModule(object):
         #add cc ctrl
         control.addSwitchAttr(self.config_node,['CC']) 
         
-        #cc grp and v
+        #ccDef grp and v
         self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp')) 
         self.subMidCtrlShoulderElbow.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlElbowWrist.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlElbow.controlGrp.setParent(self.ccDefGrp)
         self.config_node.CC.set(1)
         self.config_node.CC.connect(self.ccDefGrp.v)
+        
+        #cc hierarchy        
+        self.cntsGrp = pm.group(self.ikChain.ikCtrl.controlGrp,
+                                n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp'))
+        
+
+        self.ccDefGrp.setParent(self.cntsGrp)
+        self.cntsGrp.setParent(self.hi.CC) 
+        self.config_node.setParent(self.cntsGrp)    
+                
+        if self.solver == 'ikRPsolver':
+            pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)        
         
         #connect visable function 
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'IKFK','REV')
@@ -303,17 +315,16 @@ class LimbModule(object):
         self.guideGrp.setParent(self.hi.GUD)
         self.hi.GUD.v.set(0)
 
+        #jj grp
         self.sklGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.stretchStartLoc,
                                n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
 
         for b in (self.ikChain,self.fkChain,self.blendChain):
             b.chain[0].setParent(self.sklGrp)
             
-        self.sklGrp.setParent(self.hi.SKL)            
-        
-        self.cntsGrp = pm.group(self.ikChain.ikCtrl.controlGrp,
-                                n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp'))
-                
+        self.sklGrp.setParent(self.hi.SKL)
+                    
+            
 #         for b in (self.ikChain,self.fkChain,self.blendChain):
 #             b.chain[0].setParent(self.bonesGrp)
 #          
@@ -323,13 +334,7 @@ class LimbModule(object):
 #         self.mainGrp = pm.group(self.bonesGrp,self.cntsGrp,self.config_node,
 #                                 n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))   
          
-        if self.solver == 'ikRPsolver':
-            pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)
-        
-        #ik cc hierarchy
-        self.ccDefGrp.setParent(self.cntsGrp)
-        self.cntsGrp.setParent(self.hi.CC) 
-        self.config_node.setParent(self.cntsGrp)
+
 
 # from Modules import limbModule
 # lm = limbModule.LimbModule()
