@@ -12,7 +12,7 @@ class LegModule(object):
     rotArray = [[0,0,0],[0,0,0],[0,0,0]]
     
     def __init__(self,baseName = 'leg',side = 'l',size = 1.5,
-                 controlOrient = [0,0,0], module = 'Leg'):
+                 controlOrient = [0,0,0]):
         
         self.baseName = baseName
         self.side = side
@@ -39,6 +39,7 @@ class LegModule(object):
         self.ccDefGrp = None
         self.cntsGrp = None
         
+        #guide
         self.guides = None
         self.guideGrp = None
         
@@ -49,11 +50,12 @@ class LegModule(object):
         self.subMidCtrlThighKnee = None
         self.subMidCtrlKneeAnkle = None
         self.subMidCtrlKnee = None
-         
-        self.ribbonData = ['ThighKnee','KneeAnkle','Knee']
-        self.legnamelist = ['Thigh','Knee','Ankle']
         
-#         self.legnamelist = ['Thigh','Knee','Ankle','Ball','Toe','Heel']
+        #name list 
+        self.ribbonData = ['ThighKnee','KneeAnkle','Knee']
+        self.legNameList = ['Thigh','Knee','Ankle']
+        
+#         self.legNameList = ['Thigh','Knee','Ankle','Ball','Toe','Heel']
         
         self.hi = None
         
@@ -66,7 +68,7 @@ class LegModule(object):
         
         #set pos loc    
         for i,p in enumerate(self.posArray):
-            name = nameUtils.getUniqueName(self.side,self.baseName + self.legnamelist[i],'gud')
+            name = nameUtils.getUniqueName(self.side,self.baseName + self.legNameList[i],'gud')
             loc = pm.spaceLocator(n = name)
             loc.t.set(p)
             loc.r.set(self.rotArray[i])
@@ -82,8 +84,6 @@ class LegModule(object):
 #         pm.parent(self.guides[-1],self.guides[-4]) 
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(self.guides[0],n = name)
-        self.guideGrp.v.set(0)
-        self.guideGrp.setParent(self.hi.GUD)
             
     def build(self):
         
@@ -163,6 +163,7 @@ class LegModule(object):
         self.ikRpPvChain.stretchStartLoc.v.set(0)
     
     #set ribbon    
+    
     def __setRibbonUpper(self):
         '''
         this function set ribbon for the Upper 
@@ -170,14 +171,17 @@ class LegModule(object):
         self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side,baseName=self.baseName + self.ribbonData[0])
         self.ribon.construction()
         
-        pm.xform(self.ribon.startloc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
-        pm.xform(self.ribon.endloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon.startLoc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
+        pm.xform(self.ribon.endLoc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
         
-        pm.parentConstraint(self.blendChain.chain[0],self.ribon.startloc,mo = 1)
+        pm.parentConstraint(self.blendChain.chain[0],self.ribon.startLoc,mo = 1)
+#         pm.parentConstraint(self.blendChain.chain[0],self.blendChain.chain[1],self.ribon.epUploc,mo = 1)
+        
         
         self.__subCtrlUpper()
         
     #set ribbon ctrl
+    
     def __subCtrlUpper(self):
         
         #connect scale for ShoulderElbow jj2
@@ -195,10 +199,10 @@ class LegModule(object):
         self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side,baseName=self.baseName + self.ribbonData[1])
         self.ribon45hp.construction()
         
-        pm.xform(self.ribon45hp.startloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
-        pm.xform(self.ribon45hp.endloc,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
+        pm.xform(self.ribon45hp.startLoc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
         
-        pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endloc,mo = 1)
+        pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
                 
         self.__subCtrlLower()
     
@@ -218,8 +222,8 @@ class LegModule(object):
         elbolPos = pm.xform(self.blendChain.chain[1],query=1,ws=1,rp=1)
         pm.move(self.subMidCtrlKnee.controlGrp,elbolPos[0],elbolPos[1],elbolPos[2],a=True)
         
-        pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon45hp.startloc,mo = 1)
-        pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon.endloc,mo = 1)
+        pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon45hp.startLoc,mo = 1)
+        pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon.endLoc,mo = 1)
         pm.parentConstraint(self.blendChain.chain[1],self.subMidCtrlKnee.controlGrp,mo = 1)
         
         #name setting for the scale node for shoulderElbow Jj1
@@ -326,7 +330,6 @@ class LegModule(object):
         self.blendChain.chain[2].scaleY.connect(self.ribon45hp.jj[0].scaleY)
         self.blendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
             
-    
     def __cleanUp(self):
         
         #add cc ctrl
@@ -378,6 +381,10 @@ class LegModule(object):
             b.chain[0].setParent(self.sklGrp)
         
         self.sklGrp.setParent(self.hi.SKL)
+        
+        #guide grp
+        self.guideGrp.v.set(0)
+        self.guideGrp.setParent(self.hi.GUD)
         
 
 
