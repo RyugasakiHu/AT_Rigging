@@ -11,7 +11,7 @@ class LimbModule(object):
     rotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
     def __init__(self,baseName = 'arm',side = 'l',size = 1.5,
-                 solver = 'ikRPsolver',controlOrient = [0,0,0],module = 'Arm'):
+                 solver = 'ikRPsolver',controlOrient = [0,0,0]):
         
         self.baseName = baseName
         self.side = side
@@ -37,6 +37,7 @@ class LimbModule(object):
         self.ccDefGrp = None
         self.cntsGrp = None
         
+        #guides 
         self.guides = None
         self.guideGrp = None
         
@@ -112,10 +113,11 @@ class LimbModule(object):
         self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side,baseName=self.baseName + self.ribbonData[0])
         self.ribon.construction()
 
-        pm.xform(self.ribon.startloc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
-        pm.xform(self.ribon.endloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon.startLoc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
+        pm.xform(self.ribon.endLoc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
         
-        pm.parentConstraint(self.blendChain.chain[0],self.ribon.startloc,mo = 1)
+        pm.parentConstraint(self.blendChain.chain[0],self.ribon.startLoc,mo = 1)
+        pm.parentConstraint(self.blendChain.chain[0],self.blendChain.chain[1],self.ribon.epUploc,mo = 1)
         
         self.__subCtrlUpper()
         
@@ -135,10 +137,10 @@ class LimbModule(object):
         self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side,baseName=self.baseName + self.ribbonData[1])
         self.ribon45hp.construction()
 
-        pm.xform(self.ribon45hp.startloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
-        pm.xform(self.ribon45hp.endloc,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
+        pm.xform(self.ribon45hp.startLoc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
         
-        pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endloc,mo = 1)
+        pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
         
         self.__subCtrlLower()
           
@@ -157,8 +159,8 @@ class LimbModule(object):
         elbolPos = pm.xform(self.blendChain.chain[1],query=1,ws=1,rp=1)
         pm.move(self.subMidCtrlElbow.controlGrp,elbolPos[0],elbolPos[1],elbolPos[2],a=True)
         
-        pm.parentConstraint(self.subMidCtrlElbow.control,self.ribon45hp.startloc,mo = 1)
-        pm.parentConstraint(self.subMidCtrlElbow.control,self.ribon.endloc,mo = 1)
+        pm.parentConstraint(self.subMidCtrlElbow.control,self.ribon45hp.startLoc,mo = 1)
+        pm.parentConstraint(self.subMidCtrlElbow.control,self.ribon.endLoc,mo = 1)
         pm.parentConstraint(self.blendChain.chain[1],self.subMidCtrlElbow.controlGrp,mo = 1)
         
         #name setting for the scale node for shoulderElbow Jj1
@@ -312,6 +314,7 @@ class LimbModule(object):
         self.ikChain.lockUpStartLoc.v.set(0)
         self.ikChain.ikHandle.setParent(self.hi.IK)
         
+        #guide grp
         self.guideGrp.setParent(self.hi.GUD)
         self.hi.GUD.v.set(0)
 
