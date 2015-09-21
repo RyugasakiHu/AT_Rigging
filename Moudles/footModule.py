@@ -1,7 +1,7 @@
 import pymel.core as pm
 from subModules import fkChain,ikChain,boneChain
 from Utils import nameUtils
-from Modules import control,hierarchy
+from Modules import control,hierarchy,legModule
 
 class FootModule(object):
 
@@ -65,6 +65,7 @@ class FootModule(object):
         
         self.footChain.chain[-1].setParent(self.footChain.chain[0])
         self.__addCtrl()
+        self.__connectAttr()
 #         self.__cleanUp()
 
     def __addCtrl(self):
@@ -91,7 +92,37 @@ class FootModule(object):
         self.footCtrl.control.addAttr('ball_roll',at = 'double',dv = 0,k = 1)
         self.footCtrl.control.addAttr('toe_roll',at = 'double',dv = 0,k = 1)
         self.footCtrl.control.addAttr('toe_bend',at = 'double',dv = 0,k = 1)
+        self.footChain.chain[0].setParent(self.guides[-1])
+        self.guides[0].setParent(self.footCtrl.control)
+    
+    def __connectAttr(self):
         
+        #name Node
+        counterMultipleNodeName = nameUtils.getUniqueName(self.side,self.baseName ,'MDN')
+        toePlusMinusAverageNodeName = nameUtils.getUniqueName(self.side,self.baseName ,'PMA')
+
+        #create Node
+        counterMultipleNode = pm.createNode('multiplyDivide',n = counterMultipleNodeName)
+        toePlusMinusAverageNode = pm.createNode('multiplyDivide',n = toePlusMinusAverageNodeName)
+        
+        print self.guides
+        print self.footChain.chain
+        #ball_roll and toe_roll
+        self.footCtrl.control.ball_roll.connect(self.guides[-1].rx)
+        self.footCtrl.control.ball_roll.connect(counterMultipleNode.input1X)
+        counterMultipleNode.input2X.set(-1)
+        counterMultipleNode.outputX.connect(self.footChain.chain[1].rz)
+        self.footCtrl.control.toe_roll.connect(self.guides[2].rx)       
+        #heel_roll
+        self.footCtrl.control.heel_roll.connect(self.guides[1].rx)
+        
+#         self.footCtrl.control.IKFK.connect(legModule.LegModule.config_node.IKFK)
+
+        #toe_bend
+        
+#         self.footCtrl.control.toe_bend.connect(self.guides[1].rx)
+#         self.footCtrl.control.heel_roll.connect(self.guides[1].rx)
+    
     def __cleanUp(self):
         
         #jj grp 
