@@ -52,15 +52,15 @@ class FootModule(object):
          
     def build(self):
         
-        guidePos = [x.getTranslation(space = 'world') for x in self.guides[0],self.guides[-1],self.guides[2],self.guides[1]]
-        guideRot = [x.getRotation(space = 'world') for x in self.guides[0],self.guides[-1],self.guides[2],self.guides[1]]
+        self.guidePos = [x.getTranslation(space = 'world') for x in self.guides[0],self.guides[-1],self.guides[2],self.guides[1]]
+        self.guideRot = [x.getRotation(space = 'world') for x in self.guides[0],self.guides[-1],self.guides[2],self.guides[1]]
 
         #foot jj
         self.footChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.footChain.fromList(guidePos,guideRot)
+        self.footChain.fromList(self.guidePos,self.guideRot)
 
         for num,joint in enumerate(self.footChain.chain):
-            name = nameUtils.getUniqueName(self.side,self.footGudNameList[num],'jj')
+            name = nameUtils.getUniqueName(self.side,self.footNameList[num],'jj')
             pm.rename(joint,name)
         
         self.footChain.chain[-1].setParent(self.footChain.chain[0])
@@ -75,16 +75,27 @@ class FootModule(object):
         self.footCtrl.control.rotateZ.set(90)
         pm.makeIdentity(apply = 1,t = 0,r = 1,s = 0,pn = 1)
         pm.xform(self.footCtrl.controlGrp,ws = 1,matrix = self.guides[0].worldMatrix.get())
-    
+        pm.move(0,-self.guidePos[0][1],0,self.footCtrl.control + '.cv[0:7]',r = 1)
+        self.footChain.chain[0].setParent(self.footCtrl.control)
+        self.footCtrl.control.t.lock(1)
+        self.footCtrl.control.s.lock(1)
+        self.footCtrl.control.v.lock(1)
+        control.lockAndHideAttr(self.footCtrl.control,["tx","ty","tz","sy","sz","v","sx"])
 
+        self.footCtrl.control.addAttr('________',at = 'double',min = 0,max = 0,dv = 0)
+        pm.setAttr(self.footCtrl.control + '.________',e = 0,channelBox = 1)
+        self.footCtrl.control.________.lock(1)
+        
+        self.footCtrl.control.addAttr('IKFK',at = 'float',min = 0,max = 1,dv = 0,k = 1)
+        self.footCtrl.control.addAttr('heel_roll',at = 'double',dv = 0,k = 1)
+        self.footCtrl.control.addAttr('ball_roll',at = 'double',dv = 0,k = 1)
+        self.footCtrl.control.addAttr('toe_roll',at = 'double',dv = 0,k = 1)
+        self.footCtrl.control.addAttr('toe_bend',at = 'double',dv = 0,k = 1)
         
     def __cleanUp(self):
         
         #jj grp 
         self.footChain.chain[0].setParent(self.footCtrl.control)
-        
-        #gud grp
-        self.guideGrp.v.set(0)
 
         
         
