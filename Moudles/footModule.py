@@ -30,7 +30,8 @@ class FootModule(object):
         self.guides = None
         
         #namelist
-        self.footNameList = ['ankle','heel','toe','inside','outside','ball']
+        self.locNameList = ['ankle','heel','toe','inside','outside','ball']
+        self.footNameList = ['ankle','ball','toe','heel']
         
     def buildGuides(self):
         
@@ -38,7 +39,7 @@ class FootModule(object):
         
         #set loc pos
         for i,p in enumerate(self.posArray):
-            locName = nameUtils.getUniqueName(self.side,self.footNameList[i],'loc')
+            locName = nameUtils.getUniqueName(self.side,self.locNameList[i],'loc')
             loc = pm.spaceLocator(n = locName)
             loc.t.set(p)
             self.guides.append(loc)        
@@ -52,6 +53,7 @@ class FootModule(object):
          
     def build(self):
         
+        print self.guides
         self.guidePos = [x.getTranslation(space = 'world') for x in self.guides[0],self.guides[-1],self.guides[2],self.guides[1]]
         self.guideRot = [x.getRotation(space = 'world') for x in self.guides[0],self.guides[-1],self.guides[2],self.guides[1]]
 
@@ -103,23 +105,23 @@ class FootModule(object):
 
         #create Node
         counterMultipleNode = pm.createNode('multiplyDivide',n = counterMultipleNodeName)
-        toePlusMinusAverageNode = pm.createNode('multiplyDivide',n = toePlusMinusAverageNodeName)
+        toePlusMinusAverageNode = pm.createNode('plusMinusAverage',n = toePlusMinusAverageNodeName)
         
-        print self.guides
-        print self.footChain.chain
-        #ball_roll and toe_roll
+        #toe_roll
         self.footCtrl.control.ball_roll.connect(self.guides[-1].rx)
         self.footCtrl.control.ball_roll.connect(counterMultipleNode.input1X)
         counterMultipleNode.input2X.set(-1)
-        counterMultipleNode.outputX.connect(self.footChain.chain[1].rz)
+#         counterMultipleNode.outputX.connect(self.footChain.chain[1].rz)
         self.footCtrl.control.toe_roll.connect(self.guides[2].rx)       
+        
         #heel_roll
         self.footCtrl.control.heel_roll.connect(self.guides[1].rx)
-        
 #         self.footCtrl.control.IKFK.connect(legModule.LegModule.config_node.IKFK)
 
-        #toe_bend
-        
+        #ball_roll and toe_bend
+        counterMultipleNode.outputX.connect(toePlusMinusAverageNode.input3D[1].input3Dx)     
+        self.footCtrl.control.toe_bend.connect(toePlusMinusAverageNode.input3D[2].input3Dx)   
+        toePlusMinusAverageNode.output3Dx.connect(self.footChain.chain[1].rz)
 #         self.footCtrl.control.toe_bend.connect(self.guides[1].rx)
 #         self.footCtrl.control.heel_roll.connect(self.guides[1].rx)
     
