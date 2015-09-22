@@ -5,11 +5,11 @@ from Modules import control,hierarchy
 
 class LegModule(object):
     
-#     posArray = [[6,14,0],[6,8,2],[6,2,0],[6,1,4],[6,1,2],[6,1,-1]]
-#     rotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+    posArray = [[6,14,0],[6,8,2],[6,2,0],[6,0,-1],[6,0,4],[4,0,2],[8,0,2],[6,0,2]]
+    rotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
 
-    posArray = [[6,14,0],[6,8,2],[6,2,0]]
-    rotArray = [[0,0,0],[0,0,0],[0,0,0]]
+#     posArray = [[6,14,0],[6,8,2],[6,2,0]]
+#     rotArray = [[0,0,0],[0,0,0],[0,0,0]]
     
     def __init__(self,baseName = 'leg',side = 'l',size = 1.5,
                  controlOrient = [0,0,0]):
@@ -34,8 +34,9 @@ class LegModule(object):
         self.sklGrp = None
         
         #cc
-        configName = nameUtils.getUniqueName(self.side,self.baseName,'CONFIG')
-        self.config_node = pm.spaceLocator(n = configName)
+#         configName = nameUtils.getUniqueName(self.side,self.baseName,'CONFIG')
+#         self.footCtrl = pm.spaceLocator(n = configName)
+        self.footCtrl = None
         self.ccDefGrp = None
         self.cntsGrp = None
         
@@ -53,9 +54,8 @@ class LegModule(object):
         
         #name list 
         self.ribbonData = ['ThighKnee','KneeAnkle','Knee']
-        self.legNameList = ['Thigh','Knee','Ankle']
-        
-#         self.legNameList = ['Thigh','Knee','Ankle','Ball','Toe','Heel']
+        self.legNameList = ['Thigh','Knee','Ankle','Heel','Toe','Inside','Outside','Ball']
+        self.footNameList = ['Thigh','Knee','Ankle','Ball','Toe','Heel']        
         
         self.hi = None
         
@@ -81,49 +81,96 @@ class LegModule(object):
         for i in range(len(tempGuides)):
             if i != (len(tempGuides) - 1):
                 pm.parent(tempGuides[i],tempGuides[i + 1])
-#         pm.parent(self.guides[-1],self.guides[-4]) 
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(self.guides[0],n = name)
             
     def build(self):
         
-        guidePos = [x.getTranslation(space = 'world') for x in self.guides]
-        guideRot = [x.getRotation(space = 'world') for x in self.guides]
+        self.guidePos = [x.getTranslation(space = 'world') for x in self.guides]
+        self.guideRot = [x.getRotation(space = 'world') for x in self.guides]
+        
+        #addCtrl
+        self.footCtrl = control.Control(self.side,self.baseName,self.size) 
+        self.footCtrl.circleCtrl()
+        self.footCtrl.control.rotateZ.set(90)
+        pm.makeIdentity(apply = 1,t = 0,r = 1,s = 0,pn = 1)
         
         #ikRpPvChain
         self.ikRpPvChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikRPsolver',type = 'ikRP')
-        self.ikRpPvChain.fromList(guidePos,guideRot)
+        self.ikRpPvChain.fromList(self.guidePos[0:3],self.guideRot[0:3])
+        for num,joint in enumerate(self.ikRpPvChain.chain):
+            name = nameUtils.getUniqueName(self.side,self.legNameList[num],'ikRP')
+            pm.rename(joint,name)
 
         #ikRpChain
         self.ikRpChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikRPsolver',type = 'ikNF')
-        self.ikRpChain.fromList(guidePos,guideRot)
-        
+        self.ikRpChain.fromList(self.guidePos[0:3],self.guideRot[0:3])
+        for num,joint in enumerate(self.ikRpChain.chain):
+            name = nameUtils.getUniqueName(self.side,self.legNameList[num],'ikNF')
+            pm.rename(joint,name)
+         
         #ik blend 
         self.ikBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'ik')
-        self.ikBlendChain.fromList(guidePos,guideRot)
+        self.ikBlendChain.fromList(self.guidePos[0:3],self.guideRot[0:3])
         self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.ikRpChain.chain,self.ikRpPvChain.chain,self.ikBlendChain.chain,
                                                                    self.ikRpPvChain.ikCtrl.control,'enable_PV',self.baseName,self.side)
-        
+        for num,joint in enumerate(self.ikBlendChain.chain):
+            name = nameUtils.getUniqueName(self.side,self.legNameList[num],'ik')
+            pm.rename(joint,name)
+         
         #ikset
         self.__ikSet()
-        
-         
+           
         #fk 
         self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
-        self.fkChain.fromList(guidePos,guideRot)
-        
+        self.fkChain.fromList(self.guidePos[0:3],self.guideRot[0:3])
+        for num,joint in enumerate(self.fkChain.chain):
+            name = nameUtils.getUniqueName(self.side,self.legNameList[num],'fk')
+            pm.rename(joint,name)
+
         #ori chain
         self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.blendChain.fromList(guidePos,guideRot)
-        self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikBlendChain.chain,self.blendChain.chain,
-                                                                   self.config_node,'IKFK',self.baseName,self.side)
+        footPos = []
+        footPos.append(self.guidePos[-1])        
+        footPos.append(self.guidePos[4])
+        footPos.append(self.guidePos[3])
+        self.blendChain.fromList(self.guidePos[0:3] + footPos,self.guideRot)
+        self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikBlendChain.chain,self.blendChain.chain[0:3],
+                                                                   self.footCtrl.control,'IKFK',self.baseName,self.side)
+        for num,joint in enumerate(self.blendChain.chain):
+            name = nameUtils.getUniqueName(self.side,self.footNameList[num],'jj')
+            pm.rename(joint,name)
+        self.blendChain.chain[-1].setParent(self.blendChain.chain[-4])
         
+        self.__editCtrl()
         self.__setRibbonUpper()
         self.__setRibbonLower()
         self.__setRibbonSubMidCc()        
-        
         self.__cleanUp()
     
+    def __editCtrl(self):
+        
+        pm.xform(self.footCtrl.controlGrp,ws = 1,matrix = self.guides[2].worldMatrix.get())
+        pm.move(0,-self.guidePos[2][1],0,self.footCtrl.control + '.cv[0:7]',r = 1)
+#             self.footChain.chain[0].setParent(self.footCtrl.control)
+        self.footCtrl.control.t.lock(1)
+        self.footCtrl.control.s.lock(1)
+        self.footCtrl.control.v.lock(1)
+        control.lockAndHideAttr(self.footCtrl.control,["tx","ty","tz","sy","sz","v","sx"])
+        control.addSwitchAttr(self.footCtrl.control,['CC'])         
+        self.footCtrl.control.addAttr('________',at = 'double',min = 0,max = 0,dv = 0)
+        pm.setAttr(self.footCtrl.control + '.________',e = 0,channelBox = 1)
+        self.footCtrl.control.________.lock(1)
+        
+#             self.footCtrl.control.addAttr('IKFK',at = 'float',min = 0,max = 1,dv = 0,k = 1)
+
+        self.footCtrl.control.addAttr('heel_roll',at = 'double',dv = 0,k = 1)
+        self.footCtrl.control.addAttr('ball_roll',at = 'double',dv = 0,k = 1)
+        self.footCtrl.control.addAttr('toe_roll',at = 'double',dv = 0,k = 1)
+        self.footCtrl.control.addAttr('toe_bend',at = 'double',dv = 0,k = 1)
+#             self.footChain.chain[0].setParent(self.guides[-1])
+#             self.guides[0].setParent(self.footCtrl.control)
+     
     def __ikSet(self):
         
         #stretch loc reset
@@ -332,12 +379,9 @@ class LegModule(object):
             
     def __cleanUp(self):
         
-        #add cc ctrl
-        control.addSwitchAttr(self.config_node,['CC']) 
-        
         #cc grp and v 
         self.cntsGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp')) 
-        self.config_node.setParent(self.cntsGrp)
+        self.footCtrl.controlGrp.setParent(self.cntsGrp)
         self.ikRpPvChain.ikCtrl.controlGrp.setParent(self.cntsGrp)
         self.ikRpPvChain.poleVectorCtrl.controlGrp.setParent(self.cntsGrp)
         self.cntsGrp.setParent(self.hi.CC)
@@ -347,20 +391,20 @@ class LegModule(object):
         self.subMidCtrlKneeAnkle.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlThighKnee.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlKnee.controlGrp.setParent(self.ccDefGrp)
-        self.config_node.CC.set(1)
-        self.config_node.CC.connect(self.ccDefGrp.v)        
+        self.footCtrl.control.CC.set(1)
+        self.footCtrl.control.CC.connect(self.ccDefGrp.v)        
         
         #cc hierarchy        
         self.ccDefGrp.setParent(self.cntsGrp)
         self.cntsGrp.setParent(self.hi.CC) 
-        self.config_node.setParent(self.cntsGrp)    
+        self.footCtrl.controlGrp.setParent(self.cntsGrp)    
         
         #connect visable function 
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'IKFK','REV')
         reverseNode = pm.createNode('reverse',n = reverseNodeName)
          
-        self.config_node.IKFK.connect(self.ikRpPvChain.ikCtrl.controlGrp.v)
-        self.config_node.IKFK.connect(reverseNode.inputX)
+        self.footCtrl.control.IKFK.connect(self.ikRpPvChain.ikCtrl.controlGrp.v)
+        self.footCtrl.control.IKFK.connect(reverseNode.inputX)
         reverseNode.outputX.connect(self.fkChain.chain[0].v)
         
         #ribbon hierarchy   
@@ -383,8 +427,8 @@ class LegModule(object):
         self.sklGrp.setParent(self.hi.SKL)
         
         #guide grp
-        self.guideGrp.v.set(0)
-        self.guideGrp.setParent(self.hi.GUD)
+#         self.guideGrp.v.set(0)
+#         self.guideGrp.setParent(self.hi.GUD)
         
 
 
