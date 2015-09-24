@@ -431,11 +431,15 @@ class LegModule(object):
         #ball lift/straight
         tipRangeNode.minX.set(0)
         tipRangeNode.maxX.set(1)
+        ballRangeNode.minX.set(0)
+        ballRangeNode.maxX.set(1)
+        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(ballRangeNode.valueX)
         self.ikRpPvChain.ikCtrl.control.toe_lift.connect(ballRangeNode.oldMinX)
         self.ikRpPvChain.ikCtrl.control.toe_straight.connect(ballRangeNode.oldMaxX)        
         ballRangeNode.outValueX.connect(ballPlusMinusAverageNode.input1D[1])
         ballConditionNode.outColorR.connect(ballMultipleNode.input1X)
         ballMultipleNode.operation.set(1)
+        ballPlusMinusAverageNode.operation.set(2)
         ballPlusMinusAverageNode.input1D[0].set(1)
         ballPlusMinusAverageNode.output1D.connect(ballMultipleNode.input2X)
         ballMultipleNode.outputX.connect(self.guides[-1].rx)
@@ -446,11 +450,14 @@ class LegModule(object):
         self.ikRpPvChain.ikCtrl.control.ball_roll.connect(tipRangeNode.valueX)
         self.ikRpPvChain.ikCtrl.control.toe_lift.connect(tipRangeNode.oldMinX)
         self.ikRpPvChain.ikCtrl.control.toe_straight.connect(tipRangeNode.oldMaxX)
-        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(tipRangeMultipleNode.input1X)
+        ballConditionNode.outColorR.connect(tipRangeMultipleNode.input1X)
         tipRangeNode.outValueX.connect(tipRangeMultipleNode.input2X)
         tipRangeMultipleNode.outputX.connect(self.guides[-4].rx)
-            
-            
+        self.ikRpPvChain.ikCtrl.control.toe_spin.connect(self.guides[-4].ry)
+        
+        #default set
+        self.ikRpPvChain.ikCtrl.control.toe_lift.set(35)
+        self.ikRpPvChain.ikCtrl.control.toe_straight.set(70)
             
     def __cleanUp(self):
         
