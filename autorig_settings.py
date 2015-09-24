@@ -24,6 +24,7 @@ suffix = ['jj',# joint joint
           'gud',# guide
           'off',# offset
           'cog',# cog
+          'RANG',# setrangeNode
           'GUD',# guide grp
           'BCN',# blendColorNode
           'COND',#conditionNode
