@@ -385,23 +385,32 @@ class LegModule(object):
         #ik
         ballIkName = nameUtils.getUniqueName(self.side,'ballSc','iks')
         toeWiggleIKName = nameUtils.getUniqueName(self.side,'toeWiggleSc','iks')
-        ballIkHandle,ikEffector = pm.ikHandle(sj = self.ikBlendChain.chain[-4],ee = self.ikBlendChain.chain[-3],solver = 'ikSCsolver',n = ballIkName)
-#         toeWiggleIkHandle = pm.ikHandle(sj = self.blendChain.chain[-4],ee = self.blendChain.chain[-3],solver = 'ikSCsolver',n = toeWiggleIKName)
+        ballIkHandle,ballIkEffector = pm.ikHandle(sj = self.ikBlendChain.chain[-4],ee = self.ikBlendChain.chain[-3],solver = 'ikSCsolver',n = ballIkName)
+        toeIkHandle,toeIkEffector = pm.ikHandle(sj = self.ikBlendChain.chain[-3],ee = self.ikBlendChain.chain[-2],solver = 'ikSCsolver',n = toeWiggleIKName)
         pm.parent(ballIkHandle,self.guides[-1])
+        pm.parent(toeIkHandle,self.guides[-4])
         self.ikRpChain.ikHandle.setParent(self.guides[-1])
         self.ikRpPvChain.ikHandle.setParent(self.guides[-1])
         pm.delete(self.ikRpPvChain.ikHandle + '_pointConstraint1')
         pm.parentConstraint(self.ikRpPvChain.ikCtrl.control,self.guides[2],mo = 1)
         
         #node Name
-        heelConditionNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'heel','COND')
-        ballConditionNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'ball','COND')
-        rangeNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'ball','COND')
+        heelConditionNodeName = nameUtils.getUniqueName(self.side,'Heel','COND')
+        ballConditionNodeName = nameUtils.getUniqueName(self.side,'Ball','COND')
+        ballRangeNodeName = nameUtils.getUniqueName(self.side,'Ball','RANG')
+        ballRangeMultipleNodeName = nameUtils.getUniqueName(self.side,'Ball','MDN')
+        ballPlusMinusAverageNodeName = nameUtils.getUniqueName(self.side,'Ball','PMA')
+        tipRangeNodeName = nameUtils.getUniqueName(self.side,'Tip','RANG')
+        tipRangeMultipleNodeName = nameUtils.getUniqueName(self.side,'tipRange','MDN')
         
         #create Node
         heelConditionNode = pm.createNode('condition',n = heelConditionNodeName)
         ballConditionNode = pm.createNode('condition',n = ballConditionNodeName)
-        rangeNode = pm.createNode('setRange',n = rangeNodeName)
+        ballMultipleNode = pm.createNode('multiplyDivide',n = ballRangeMultipleNodeName)
+        ballRangeNode = pm.createNode('setRange',n = ballRangeNodeName)
+        ballPlusMinusAverageNode = pm.createNode('plusMinusAverage',n = ballPlusMinusAverageNodeName)
+        tipRangeNode = pm.createNode('setRange',n = tipRangeNodeName)
+        tipRangeMultipleNode = pm.createNode('multiplyDivide',n = tipRangeMultipleNodeName)
         
         #connecting
         #ball negetive
@@ -412,20 +421,37 @@ class LegModule(object):
         heelConditionNode.colorIfFalseR.set(0)
         heelConditionNode.outColorR.connect(self.guides[3].rx)
         
-        #ball positive
+        #ball value
         self.ikRpPvChain.ikCtrl.control.ball_roll.connect(ballConditionNode.firstTerm)
         self.ikRpPvChain.ikCtrl.control.ball_roll.connect(ballConditionNode.colorIfTrueR)
         ballConditionNode.secondTerm.set(0)
         ballConditionNode.operation.set(3)
         ballConditionNode.colorIfFalseR.set(0)
-        ballConditionNode.outColorR.connect(self.guides[-1].rx)        
+        
+        #ball lift/straight
+        tipRangeNode.minX.set(0)
+        tipRangeNode.maxX.set(1)
+        self.ikRpPvChain.ikCtrl.control.toe_lift.connect(ballRangeNode.oldMinX)
+        self.ikRpPvChain.ikCtrl.control.toe_straight.connect(ballRangeNode.oldMaxX)        
+        ballRangeNode.outValueX.connect(ballPlusMinusAverageNode.input1D[1])
+        ballConditionNode.outColorR.connect(ballMultipleNode.input1X)
+        ballMultipleNode.operation.set(1)
+        ballPlusMinusAverageNode.input1D[0].set(1)
+        ballPlusMinusAverageNode.output1D.connect(ballMultipleNode.input2X)
+        ballMultipleNode.outputX.connect(self.guides[-1].rx)
         
         #toe lift/ straight
-        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(rangeNode.valueX)
-        self.ikRpPvChain.ikCtrl.control.toe_lift.connect(rangeNode.oldMinX)
-        self.ikRpPvChain.ikCtrl.control.toe_straight.connect(rangeNode.oldMaxX)
+        tipRangeNode.minX.set(0)
+        tipRangeNode.maxX.set(1)
+        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(tipRangeNode.valueX)
+        self.ikRpPvChain.ikCtrl.control.toe_lift.connect(tipRangeNode.oldMinX)
+        self.ikRpPvChain.ikCtrl.control.toe_straight.connect(tipRangeNode.oldMaxX)
+        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(tipRangeMultipleNode.input1X)
+        tipRangeNode.outValueX.connect(tipRangeMultipleNode.input2X)
+        tipRangeMultipleNode.outputX.connect(self.guides[-4].rx)
             
-
+            
+            
     def __cleanUp(self):
         
         #cc grp and v 
@@ -446,7 +472,8 @@ class LegModule(object):
         #cc hierarchy        
         self.ccDefGrp.setParent(self.cntsGrp)
         self.cntsGrp.setParent(self.hi.CC) 
-        self.config_node.setParent(self.cntsGrp)    
+        self.config_node.setParent(self.cntsGrp)
+        self.config_node.IKFK.set(1)    
         
         #connect visable function 
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'IKFK','REV')
