@@ -367,20 +367,34 @@ class LegModule(object):
 #         self.config_node.v.lock(1)
 #         control.lockAndHideAttr(self.config_node,["tx","ty","tz","sy","sz","v","sx"])
         control.addSwitchAttr(self.config_node,['CC'])         
-        self.ikRpPvChain.ikCtrl.control.addAttr('________',at = 'double',min = 0,max = 0,dv = 0)
-        pm.setAttr(self.ikRpPvChain.ikCtrl.control + '.________',e = 0,channelBox = 1)
-        self.ikRpPvChain.ikCtrl.control.________.lock(1)
+        self.ikRpPvChain.ikCtrl.control.addAttr('foot_roll',at = 'double',min = 0,max = 0,dv = 0)
+        pm.setAttr(self.ikRpPvChain.ikCtrl.control + '.foot_roll',e = 0,channelBox = 1)
+        self.ikRpPvChain.ikCtrl.control.foot_roll.lock(1)
 
-        self.ikRpPvChain.ikCtrl.control.addAttr('ball_roll',at = 'double',dv = 0,k = 1)
+        self.ikRpPvChain.ikCtrl.control.addAttr('ball',at = 'double',dv = 0,k = 1)
         self.ikRpPvChain.ikCtrl.control.addAttr('toe_lift',at = 'double',dv = 0,k = 1)
         self.ikRpPvChain.ikCtrl.control.addAttr('toe_straight',at = 'double',dv = 0,k = 1)
         self.ikRpPvChain.ikCtrl.control.addAttr('toe_wiggle',at = 'double',dv = 0,k = 1)
         self.ikRpPvChain.ikCtrl.control.addAttr('toe_spin',at = 'double',dv = 0,k = 1)
         self.ikRpPvChain.ikCtrl.control.addAttr('side',at = 'double',dv = 0,k = 1)
+        
+        self.ikRpPvChain.ikCtrl.control.addAttr('single_roll',at = 'double',min = 0,max = 0,dv = 0)
+        pm.setAttr(self.ikRpPvChain.ikCtrl.control + '.single_roll',e = 0,channelBox = 1)
+        self.ikRpPvChain.ikCtrl.control.single_roll.lock(1)     
+        
+        self.ikRpPvChain.ikCtrl.control.addAttr('ball_roll',at = 'double',dv = 0,k = 1)
+        self.ikRpPvChain.ikCtrl.control.addAttr('toe_roll',at = 'double',dv = 0,k = 1)
+        self.ikRpPvChain.ikCtrl.control.addAttr('heel_roll',at = 'double',dv = 0,k = 1)        
+           
 #             self.footChain.chain[0].setParent(self.guides[-1])
 #             self.guides[0].setParent(self.config_node)
 
     def __ikFootSet(self):
+        
+        #add toe wiggle loc
+        toeWiggleLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'toeWiggle','gud'))
+        pm.xform(toeWiggleLoc,ws = 1,matrix = self.guides[-1].worldMatrix.get())
+        pm.parent(toeWiggleLoc,self.guides[-2])
         
         #ik
         ballIkName = nameUtils.getUniqueName(self.side,'ballSc','iks')
@@ -388,7 +402,6 @@ class LegModule(object):
         ballIkHandle,ballIkEffector = pm.ikHandle(sj = self.ikBlendChain.chain[-4],ee = self.ikBlendChain.chain[-3],solver = 'ikSCsolver',n = ballIkName)
         toeIkHandle,toeIkEffector = pm.ikHandle(sj = self.ikBlendChain.chain[-3],ee = self.ikBlendChain.chain[-2],solver = 'ikSCsolver',n = toeWiggleIKName)
         pm.parent(ballIkHandle,self.guides[-1])
-        pm.parent(toeIkHandle,self.guides[-4])
         self.ikRpChain.ikHandle.setParent(self.guides[-1])
         self.ikRpPvChain.ikHandle.setParent(self.guides[-1])
         pm.delete(self.ikRpPvChain.ikHandle + '_pointConstraint1')
@@ -402,6 +415,11 @@ class LegModule(object):
         ballPlusMinusAverageNodeName = nameUtils.getUniqueName(self.side,'Ball','PMA')
         tipRangeNodeName = nameUtils.getUniqueName(self.side,'Tip','RANG')
         tipRangeMultipleNodeName = nameUtils.getUniqueName(self.side,'tipRange','MDN')
+        insideConditionNodeName = nameUtils.getUniqueName(self.side,'Inside','COND')
+        outsideConditionNodeName = nameUtils.getUniqueName(self.side,'Outside','COND')
+        singleBallPlusMinusAverageNodeName = nameUtils.getUniqueName(self.side,'singleBall','PMA')
+        singleToePlusMinusAverageNodeName = nameUtils.getUniqueName(self.side,'singleToe','PMA')
+        singleHeelPlusMinusAverageNodeName = nameUtils.getUniqueName(self.side,'singleHeel','PMA')        
         
         #create Node
         heelConditionNode = pm.createNode('condition',n = heelConditionNodeName)
@@ -411,19 +429,26 @@ class LegModule(object):
         ballPlusMinusAverageNode = pm.createNode('plusMinusAverage',n = ballPlusMinusAverageNodeName)
         tipRangeNode = pm.createNode('setRange',n = tipRangeNodeName)
         tipRangeMultipleNode = pm.createNode('multiplyDivide',n = tipRangeMultipleNodeName)
+        insideConditionNode = pm.createNode('condition',n = insideConditionNodeName)
+        outsideConditionNode = pm.createNode('condition',n = outsideConditionNodeName)
+        singleBallPlusMinusAverageNode = pm.createNode('plusMinusAverage',n = singleBallPlusMinusAverageNodeName)        
+        singleToePlusMinusAverageNode = pm.createNode('plusMinusAverage',n = singleToePlusMinusAverageNodeName)        
+        singleHeelPlusMinusAverageNode = pm.createNode('plusMinusAverage',n = singleHeelPlusMinusAverageNodeName)                
         
         #connecting
         #ball negetive
-        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(heelConditionNode.firstTerm)
-        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(heelConditionNode.colorIfTrueR)
+        self.ikRpPvChain.ikCtrl.control.ball.connect(heelConditionNode.firstTerm)
+        self.ikRpPvChain.ikCtrl.control.ball.connect(heelConditionNode.colorIfTrueR)
+        self.ikRpPvChain.ikCtrl.control.heel_roll.connect(singleHeelPlusMinusAverageNode.input1D[0])
+        heelConditionNode.outColorR.connect(singleHeelPlusMinusAverageNode.input1D[1])
         heelConditionNode.secondTerm.set(0)
         heelConditionNode.operation.set(5)
         heelConditionNode.colorIfFalseR.set(0)
-        heelConditionNode.outColorR.connect(self.guides[3].rx)
+        singleHeelPlusMinusAverageNode.output1D.connect(self.guides[3].rx)
         
         #ball value
-        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(ballConditionNode.firstTerm)
-        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(ballConditionNode.colorIfTrueR)
+        self.ikRpPvChain.ikCtrl.control.ball.connect(ballConditionNode.firstTerm)
+        self.ikRpPvChain.ikCtrl.control.ball.connect(ballConditionNode.colorIfTrueR)
         ballConditionNode.secondTerm.set(0)
         ballConditionNode.operation.set(3)
         ballConditionNode.colorIfFalseR.set(0)
@@ -433,7 +458,8 @@ class LegModule(object):
         tipRangeNode.maxX.set(1)
         ballRangeNode.minX.set(0)
         ballRangeNode.maxX.set(1)
-        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(ballRangeNode.valueX)
+        self.ikRpPvChain.ikCtrl.control.ball.connect(ballRangeNode.valueX)
+        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(singleBallPlusMinusAverageNode.input1D[0])
         self.ikRpPvChain.ikCtrl.control.toe_lift.connect(ballRangeNode.oldMinX)
         self.ikRpPvChain.ikCtrl.control.toe_straight.connect(ballRangeNode.oldMaxX)        
         ballRangeNode.outValueX.connect(ballPlusMinusAverageNode.input1D[1])
@@ -442,18 +468,38 @@ class LegModule(object):
         ballPlusMinusAverageNode.operation.set(2)
         ballPlusMinusAverageNode.input1D[0].set(1)
         ballPlusMinusAverageNode.output1D.connect(ballMultipleNode.input2X)
-        ballMultipleNode.outputX.connect(self.guides[-1].rx)
+        ballMultipleNode.outputX.connect(singleBallPlusMinusAverageNode.input1D[1])
+        singleBallPlusMinusAverageNode.output1D.connect(self.guides[-1].rx)
         
         #toe lift/ straight
         tipRangeNode.minX.set(0)
         tipRangeNode.maxX.set(1)
-        self.ikRpPvChain.ikCtrl.control.ball_roll.connect(tipRangeNode.valueX)
+        self.ikRpPvChain.ikCtrl.control.ball.connect(tipRangeNode.valueX)
         self.ikRpPvChain.ikCtrl.control.toe_lift.connect(tipRangeNode.oldMinX)
         self.ikRpPvChain.ikCtrl.control.toe_straight.connect(tipRangeNode.oldMaxX)
+        self.ikRpPvChain.ikCtrl.control.toe_roll.connect(singleToePlusMinusAverageNode.input1D[0])        
         ballConditionNode.outColorR.connect(tipRangeMultipleNode.input1X)
         tipRangeNode.outValueX.connect(tipRangeMultipleNode.input2X)
-        tipRangeMultipleNode.outputX.connect(self.guides[-4].rx)
+        tipRangeMultipleNode.outputX.connect(singleToePlusMinusAverageNode.input1D[1])
+        singleToePlusMinusAverageNode.output1D.connect(self.guides[-4].rx)
         self.ikRpPvChain.ikCtrl.control.toe_spin.connect(self.guides[-4].ry)
+        self.guides.append(toeWiggleLoc)
+        pm.parent(toeIkHandle,self.guides[-1])
+        
+        
+        self.ikRpPvChain.ikCtrl.control.toe_wiggle.connect(self.guides[-1].rx)
+        
+        #inside
+        self.ikRpPvChain.ikCtrl.control.side.connect(insideConditionNode.firstTerm)
+        self.ikRpPvChain.ikCtrl.control.side.connect(insideConditionNode.colorIfTrueR)
+        insideConditionNode.operation.set(3)
+        insideConditionNode.outColorR.connect(self.guides[-4].rz)
+        
+        #outside
+        self.ikRpPvChain.ikCtrl.control.side.connect(outsideConditionNode.firstTerm)
+        self.ikRpPvChain.ikCtrl.control.side.connect(outsideConditionNode.colorIfTrueR)
+        outsideConditionNode.operation.set(5)
+        outsideConditionNode.outColorR.connect(self.guides[-3].rz)
         
         #default set
         self.ikRpPvChain.ikCtrl.control.toe_lift.set(35)
@@ -494,11 +540,7 @@ class LegModule(object):
         self.ribon.main.setParent(self.hi.XTR)
         self.ribon45hp.main.setParent(self.hi.XTR)
         self.ribon.main.v.set(0)
-        self.ribon45hp.main.v.set(0)
-        
-        #ik grp
-#         self.ikRpChain.ikHandle.setParent(self.hi.IK)
-#         self.ikRpPvChain.ikHandle.setParent(self.hi.IK)        
+        self.ribon45hp.main.v.set(0) 
         
         #jj grp
         self.sklGrp = pm.group(self.ikRpChain.stretchStartLoc,self.ikRpPvChain.stretchStartLoc,self.ikRpPvChain.lockUpStartLoc,
@@ -510,17 +552,27 @@ class LegModule(object):
         self.sklGrp.setParent(self.hi.SKL)
         
         #guide grp
-#         self.guideGrp.v.set(0)
-#         self.guideGrp.setParent(self.hi.GUD)
-        
+        self.ikRpChain.stretchEndLoc.v.set(0)
+        self.guideGrp.v.set(0)
+        self.guideGrp.setParent(self.hi.GUD)
+        self.guides[2].setParent(self.hi.IK)
+        self.guides[2].V.set(0)            
 
+# maya.cmds.file(new = 1,force = 1)
+# import sys
+# myPath = 'C:/eclipse/test/OOP/AutoRig'
 
-            
+# if not myPath in sys.path:
+#     sys.path.append(myPath)
+    
+# import reloadMain
+# reload(reloadMain)
 
-# from Modules import legModule
+# from Modules import legModule,footModule
 # lg = legModule.LegModule()
 # lg.buildGuides()
-# lg.build()        
+# lg.build()
+ 
         
         
                         
