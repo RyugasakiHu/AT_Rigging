@@ -81,7 +81,7 @@ class LimbModule(object):
         self.guideRot = [x.getRotation(space = 'world') for x in self.guides]
         
         #addBlendCtrl 
-        self.config_node = control.Control(self.side,self.baseName + 'IKFK_blender',self.size) 
+        self.config_node = control.Control(self.side,self.baseName + '_IKFK_blender',self.size) 
         self.config_node.ikfkBlender()        
         
         #fk first 
@@ -105,11 +105,11 @@ class LimbModule(object):
                                                             self.config_node.control,'IKFK',self.baseName,self.side)
         
         self.__ikfkBlender()
-#         self.__setRibbonUpper()
-#         self.__setRibbonLower()
-#         self.__setRibbonSubMidCc()
-#         
-#         self.__cleanUp()
+        self.__setRibbonUpper()
+        self.__setRibbonLower()
+        self.__setRibbonSubMidCc()
+         
+        self.__cleanUp()
         
     def __ikfkBlender(self):
         
@@ -321,7 +321,7 @@ class LimbModule(object):
 
         self.ccDefGrp.setParent(self.cntsGrp)
         self.cntsGrp.setParent(self.hi.CC) 
-        self.config_node.control.setParent(self.cntsGrp)    
+        self.config_node.controlGrp.setParent(self.cntsGrp)    
                 
         if self.solver == 'ikRPsolver':
             pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)        
