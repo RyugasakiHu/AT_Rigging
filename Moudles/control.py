@@ -53,13 +53,47 @@ class Control(object):
                                      61,62,63,64,65,66,67,67,67]) 
 #         self.__finalizeCc()  
         self.__colorSet()     
+    
+    def ikfkBlender(self):
+        
+        self.__buildName()
+        
+        if self.controlName :
+            #que
+            self.control = pm.curve(name = self.controlName , d = 1,p = [(-0.5,0.5,0.5),(0.5,0.5,0.5),(0.5,0.5,-0.5),(-0.5,0.5,-0.5),
+                                                          (-0.5,0.5,0.5),(-0.5,-0.5,0.5),(-0.5,-0.5,-0.5),(0.5,-0.5,-0.5),
+                                                          (0.5,-0.5,0.5),(0.5,-0.5,0.5),(-0.5,-0.5,0.5),(0.5,-0.5,0.5),
+                                                          (0.5,0.5,0.5),(0.5,0.5,-0.5),(0.5,-0.5,-0.5),(-0.5,-0.5,-0.5),
+                                                          (-0.5,0.5,-0.5)],k = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+            
+            F = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'FK')
+            I = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'I')
+            text = ['F','K','I']
+            selectionList = pm.ls("curve*")
+            self.textObj = [] 
+            for num,sl in enumerate(selectionList):
+                if num <= 2:
+                    pm.parent(sl,w = 1)   
+                    name = pm.rename(sl,text[num])
+                    pm.setAttr(text[num] + '.overrideEnabled',1)
+                    pm.setAttr(text[num] + '.overrideDisplayType',2)
+                    self.textObj.append(name)
+            pm.delete('Text*')      
+            pm.move(self.textObj[0],-1,0.6,0)
+            pm.move(self.textObj[1],0,0.6,0)
+            pm.move(self.textObj[2],-0.6,0.6,0)
+            pm.makeIdentity(self.textObj[0],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
+            pm.makeIdentity(self.textObj[1],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
+            pm.makeIdentity(self.textObj[2],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
+            pm.parent(self.textObj[0],self.control)
+            pm.parent(self.textObj[1],self.control)
+            pm.parent(self.textObj[2],self.control)
+
+        self.__finalizeCc()       
+        self.__colorSet() 
         
     def ifkSwitch(self):
-        '''
-        curve -d 1 -p -4 0 0 -p -2 2 0 -p -2 1 0 -p 2 1 0 -p 2 2 0 -p 4 0 0 
-        -p 2 -2 0 -p 2 -1 0 -p -2 -1 0 -p -2 -2 0 
-        -p -4 0 0 -k 0 -k 1 -k 2 -k 3 -k 4 -k 5 -k 6 -k 7 -k 8 -k 9 -k 10 ;
-        '''
+
         self.__buildName()
         if not self.controlName :
             return
@@ -68,30 +102,8 @@ class Control(object):
                                                                    (4,0,0),(2,-2,0),(2,-1,0),(-2,-1,0),(-2,-2,0),(-4,0,0)],
                                 k = [0,1,2,3,4,5,6,7,8,9,10])
         
-    def ikCtrl(self):
-         
-        self.__buildName()
-        
-        if self.controlName :
-            #que
-            self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [0,1,0])[0]
-            #self.control = mc.circle(n = self.controlName,ch = 0,o = 1,nr = (1,0,0))
-            for i in range(4):
-                i = 2 * i  + 1
-                pm.select(self.control + '.cv[' + str(i) +']',add = 1)
-            pm.move(0,0.5,0,r = 1)
-            pm.scale(0.5,0.5,0.5,p = (0,0.5,0),r = 1)
-            pm.select(cl = 1)
-
-            for t in range(4):
-                t = 2 * t 
-                pm.select(self.control + '.cv[' + str(t) +']',add = 1)
-            pm.move(0,-1,0,r = 1)                
-            pm.scale(2.5,2.5,2.5,p = (0,-0.5,0),r = 1)
-            pm.move(self.control+'.scalePivot',self.control+'.rotatePivot',r = (0,0,0))
-
-        self.__finalizeCc()  
-        self.__colorSet()     
+        self.__finalizeCc()       
+        self.__colorSet() 
         
     def poleCtrl(self):
         '''
@@ -102,7 +114,6 @@ class Control(object):
         if self.controlName :
             #que
             self.control = pm.sphere(name = self.controlName,ch = 0,o = 1,po = 0 ,r = 1,ax = [0,1,0],nsp = 8)[0]
-            #self.control = mc.circle(n = self.controlName,ch = 0,o = 1,nr = (1,0,0))
             pm.disconnectAttr(self.control.getShape().instObjGroups[0],'initialShadingGroup.dagSetMembers[0]')
             
         self.__finalizeCc()   
@@ -116,21 +127,12 @@ class Control(object):
             return 
         line = pm.curve(d = 1,p = [(0,0,0),(0.8,0,0)], k = [0,1],n = self.controlName)
         circle = pm.circle(ch = 1,o = True,nr = (0,1,0),r=0.1)[0]
-        #line = mc.curve(n = self.controlName,d = 1,p = [(0,0,0),(0.8,0,0)],k = [0,1])
-        #circle = mc.circle(n = 'temp',ch = 1,o = 1,nr = (0,1,0),r = 0.1)
-        #cmds.getAttr('curve1.controlPoints',size=True)
-        #cmds.getAttr('curve1.cv[*]')
-        
         
         pm.move(0.9,0,0,circle.getShape().cv,r = 1)
         pm.parent(circle.getShape(),line,shape = 1,add = 1)    
-        #mc.move(0.9,0,0,circle[0] + '.cv[0:7]',r = 1) 
-        #mc.parent(circle[0] + 'Shape',line,shape = 1,add = 1)
          
         pm.delete(circle)
         pm.select(cl = 1)    
-        #mc.delete(circle)
-        #mc.select(cl = 1)
         
         self.control = line
         
@@ -225,5 +227,5 @@ def addSwitchAttr(objName,attrs):
                         
         
 # from Modules import control
-# cnt = control.Control()
+# cnt = control.Control(side = 'r',baseName = 'aaa',size = 1.5)
 # cnt.circleCtrl()        
