@@ -33,7 +33,7 @@ class LimbModule(object):
             
         #cc    
         configName = nameUtils.getUniqueName(self.side,self.baseName,'CONFIG')
-        self.config_node = pm.spaceLocator(n = configName)
+        self.config_node = None
         self.ccDefGrp = None
         self.cntsGrp = None
         
@@ -77,16 +77,20 @@ class LimbModule(object):
                      
     def build(self):
         
-        guidePos = [x.getTranslation(space = 'world') for x in self.guides]
-        guideRot = [x.getRotation(space = 'world') for x in self.guides]
+        self.guidePos = [x.getTranslation(space = 'world') for x in self.guides]
+        self.guideRot = [x.getRotation(space = 'world') for x in self.guides]
+        
+        #addBlendCtrl 
+        self.config_node = control.Control(self.side,self.baseName + 'IKFK_blender',self.size) 
+        self.config_node.ikfkBlender()        
         
         #fk first 
         self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
-        self.fkChain.fromList(guidePos,guideRot)
+        self.fkChain.fromList(self.guidePos,self.guideRot)
         
         #then ik
         self.ikChain = ikChain.IkChain(self.baseName,self.side,self.size,self.solver,type = 'ikRP')
-        self.ikChain.fromList(guidePos,guideRot)
+        self.ikChain.fromList(self.guidePos,self.guideRot)
         
         #ik cc connect ori
         self.ikChain.ikCtrl.control.rx.connect(self.ikChain.chain[-2].rx)
@@ -95,16 +99,46 @@ class LimbModule(object):
         
         #ori
         self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.blendChain.fromList(guidePos,guideRot)
+        self.blendChain.fromList(self.guidePos,self.guideRot)
         
         self.blendData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikChain.chain,self.blendChain.chain,
-                                                            self.config_node,'IKFK',self.baseName,self.side)
+                                                            self.config_node.control,'IKFK',self.baseName,self.side)
         
-        self.__setRibbonUpper()
-        self.__setRibbonLower()
-        self.__setRibbonSubMidCc()
+        self.__ikfkBlender()
+#         self.__setRibbonUpper()
+#         self.__setRibbonLower()
+#         self.__setRibbonSubMidCc()
+#         
+#         self.__cleanUp()
         
-        self.__cleanUp()
+    def __ikfkBlender(self):
+        
+        #connect visable function 
+        reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'IKFK','REV')
+        reverseNode = pm.createNode('reverse',n = reverseNodeName)
+        
+        #connect node 
+        self.config_node.control.IKFK.connect(self.ikChain.ikCtrl.controlGrp.v)
+        self.config_node.control.IKFK.connect(self.ikChain.poleVectorCtrl.controlGrp.v)
+        self.config_node.control.IKFK.connect(self.config_node.textObj[2].v)
+        self.config_node.control.IKFK.connect(reverseNode.inputX)
+        reverseNode.outputX.connect(self.fkChain.chain[0].v)
+        reverseNode.outputX.connect(self.config_node.textObj[0].v)             
+        
+        #set pos
+        pm.xform(self.config_node.controlGrp,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
+        self.config_node.controlGrp.rx.set(0)
+        self.config_node.controlGrp.ry.set(0)
+        self.config_node.controlGrp.rz.set(0)
+        pm.move(self.guidePos[2][0],self.guidePos[2][1] + 2 * self.size,self.guidePos[2][2],self.config_node.controlGrp)
+        wrist_pos = pm.xform(self.blendChain.chain[2],query=1,ws=1,rp=1)
+        pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.config_node.controlGrp + '.rotatePivot')
+        pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.config_node.controlGrp + '.scalePivot')
+        pm.pointConstraint(self.blendChain.chain[2],self.config_node.controlGrp,mo = 1)
+#         pm.orientConstraint(self.blendChain.chain[2],self.config_node.controlGrp,mo = 1)   
+        control.lockAndHideAttr(self.config_node.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])     
+        
+        
     
     def __setRibbonUpper(self):
         '''
@@ -270,15 +304,15 @@ class LimbModule(object):
     def __cleanUp(self):
         
         #add cc ctrl
-        control.addSwitchAttr(self.config_node,['CC']) 
+        control.addSwitchAttr(self.config_node.control,['CC']) 
         
         #ccDef grp and v
         self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp')) 
         self.subMidCtrlShoulderElbow.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlElbowWrist.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlElbow.controlGrp.setParent(self.ccDefGrp)
-        self.config_node.CC.set(1)
-        self.config_node.CC.connect(self.ccDefGrp.v)
+        self.config_node.control.CC.set(1)
+        self.config_node.control.CC.connect(self.ccDefGrp.v)
         
         #cc hierarchy        
         self.cntsGrp = pm.group(self.ikChain.ikCtrl.controlGrp,
@@ -287,19 +321,10 @@ class LimbModule(object):
 
         self.ccDefGrp.setParent(self.cntsGrp)
         self.cntsGrp.setParent(self.hi.CC) 
-        self.config_node.setParent(self.cntsGrp)    
+        self.config_node.control.setParent(self.cntsGrp)    
                 
         if self.solver == 'ikRPsolver':
             pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)        
-        
-        #connect visable function 
-        reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'IKFK','REV')
-        reverseNode = pm.createNode('reverse',n = reverseNodeName)
-         
-        self.config_node.IKFK.connect(self.ikChain.ikCtrl.controlGrp.v)
-        self.config_node.IKFK.connect(self.ikChain.poleVectorCtrl.controlGrp.v)
-        self.config_node.IKFK.connect(reverseNode.inputX)
-        reverseNode.outputX.connect(self.fkChain.chain[0].v)
         
         #ribbon hierarchy   
         self.ribon.main.setParent(self.hi.XTR)
