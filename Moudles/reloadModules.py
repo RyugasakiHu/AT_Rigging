@@ -1,4 +1,4 @@
-import control,limbModule,hierarchy,legModule,footModule
+import control,limbModule,hierarchy,legModule,footModule,fingerModule
 
 def reloadIt():
     reload(control)
@@ -6,5 +6,6 @@ def reloadIt():
     reload(hierarchy)
     reload(legModule)
     reload(footModule)
+    reload(fingerModule)
     
     print '----->Modules Reload : OK'
