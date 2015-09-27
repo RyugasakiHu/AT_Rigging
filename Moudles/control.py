@@ -216,7 +216,7 @@ def lockAndHideAttr(objName,attrs):
 def addSwitchAttr(objName,attrs):
     
     '''
-    this function lock and Hide attr
+    this function add switch addr
     @para attrs: list 
     '''
     
@@ -225,6 +225,22 @@ def addSwitchAttr(objName,attrs):
     for attr in attrs:
         pm.addAttr(objName, ln = attr, at ="float",min = 0,max = 1,dv = 0,h = False,k = True )
                         
+def addFloatAttr(objName,attrs,minV,maxV):
+    
+    '''
+    this function add mutiple attr
+    @para attrs: list 
+    '''
+    
+    if not objName:
+        return 
+    for attr in attrs:
+        pm.addAttr(objName, ln = attr, at ="double",min = minV,max = maxV,dv = 0,h = False,k = True )
+              
+        
+        
+        
+        
         
 # from Modules import control
 # cnt = control.Control(side = 'r',baseName = 'aaa',size = 1.5)
