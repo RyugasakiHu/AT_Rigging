@@ -32,7 +32,6 @@ class LimbModule(object):
         self.sklGrp = None
             
         #cc    
-        configName = nameUtils.getUniqueName(self.side,self.baseName,'CONFIG')
         self.config_node = None
         self.ccDefGrp = None
         self.cntsGrp = None
@@ -81,7 +80,7 @@ class LimbModule(object):
         self.guideRot = [x.getRotation(space = 'world') for x in self.guides]
         
         #addBlendCtrl 
-        self.config_node = control.Control(self.side,self.baseName + '_IKFK_blender',self.size) 
+        self.config_node = control.Control(self.side,self.baseName + 'Settings',self.size) 
         self.config_node.ikfkBlender()        
         
         #fk first 
@@ -97,7 +96,11 @@ class LimbModule(object):
         self.ikChain.ikCtrl.control.ry.connect(self.ikChain.chain[-2].ry)
         self.ikChain.ikCtrl.control.rz.connect(self.ikChain.chain[-2].rz)
         
-        #ori
+        #set cc
+        pm.addAttr(self.config_node.control,ln = '__',at = 'enum',en = 'ArmCtrl:')
+        pm.setAttr(self.config_node.control + '.__',k = 1,l = 1)
+        
+        #ori                
         self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
         self.blendChain.fromList(self.guidePos,self.guideRot)
         
@@ -117,7 +120,7 @@ class LimbModule(object):
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'IKFK','REV')
         reverseNode = pm.createNode('reverse',n = reverseNodeName)
         
-        #connect node 
+        #connect node
         self.config_node.control.IKFK.connect(self.ikChain.ikCtrl.controlGrp.v)
         self.config_node.control.IKFK.connect(self.ikChain.poleVectorCtrl.controlGrp.v)
         self.config_node.control.IKFK.connect(self.config_node.textObj[2].v)
@@ -311,7 +314,7 @@ class LimbModule(object):
         self.subMidCtrlShoulderElbow.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlElbowWrist.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlElbow.controlGrp.setParent(self.ccDefGrp)
-        self.config_node.control.CC.set(1)
+        self.config_node.control.CC.set(0)
         self.config_node.control.CC.connect(self.ccDefGrp.v)
         
         #cc hierarchy        
