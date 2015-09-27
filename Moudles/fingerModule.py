@@ -1,21 +1,21 @@
 import pymel.core as pm
 from subModules import fkChain,ikChain,boneChain,ribbon
 from Utils import nameUtils
-from Modules import control,hierarchy
+from Modules import control,hierarchy,limbModule
 
 class FingerModule(object):
     
-    posIndexArray = [[18,12,1],[21,12,1],[23,12,1],[25,12,1]]
-    posMiddleArray = [[18,12,0],[21,12,0],[23,12,0],[26,12,0]]
-    posRingArray = [[18,12,-1],[21,12,-1],[23,12,-1],[25,12,-1]]
-    posPinkyArray = [[18,12,-2],[21,12,-2],[23,12,-2],[24,12,-2]]
+    posIndexArray = [[20,12,1],[23,12,1],[25,12,1],[27,12,1]]
+    posMiddleArray = [[20,12,0],[23,12,0],[25,12,0],[28,12,0]]
+    posRingArray = [[20,12,-1],[23,12,-1],[25,12,-1],[27,12,-1]]
+    posPinkyArray = [[20,12,-2],[23,12,-2],[25,12,-2],[26,12,-2]]
     
     rotIndexArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotMiddleArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotRingArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotPinkyArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
-    def __init__(self,baseName = 'finger',side = 'l',size = 1.5,controlOrient = [0,0,0]):
+    def __init__(self,baseName = 'finger',side = 'l',size = 0.5,controlOrient = [0,0,0]):
         
         self.baseName = baseName
         self.side = side
@@ -28,15 +28,12 @@ class FingerModule(object):
         
         #cc
         self.config_node = None
-        
+            
         #nameList
         self.fingerName = ['thumb','index','middle','ring','pinky']
         self.fingerJoint = ['Root','Tip','Mid','End','Partial']
         
     def buildGuides(self):
-        
-        self.hi = hierarchy.Hierarchy(characterName = 'test')
-        self.hi.build()
         
         self.guides = []
         self.guideGrp = []
@@ -110,23 +107,59 @@ class FingerModule(object):
         self.tempPinkyGuides.reverse()   
         self.guides.append(self.tempPinkyGuides[0])            
         
-               
+        #guide grp       
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp') 
         self.guideGrp = pm.group(self.tempIndexGuides[0],self.tempMiddleGuides[0],
                                  self.tempRingGuides[0],self.tempPinkyGuides[0],n = name)
         
-        print self.tempPinkyGuides
+        #connect to the 
+        self.lm = limbModule.LimbModule()
+        self.lm.buildGuides()
         
     def build(self):
         
-        self.guidePos = [x.getTranslation(space = 'world') for x in self.guides]
-        self.guideRot = [x.getRotation(space = 'world') for x in self.guides]
+        self.lm.build()  
         
+        #index info
+        self.guideIndexPos = [x.getTranslation(space = 'world') for x in self.indexGuides]
+        self.guideIndexRot = [x.getRotation(space = 'world') for x in self.indexGuides]
         
+        #fk test
+        self.fkIndexChain = fkChain.FkChain(self.baseName,self.side,self.size)
+        self.fkIndexChain.fromList(self.guideIndexPos,self.guideIndexRot)        
         
+        self.__handAttr()
         
+    def __handAttr(self):
+           
+        #set cc
+        pm.addAttr(self.lm.config_node.control,ln = '___',at = 'enum',en = 'HandDrives:')
+        pm.setAttr(self.lm.config_node.control + '.___',e = 1,channelBox = 1)
         
+        #add attr
+        control.addFloatAttr(self.lm.config_node.control,['fist_a','firs_b','relax_a','relax_b','relax_c',
+                                                          'relax_d','relax_e','grab_a','grab_b''spread_a',
+                                                          'spread_b','hand','plam_a','plam_b','thumb_a',
+                                                          'thumb_b','index','middle','ring','pinky','point'],-3,10)
+
         
+          
+        
+# maya.cmds.file(new = 1,f = 1)
+# import sys
+# myPath = 'C:/eclipse/test/OOP/AutoRig'
+# 
+# if not myPath in sys.path:
+#     sys.path.append(myPath)
+#     
+# import reloadMain
+# reload(reloadMain)
+# 
+# from Modules import fingerModule
+# fg = fingerModule.FingerModule()
+# fg.buildGuides()
+# fg.build()
+
         
         
         
