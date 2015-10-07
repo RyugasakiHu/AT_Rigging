@@ -28,6 +28,7 @@ class FingerModule(object):
         
         #cc
         self.config_node = None
+        self.indexSDK = []
             
         #nameList
         self.fingerName = ['thumb','index','middle','ring','pinky']
@@ -133,6 +134,7 @@ class FingerModule(object):
                                    
         self.__handAttr()
         self.__fingerCC()
+        self.__setSDK()
 #         self.__nodeConnect()
         
     def __handAttr(self):
@@ -149,8 +151,6 @@ class FingerModule(object):
                                                           'pinky_curl','point'],-3,10)
 
     def __fingerCC(self):
-        
-        fingerSDK = []
         
         for num,indexJoint in enumerate(self.indexBlendChain.chain):
             
@@ -170,7 +170,12 @@ class FingerModule(object):
                 #create sdk grp
                 sdkGrp = pm.group(cc,n = nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'SDK'),
                          parent = self.indexBlendChain.chain[num])
-                fingerSDK.append(sdkGrp)
+                
+                self.indexSDK.append(sdkGrp)
+                
+    def __setSDK(self):
+        
+        pass            
                 
     def __nodeConnect(self):
         
