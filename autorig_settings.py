@@ -33,6 +33,7 @@ suffix = ['jj',# joint joint
           'PMA',# plus minus averageNode
           'RV',#remap valueNode
           'CONFIG',# WTF
+          'SDK',#SDK frp
           'ALL',#ALL grp
           'TRS',#TRS grp
           'PP',#PP grp
