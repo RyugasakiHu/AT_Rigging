@@ -1,7 +1,7 @@
 #import maya.cmds as mc
 import pymel.core as pm
 from Utils import nameUtils,xformUtils
-#que getparent()
+from Modules import control
 
 class Control(object):
 
@@ -17,7 +17,26 @@ class Control(object):
         self.control = None
         self.controlGrp = None
         self.controlName = None
-     
+    
+    def microCtrl(self):
+        
+        #set cc and ccllimit
+        self.control = pm.circle(name = self.baseName + '_cc',ch = 0,o = 1 ,nr = [0,0,1],r = 0.2)[0]
+        pm.transformLimits( tx=(-1, 1), ty=(-1, 1))
+        pm.transformLimits( etx=(True, True), ety=(True, True))
+        control.lockAndHideAttr(self.control,['tz','rx','ry','rz','sx','sy','sz','v'])
+        
+        #set boundary
+        boundary = pm.curve(name = self.baseName + '_bdr',d = 1,
+                            p = [(-1,1,0),(-1,-1,0),(1,-1,0),(1,1,0),(-1,1,0)],k = (0,1,2,3,4))
+        boundary.getShape().overrideEnabled.set(1)
+        boundary.getShape().overrideDisplayType.set(1)
+        
+        #group them all
+        pm.group(self.control,boundary,n = self.baseName + '_cc_grp')
+        
+        self.__colorSet()   
+        
     def circleCtrl(self):
          
         self.__buildName()
@@ -236,11 +255,6 @@ def addFloatAttr(objName,attrs,minV,maxV):
         return 
     for attr in attrs:
         pm.addAttr(objName, ln = attr, at ="double",min = minV,max = maxV,dv = 0,h = False,k = True )
-              
-        
-        
-        
-        
         
 # from Modules import control
 # cnt = control.Control(side = 'r',baseName = 'aaa',size = 1.5)
