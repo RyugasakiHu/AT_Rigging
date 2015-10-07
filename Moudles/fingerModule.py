@@ -129,8 +129,8 @@ class FingerModule(object):
         
         #fk test
         self.indexBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.indexBlendChain.fromList(self.guideIndexPos,self.guideIndexPos)          
-        
+        self.indexBlendChain.fromList(self.guideIndexPos,self.guideIndexPos)
+                                   
         self.__handAttr()
         self.__fingerCC()
 #         self.__nodeConnect()
@@ -150,27 +150,28 @@ class FingerModule(object):
 
     def __fingerCC(self):
         
-        fingerCC = []
+        fingerSDK = []
         
         for num,indexJoint in enumerate(self.indexBlendChain.chain):
-            #create circle
-            cc = pm.circle(n = nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'cc'),
-                           ch = 1,nr = (1,0,0),r = 0.5)[0]
-                           
-            #align and parent               
-            pm.xform(cc,ws = 1,
-                     matrix = indexJoint.worldMatrix.get())
-            
-            cc.setParent(self.indexBlendChain.chain[num])
             
             if num < self.indexBlendChain.chainLength() - 1:
+                #correct jj name
+                pm.rename(indexJoint,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'jj'))
+                
+                #create circle
+                cc = pm.circle(n = nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'cc'),
+                               ch = 1,nr = (1,0,0),r =  indexJoint.getRadius() / 5)[0]
+                               
+                #align and parent               
+                pm.xform(cc,ws = 1,matrix = indexJoint.worldMatrix.get())
+                cc.setParent(self.indexBlendChain.chain[num])
                 self.indexBlendChain.chain[num+1].setParent(cc)
-            
-            pm.group(cc,n = 'asd',parent = self.indexBlendChain.chain[num])
-            #create sdk grp
-            #pm.group(n = 'asd',parent = self.indexBlendChain.chain[num])
-            
-
+                    
+                #create sdk grp
+                sdkGrp = pm.group(cc,n = nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'SDK'),
+                         parent = self.indexBlendChain.chain[num])
+                fingerSDK.append(sdkGrp)
+                
     def __nodeConnect(self):
         
         #create node name
