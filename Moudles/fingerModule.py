@@ -2,6 +2,7 @@ import pymel.core as pm
 from subModules import fkChain,ikChain,boneChain,ribbon
 from Utils import nameUtils
 from Modules import control,hierarchy,limbModule
+from see import see
 
 class FingerModule(object):
     
@@ -152,69 +153,63 @@ class FingerModule(object):
 
     def __fingerCC(self):
         
+        self.indexSDK = []
+        
         for num,indexJoint in enumerate(self.indexBlendChain.chain):
-            
             if num < self.indexBlendChain.chainLength() - 1:
                 #correct jj name
                 pm.rename(indexJoint,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'jj'))
                 
-                #create circle
-                cc = pm.circle(n = nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'cc'),
-                               ch = 1,nr = (1,0,0),r =  indexJoint.getRadius() / 5)[0]
-                               
-                #align and parent               
-                pm.xform(cc,ws = 1,matrix = indexJoint.worldMatrix.get())
-                cc.setParent(self.indexBlendChain.chain[num])
-                self.indexBlendChain.chain[num+1].setParent(cc)
-                    
-                #create sdk grp
-                sdkGrp = pm.group(cc,n = nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'SDK'),
-                         parent = self.indexBlendChain.chain[num])
+                #create sdk and correct cc name
+                cc = control.Control(self.side,self.baseName,size = indexJoint.getRadius() / 5) 
+                cc.circleCtrl()
+                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'cc'))
+                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'SDK'))
+                self.indexSDK.append(cc.controlGrp)
                 
-                self.indexSDK.append(sdkGrp)
+                #align cc grp
+                pm.xform(cc.controlGrp,ws = 1,matrix = indexJoint.worldMatrix.get())
                 
+                #parent jj
+                cc.controlGrp.setParent(indexJoint)
+                self.indexBlendChain.chain[num + 1].setParent(cc.control)   
+                             
+        print self.indexSDK
+           
     def __setSDK(self):
         
-        pass            
-                
-    def __nodeConnect(self):
+        #set defaut sdk
+        for SDK in self.indexSDK:
+            for vec in ['t','r']:
+                for ch in ['x','y','z']:            
+                    pm.setDrivenKeyframe(SDK + '.' + vec + ch, cd = self.lm.config_node.control + '.fist_a' )
         
-        #create node name
-        imrMultipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_index','MDN')
+        #set max value
+        pm.setAttr('CN_l_indexRoot_0_SDK' + '.translateZ',1)
+#         self.indexSDK[1].rx.set(7.726)
+#         self.indexSDK[1].ry.set(98.472)
+#         self.indexSDK[1].rz.set(-6.923)
+        self.lm.config_node.control.fist_a.set(10)
         
-        #create node
-        imrMultipleNode = pm.createNode('multiplyDivide',n = imrMultipleNodeName)
+        print self.indexSDK[1].rx.get()
+#         print see(self.indexSDK[1].rx)
+        print self.lm.config_node.control.fist_a.get()
         
-        #set default value
-        imrMultipleNode.input2X.set(10)
-        imrMultipleNode.input2Y.set(10)
-        imrMultipleNode.input2Z.set(10)
-        
-        #connect curl
-        self.lm.config_node.control.index_curl.connect(imrMultipleNode.input1X)
-        self.lm.config_node.control.middle_curl.connect(imrMultipleNode.input1Y)
-        self.lm.config_node.control.ring_curl.connect(imrMultipleNode.input1Z)        
-        
-        #output
-        #index_curl
-        imrMultipleNode.outputX.connect(self.fkIndexChain.chain[0].ry)
-        imrMultipleNode.outputX.connect(self.fkIndexChain.chain[1].ry)
-        imrMultipleNode.outputX.connect(self.fkIndexChain.chain[2].ry)
-
-#         #middle_curl
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[0].ry)
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[1].ry)
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[2].ry)
-#         
-#         #index_curl
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[0].ry)
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[1].ry)
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[2].ry)
-#         
-#         #index_curl
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[0].ry)
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[1].ry)
-#         imrMultipleNode.outputX.connect(self.fkIndexChain.chain[2].ry)                        
+#         #set max sdk
+#         for SDK in self.indexSDK:
+#             for vec in ['t','r']:
+#                 for ch in ['x','y','z']:            
+#                     pm.setDrivenKeyframe(SDK + '.' + vec + ch, cd = self.lm.config_node.control + '.fist_a' )
+         
+#         #reset value   
+#         for SDK in self.indexSDK:
+#             pm.setDrivenKeyframe(SDK + '.ry', cd=self.lm.config_node.control + '.fist_a' )
+#             for vec in ['t','r']:
+#                 for ch in ['x','y','z']:
+#                     SDK.attr('%s%s'%vec,ch.set(0))
+                                   
+        def __cleanUp():
+            pass                        
                  
         
 # import maya.cmds as mc
