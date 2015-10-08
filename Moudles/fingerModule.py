@@ -184,29 +184,11 @@ class FingerModule(object):
                 for ch in ['x','y','z']:            
                     pm.setDrivenKeyframe(SDK + '.' + vec + ch, cd = self.lm.config_node.control + '.fist_a' )
         
-        #set max value
-        pm.setAttr('CN_l_indexRoot_0_SDK' + '.translateZ',1)
-#         self.indexSDK[1].rx.set(7.726)
-#         self.indexSDK[1].ry.set(98.472)
-#         self.indexSDK[1].rz.set(-6.923)
-        self.lm.config_node.control.fist_a.set(10)
-        
-        print self.indexSDK[1].rx.get()
-#         print see(self.indexSDK[1].rx)
-        print self.lm.config_node.control.fist_a.get()
-        
 #         #set max sdk
 #         for SDK in self.indexSDK:
 #             for vec in ['t','r']:
 #                 for ch in ['x','y','z']:            
 #                     pm.setDrivenKeyframe(SDK + '.' + vec + ch, cd = self.lm.config_node.control + '.fist_a' )
-         
-#         #reset value   
-#         for SDK in self.indexSDK:
-#             pm.setDrivenKeyframe(SDK + '.ry', cd=self.lm.config_node.control + '.fist_a' )
-#             for vec in ['t','r']:
-#                 for ch in ['x','y','z']:
-#                     SDK.attr('%s%s'%vec,ch.set(0))
                                    
         def __cleanUp():
             pass                        
