@@ -3,6 +3,7 @@ from subModules import fkChain,ikChain,boneChain,ribbon
 from Utils import nameUtils
 from Modules import control,hierarchy,limbModule
 from see import see
+from __builtin__ import chr
 
 class FingerModule(object):
     
@@ -173,23 +174,38 @@ class FingerModule(object):
                 #parent jj
                 cc.controlGrp.setParent(indexJoint)
                 self.indexBlendChain.chain[num + 1].setParent(cc.control)   
-                             
-        print self.indexSDK
            
     def __setSDK(self):
         
+        #set val
+        indexRotList = [[0.0,1.167,0.0],[7.726,98.472,-6.923],[-5.086,109.129,-14.339],[0.0,121.353,0.0]]
+        rotateAttrs = []
+        rotateVals = [] 
+        chr = ['x','y','z']
+                
         #set defaut sdk
         for SDK in self.indexSDK:
             for vec in ['t','r']:
-                for ch in ['x','y','z']:            
+                for ch in chr:            
                     pm.setDrivenKeyframe(SDK + '.' + vec + ch, cd = self.lm.config_node.control + '.fist_a' )
         
-#         #set max sdk
-#         for SDK in self.indexSDK:
-#             for vec in ['t','r']:
-#                 for ch in ['x','y','z']:            
-#                     pm.setDrivenKeyframe(SDK + '.' + vec + ch, cd = self.lm.config_node.control + '.fist_a' )
-                                   
+        #get attr data
+        for SDK in self.indexSDK:
+            for ch in chr:
+                attr = SDK + '.r' + ch
+                rotateAttrs.append(attr)
+        
+        #get rotate val
+        for index in indexRotList:
+            for num in [0,1,2]:
+                val = index[num]
+                rotateVals.append(val)
+        
+        #set dic
+        for num,attr in enumerate(rotateAttrs):
+            pm.setDrivenKeyframe(attr,v = rotateVals[num],
+                                cd = self.lm.config_node.control + '.fist_a',dv = 10 )
+ 
         def __cleanUp():
             pass                        
                  
