@@ -208,19 +208,20 @@ class FingerModule(object):
         indexAppendMaxRotList.append(indexFistbMaxRotList)
                 
         #fist_a min(-3) val:        
-#         indexFistaMinRotList = [[0.0, 0.0, 0.0], [2.3656792422, -23.6599771482, 1.9016638177], [1.52594527386, -22.6379875224, 4.30163088994], [0.0, -26.3052739235, 0.0]]
-#         midFistaMinRotList = [[0.0, 0.0, 0.0], [0.0, -13.0502537762, 0.0], [0.0, -23.0761814451, 0.964029917432], [0.0, -23.0867256252, 0.0]]
-#         ringFistaMinRotList = [[0.0, 0.0, 0.0], [-8.0276, -10.3753295339, -0.732478856346], [0.0, -17.8428903421, -1.36490170652], [0.0, -21.1802374187, 0.0]]
-#         pinkyFistaMinRotList = [[1.04135682811, -1.22801612104, 0.0], [-8.96452963728, -10.9554773142, -2.95571135541], [-0.966671923269, -14.4907648544, -4.37633648762], [0.0, -12.7468772018, 0.0]]
-#         
-#         indexAppendMinRotList.append(indexFistaMinRotList)
+        indexFistaMinRotList = [[0.0, 0.0, 0.0], [2.3656792422, -23.6599771482, 1.9016638177], [1.52594527386, -22.6379875224, 4.30163088994], [0.0, -26.3052739235, 0.0]]
+        midFistaMinRotList = [[0.0, 0.0, 0.0], [0.0, -13.0502537762, 0.0], [0.0, -23.0761814451, 0.964029917432], [0.0, -23.0867256252, 0.0]]
+        ringFistaMinRotList = [[0.0, 0.0, 0.0], [-8.0276, -10.3753295339, -0.732478856346], [0.0, -17.8428903421, -1.36490170652], [0.0, -21.1802374187, 0.0]]
+        pinkyFistaMinRotList = [[1.04135682811, -1.22801612104, 0.0], [-8.96452963728, -10.9554773142, -2.95571135541], [-0.966671923269, -14.4907648544, -4.37633648762], [0.0, -12.7468772018, 0.0]]
+         
+        indexAppendMinRotList.append(indexFistaMinRotList)
         
         #fist_b min(-3)val:
-#         indexFistbMinRotList = [[0.0, 0.0, 0.0],[-1.32670302602, -19.8554351973, 0.0],[0.0, -30.3618382339, 0.0],[0.0, -22.7636215909, 0.0]]
+        indexFistbMinRotList = [[0.0, 0.0, 0.0],[-1.32670302602, -19.8554351973, 0.0],[0.0, -30.3618382339, 0.0],[0.0, -22.7636215909, 0.0]]
 # midMinAttrs: fistB -3: [[0.0, 0.0, 0.0],[0.0, -24.3011201928, 0.0],[0.0, -29.2869273013, 0.0],[0.0, -29.5646757999, 0.0]]
 # ringMinAttrs: fistB -3: [[0.0, 0.0, 0.0],[1.44764159413, -25.6759372289, 0.0],[0.0, -28.0461595706, 0.0],[0.0, -29.2715641599, 0.0]]
 # pinkyMinAttr: fistB -3: [[0.0, 0.0, 0.0],[3.37166184668, -27.4071741155, -1.16628417085],[0.0, -27.2388580576, 0.0],[0.0, -28.4642617121, 0.0]]
-#         indexAppendMinRotList.append(indexAppendMinRotList)
+
+        indexAppendMinRotList.append(indexFistbMinRotList)
         
         #set attr list:
         indexRotAttrs = []
@@ -240,17 +241,32 @@ class FingerModule(object):
                                          cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)            
                       
         #get/set rotate Max val to main rot list:
-        #get max(10) index list
+        #get index list
         for number,valueList in enumerate(indexAppendMaxRotList):
             for value in valueList:
                 for num in [0,1,2]:
                     val = value[num]
                     indexMainMaxRotList.append(val)
-                
+        print indexMainMaxRotList
+        
         #set dic max(10) val
         for number,attrList in enumerate(indexRotAttrs):
             pm.setDrivenKeyframe(attrList,v = indexMainMaxRotList[number],
                                  cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)    
+            
+        #get/set rotate Min val to main rot list:
+        #get index list
+        for number,valueList in enumerate(indexAppendMinRotList):
+            for value in valueList:
+                for num in [0,1,2]:
+                    val = value[num]
+                    indexMainMinRotList.append(val)
+        print indexMainMinRotList
+        
+        #set dic max(-3) val
+        for number,attrList in enumerate(indexRotAttrs):
+            pm.setDrivenKeyframe(attrList,v = indexMainMinRotList[number],
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)             
         
         def __cleanUp():
             pass                        
