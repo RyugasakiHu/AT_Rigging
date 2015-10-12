@@ -38,7 +38,7 @@ class FingerModule(object):
 #                       'thumb_b','index_curl','middle_curl','ring_curl',
 #                       'pinky_curl','point']
         
-        self.attrs = ['fist_a']
+        self.attrs = ['fist_a','firs_b']
             
         #nameList
         self.fingerName = ['thumb','index','middle','ring','pinky']
@@ -185,87 +185,73 @@ class FingerModule(object):
         #prepare chr:
         chr = ['x','y','z']
         
-        #set val:
+        #set Mian val List:
+        indexAppendMaxRotList = []
+        indexAppendMinRotList = []
         indexMainMaxRotList = []
         indexMainMinRotList = []
         
-        #fist max(10) val:
+        #fist_a max(10) val:
         indexFistaMaxRotList = [[0.0, 1.1667451, 0.0],[7.7256914, 98.47196, -6.9225698],[-5.0864835, 109.12878, -14.33877],[0.0, 121.35306, 0.0]]
         midFistaMaxRotList = [[0.0, 0.0, 0.0],[1.343452, 94.24476, -0.17447495],[-1.2531719, 111.28286, -3.2134328],[0.0, 111.31801, 0.0]]
         ringFistaMaxRotList = [[-2.2915976, 0.99224884, 0.3515861],[-1.654204, 94.229347, 8.2182298],[1.4022289, 107.094, 4.5496722],[0.0, 118.21848, 0.0]]
         pinkyFistaMaxRotList = [[-3.4711895, 4.0933869, 1.0393476],[-3.908681, 104.27619, 16.853265],[3.2222396, 102.18746, 14.587789],[0.0, 96.374496, 0.0]]
         
-        indexMainMaxRotList.append(indexFistaMaxRotList)
+        indexAppendMaxRotList.append(indexFistaMaxRotList)
+        
+        #fist_b max(10) val:
+        indexFistbMaxRotList = [[0.0, 0.0, 0.0],[4.4223436, 66.184789, 1.8546305],[0.0, 101.20612, 0.0],[0.0, 75.878746, 0.0]]
+# midMaxAttrs: fistB 10: [[0.0, 0.0, 0.0],[0.0, 81.00373, 0.0],[0.0, 97.623089, 0.0],[0.0, 98.548929, 0.0]]
+# ringMaxAttrs: fistB 10: [[0.0, 0.0, 0.0],[-4.8254718, 85.586453, 2.4808469],[0.0, 93.487201, 0.0],[0.0, 97.57188, 0.0]]
+# pinkyMaxAttrs: fistB 10: [[0.0, 0.0, 0.0],[-11.238872, 91.357247, 3.8876141],[0.0, 90.796196, 0.0],[0.0, 94.880874, 0.0]]
+# 
+        indexAppendMaxRotList.append(indexFistbMaxRotList)
                 
-        #fist min(-3) val:        
-        indexFistaMinRotList = [[0.0, 0.0, 0.0], [2.3656792422, -23.6599771482, 1.9016638177], [1.52594527386, -22.6379875224, 4.30163088994], [0.0, -26.3052739235, 0.0]]
-        midFistaMinRotList = [[0.0, 0.0, 0.0], [0.0, -13.0502537762, 0.0], [0.0, -23.0761814451, 0.964029917432], [0.0, -23.0867256252, 0.0]]
-        ringFistaMinRotList = [[0.0, 0.0, 0.0], [-8.0276, -10.3753295339, -0.732478856346], [0.0, -17.8428903421, -1.36490170652], [0.0, -21.1802374187, 0.0]]
-        pinkyFistaMinRotList = [[1.04135682811, -1.22801612104, 0.0], [-8.96452963728, -10.9554773142, -2.95571135541], [-0.966671923269, -14.4907648544, -4.37633648762], [0.0, -12.7468772018, 0.0]]
+        #fist_a min(-3) val:        
+#         indexFistaMinRotList = [[0.0, 0.0, 0.0], [2.3656792422, -23.6599771482, 1.9016638177], [1.52594527386, -22.6379875224, 4.30163088994], [0.0, -26.3052739235, 0.0]]
+#         midFistaMinRotList = [[0.0, 0.0, 0.0], [0.0, -13.0502537762, 0.0], [0.0, -23.0761814451, 0.964029917432], [0.0, -23.0867256252, 0.0]]
+#         ringFistaMinRotList = [[0.0, 0.0, 0.0], [-8.0276, -10.3753295339, -0.732478856346], [0.0, -17.8428903421, -1.36490170652], [0.0, -21.1802374187, 0.0]]
+#         pinkyFistaMinRotList = [[1.04135682811, -1.22801612104, 0.0], [-8.96452963728, -10.9554773142, -2.95571135541], [-0.966671923269, -14.4907648544, -4.37633648762], [0.0, -12.7468772018, 0.0]]
+#         
+#         indexAppendMinRotList.append(indexFistaMinRotList)
         
-        indexMainMinRotList.append(indexFistaMinRotList)
+        #fist_b min(-3)val:
+#         indexFistbMinRotList = [[0.0, 0.0, 0.0],[-1.32670302602, -19.8554351973, 0.0],[0.0, -30.3618382339, 0.0],[0.0, -22.7636215909, 0.0]]
+# midMinAttrs: fistB -3: [[0.0, 0.0, 0.0],[0.0, -24.3011201928, 0.0],[0.0, -29.2869273013, 0.0],[0.0, -29.5646757999, 0.0]]
+# ringMinAttrs: fistB -3: [[0.0, 0.0, 0.0],[1.44764159413, -25.6759372289, 0.0],[0.0, -28.0461595706, 0.0],[0.0, -29.2715641599, 0.0]]
+# pinkyMinAttr: fistB -3: [[0.0, 0.0, 0.0],[3.37166184668, -27.4071741155, -1.16628417085],[0.0, -27.2388580576, 0.0],[0.0, -28.4642617121, 0.0]]
+#         indexAppendMinRotList.append(indexAppendMinRotList)
         
-        #set dic
+        #set attr list:
         indexRotAttrs = []
-        indexFistMaxRotVals = [] 
-        indexFistMinRotVals = []
         
-        indexMainMaxRotVals = [indexFistMaxRotVals]
-        indexMainMinRotVals= [indexFistMinRotVals]
-        
-        
-#         midRotAttrs = []
-#         midFistMaxRotVals = [] 
-#         midFistMinRotVals = []
-#         
-#         ringRotAttrs = []
-#         ringFistMaxRotVals = [] 
-#         ringFistMinRotVals = []
-#         
-#         pinkyRotAttrs = []
-#         pinkyFistMaxRotVals = [] 
-#         pinkyFistMinRotVals = []
-
-        #get attr data
-        for indexSdk in self.indexSdks:
-            for ch in chr:
-                attr = indexSdk + '.r' + ch
-                indexRotAttrs.append(attr)
-                                
-        #set defaut(0) sdk
-        for indexSdk in self.indexSdks:
-            for ch in chr:            
-                pm.setDrivenKeyframe(indexSdk + '.r' + ch,v = 0, 
-                                     cd = self.lm.config_node.control + '.fist_a',dv = 0)
-#             for vec in ['t','r']:                
-#                 pm.setDrivenKeyframe(indexSdk + '.' + vec + ch,v = 0, 
-#                                      cd = self.lm.config_node.control + '.fist_a',dv = 0)            
-    
         for selfAttr in self.attrs:
-            #get rotate Max val
-            for valueList in indexMainMaxRotList:
-                for value in valueList:
-                    for num in [0,1,2]:
-                        val = value[num]
-                        indexFistMaxRotVals.append(val)
-            
-            #set dic max(10) val
-            for indexMaxRotVals in indexMainMaxRotVals:
-                for num,attr in enumerate(indexRotAttrs):
-                    pm.setDrivenKeyframe(attr,v = indexMaxRotVals[num],
-                                        cd = self.lm.config_node.control + '.' + selfAttr,dv = 10)
-     
-            #get rotate Min val
-            for index in indexFistaMinRotList:
+            #set attr
+            for indexSdk in self.indexSdks:
+                for ch in chr:
+                    attr = indexSdk + '.r' + ch
+                    indexRotAttrs.append(attr)            
+
+            #set default(0) sdk
+            #set index default:
+            for indexSdk in self.indexSdks:
+                for ch in chr:            
+                    pm.setDrivenKeyframe(indexSdk + '.r' + ch,v = 0, 
+                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)            
+                      
+        #get/set rotate Max val to main rot list:
+        #get max(10) index list
+        for number,valueList in enumerate(indexAppendMaxRotList):
+            for value in valueList:
                 for num in [0,1,2]:
-                    val = index[num]
-                    indexFistMinRotVals.append(val)
-     
-            #set dic min(-3) val
-            for num,attr in enumerate(indexRotAttrs):
-                pm.setDrivenKeyframe(attr,v = indexFistMinRotVals[num],
-                                    cd = self.lm.config_node.control + '.' + selfAttr,dv = -3)
- 
+                    val = value[num]
+                    indexMainMaxRotList.append(val)
+                
+        #set dic max(10) val
+        for number,attrList in enumerate(indexRotAttrs):
+            pm.setDrivenKeyframe(attrList,v = indexMainMaxRotList[number],
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)    
+        
         def __cleanUp():
             pass                        
                  
