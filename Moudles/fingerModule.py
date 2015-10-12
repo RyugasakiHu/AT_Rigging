@@ -272,6 +272,12 @@ class FingerModule(object):
         #set Main extreme list
         indexMainMaxRotList = []
         indexMainMinRotList = []
+        midMainMaxRotList = []
+        midMainMinRotList = []
+        ringMainMaxRotList = []
+        ringMainMinRotList = []
+        pinkyMainMaxRotList = []
+        pinkyMainMinRotList = []                        
         
         #fist_a
         #fist_a max(10) val:
@@ -281,6 +287,9 @@ class FingerModule(object):
         pinkyFistaMaxRotList = [[-3.4711895, 4.0933869, 1.0393476],[-3.908681, 104.27619, 16.853265],[3.2222396, 102.18746, 14.587789],[0.0, 96.374496, 0.0]]
         
         indexAppendMaxRotList.append(indexFistaMaxRotList)
+        midAppendMaxRotList.append(midFistaMaxRotList)
+        ringAppendMaxRotList.append(ringFistaMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyFistaMaxRotList)
         
         #fist_a min(-3) val:        
         indexFistaMinRotList = [[0.0, 0.0, 0.0], [2.3656792422, -23.6599771482, 1.9016638177], [1.52594527386, -22.6379875224, 4.30163088994], [0.0, -26.3052739235, 0.0]]
@@ -288,7 +297,10 @@ class FingerModule(object):
         ringFistaMinRotList = [[0.0, 0.0, 0.0], [-8.0276, -10.3753295339, -0.732478856346], [0.0, -17.8428903421, -1.36490170652], [0.0, -21.1802374187, 0.0]]
         pinkyFistaMinRotList = [[1.04135682811, -1.22801612104, 0.0], [-8.96452963728, -10.9554773142, -2.95571135541], [-0.966671923269, -14.4907648544, -4.37633648762], [0.0, -12.7468772018, 0.0]]
          
-        indexAppendMinRotList.append(indexFistaMinRotList)        
+        indexAppendMinRotList.append(indexFistaMinRotList)    
+        midAppendMinRotList.append(midFistaMinRotList)        
+        ringAppendMinRotList.append(ringFistaMinRotList)    
+        pinkyAppendMinRotList.append(pinkyFistaMinRotList)    
         
         #fist_b
         #fist_b max(10) val:
@@ -298,6 +310,9 @@ class FingerModule(object):
         pinkyFistbMaxRotList = [[0.0, 0.0, 0.0],[-11.238872, 91.357247, 3.8876141],[0.0, 90.796196, 0.0],[0.0, 94.880874, 0.0]]
  
         indexAppendMaxRotList.append(indexFistbMaxRotList)
+        midAppendMaxRotList.append(midFistbMaxRotList)
+        ringAppendMaxRotList.append(ringFistbMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyFistbMaxRotList)        
 
         #fist_b min(-3)val:
         indexFistbMinRotList = [[0.0, 0.0, 0.0],[-1.32670302602, -19.8554351973, 0.0],[0.0, -30.3618382339, 0.0],[0.0, -22.7636215909, 0.0]]
@@ -315,6 +330,9 @@ class FingerModule(object):
         pinkyRelaxaMaxRotList = [[-1.8613005, 0.056215787, 1.7302502],[12.382909, 26.61312, 15.826518],[0.0, 45.728939, 0.0],[0.0, 45.728939, 0.0]]
                 
         indexAppendMaxRotList.append(indexRelaxaMaxRotList)
+        midAppendMaxRotList.append(midRelaxaMaxRotList)
+        ringAppendMaxRotList.append(ringRelaxaMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyRelaxaMaxRotList)        
         
         #relax_a  min(-3)val:          
         indexRelaxaMinRotList = [[0.0, 0.0, 0.0],[0.0, 2.55349438396, 2.97765346574],[0.0, -4.57179902403, 0.0],[0.0, -4.57179902403, 0.0]]
@@ -332,6 +350,9 @@ class FingerModule(object):
         pinkyRelaxbMaxRotList = [[0.0, 0.0, 0.0],[-10.137134, 20.327381, 2.100268],[0.0, 16.165473, 0.0],[0.0, 16.165473, 0.0]]
          
         indexAppendMaxRotList.append(indexRelaxbMaxRotList)
+        midAppendMaxRotList.append(midRelaxbMaxRotList)
+        ringAppendMaxRotList.append(ringRelaxbMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyRelaxbMaxRotList)        
         
         #relax_b min(-3) val: 
         indexRelaxbMinRotList = [[0.0, 0.0, 0.0],[-1.40501603744, -1.76448329217, 0.0],[0.0, -3.0301932355, 0.0],[0.0, -3.0301932355, 0.0]]
@@ -348,7 +369,10 @@ class FingerModule(object):
         ringRelaxcMaxRotList = [[-2.8230663, 0.0, 0.0],[-4.8881484, 52.212118, 6.271701],[0.0, 43.664156, 0.0],[0.0, 43.664156, 0.0]]
         pinkyRelaxcMaxRotList = [[-2.8230663, 0.0, 0.0],[-3.8132578, 54.511244, 5.3288443],[0.0, 46.053723, 0.0],[0.0, 46.053723, 0.0]]
                          
-        indexAppendMaxRotList.append(indexRelaxcMaxRotList)        
+        indexAppendMaxRotList.append(indexRelaxcMaxRotList)      
+        midAppendMaxRotList.append(midRelaxcMaxRotList)
+        ringAppendMaxRotList.append(ringRelaxcMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyRelaxcMaxRotList)              
         
         #relax_c min(-3) val:
         indexRelaxcMinRotList = [[0.0, 0.0, 0.0],[-1.58493940724, -9.40355275552, 0.962994550952],[0.0, -6.87511250747, 0.0],[0.0, -6.87511250747, 0.0]]
@@ -366,6 +390,9 @@ class FingerModule(object):
         pinkyRelaxdMaxRotList = [[0.0, 0.0, 0.0],[-15.723218, 33.076844, -1.6909839],[0.0, 16.165473, 0.0],[0.0, 16.165473, 0.0]]
         
         indexAppendMaxRotList.append(indexRelaxdMaxRotList)  
+        midAppendMaxRotList.append(midRelaxdMaxRotList)
+        ringAppendMaxRotList.append(ringRelaxdMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyRelaxdMaxRotList)            
 
         #relax_d min(-3) val:
         indexRelaxdMinRotList = [[0.0, 0.0, 0.0],[-1.62482857459, -3.76055524696, 0.0],[0.0, -3.0301932355, 0.0],[0.0, -3.0301932355, 0.0]]
@@ -382,7 +409,10 @@ class FingerModule(object):
         ringRelaxeMaxRotList = [[-2.8230663, 0.0, 0.0],[-4.8881484, 52.212118, 6.271701],[0.0, 47.306373, 0.0],[0.0, 47.306373, 0.0]]
         pinkyRelaxeMaxRotList = [[-2.8230663, 0.0, 0.0],[-11.348742, 55.622932, 9.5249724],[0.0, 46.053723, 0.0],[0.0, 46.053723, 0.0]]
                  
-        indexAppendMaxRotList.append(indexRelaxeMaxRotList)          
+        indexAppendMaxRotList.append(indexRelaxeMaxRotList)         
+        midAppendMaxRotList.append(midRelaxeMaxRotList)
+        ringAppendMaxRotList.append(ringRelaxeMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyRelaxeMaxRotList)             
                 
         #relax_e min(-3) val:
         indexRelaxeMinRotList = [[0.0, 0.0, 0.0],[-1.58493940724, -9.40355275552, 0.962994550952],[0.0, -1.52939260387, 0.0],[0.0, -3.65989711932, 0.0]]
@@ -400,6 +430,9 @@ class FingerModule(object):
         pinkyGrabaMaxAttrs = [[-1.8613005, 0.056215787, 1.7302502],[1.4394069, 0.14493989, 16.418532],[0.0, 43.58425, 0.0],[0.0, 52.072421, 0.0]]
         
         indexAppendMaxRotList.append(indexGrabaMaxAttrs)
+        midAppendMaxRotList.append(midGrabaMaxAttrs)
+        ringAppendMaxRotList.append(ringGrabaMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyGrabaMaxAttrs)            
         
         #grab_a min(-3) val: 
         indexGrabaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 2.55643895266, 4.84421472464],[0.0, -12.5832744564, 0.0],[0.0, -13.284281742, 0.0]]
@@ -417,6 +450,9 @@ class FingerModule(object):
         pinkyGrabbMaxAttrs = [[-1.8613005, 0.056215787, 1.7302502],[-1.9825828, 29.626945, 18.362295],[0.0, 35.245693, 0.0],[0.0, 34.28776, 0.0]]
                          
         indexAppendMaxRotList.append(indexGrabbMaxAttrs)
+        midAppendMaxRotList.append(midGrabbMaxAttrs)
+        ringAppendMaxRotList.append(ringGrabbMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyGrabbMaxAttrs)            
         
         #grab_b min(-3) val:                 
         indexGrabbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 2.55643895266, 4.84421472464],[0.0, -6.27937348304, 0.0],[0.0, -6.98037935086, 0.0]]
@@ -434,6 +470,9 @@ class FingerModule(object):
         pinkySpreadaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 22.877102],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
         indexAppendMaxRotList.append(indexSpreadaMaxAttrs)
+        midAppendMaxRotList.append(midSpreadaMaxAttrs)
+        ringAppendMaxRotList.append(ringSpreadaMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkySpreadaMaxAttrs)             
         
         #Spreada min(-3) val:                 
         indexSpreadaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 7.67479746336],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -452,6 +491,9 @@ class FingerModule(object):
         pinkySpreadbMaxAttrs = [[0.0, 0.0, 0.0],[-3.4375475, 29.857157, 26.640187],[0.0, -8.2723094, 0.0],[0.0, -8.2723094, 0.0]]
                          
         indexAppendMaxRotList.append(indexSpreadbMaxAttrs)
+        midAppendMaxRotList.append(midSpreadbMaxAttrs)
+        ringAppendMaxRotList.append(ringSpreadbMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkySpreadbMaxAttrs)            
         
         #Spreadb min(-3) val:                 
         indexSpreadbMinAttrs = [[0.0, 0.0, 0.0],[-2.61741043801, 3.11845608838, 5.42463689589],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
@@ -469,6 +511,9 @@ class FingerModule(object):
         pinkyHandMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -8.3619136],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
                          
         indexAppendMaxRotList.append(indexHandMaxAttrs)
+        midAppendMaxRotList.append(midHandMaxAttrs)
+        ringAppendMaxRotList.append(ringHandMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyHandMaxAttrs)            
         
         #hand min(-3) val:                 
         indexHandMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -1.78519442026],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -486,6 +531,9 @@ class FingerModule(object):
         pinkyPalmaMaxAttrs = [[-17.534821, 1.0340395, -2.1197015],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]        
         
         indexAppendMaxRotList.append(indexPalmaMaxAttrs)
+        midAppendMaxRotList.append(midPalmaMaxAttrs)
+        ringAppendMaxRotList.append(ringPalmaMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyPalmaMaxAttrs)            
         
         #palm_a min(-3) val:                 
         indexPalmaMinAttrs = [[-2.85047358591, 0.0, 0.0],[-3.6388550315, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -503,6 +551,9 @@ class FingerModule(object):
         pinkyPalmbMaxAttrs = [[-13.947657, 1.9094432, -0.4750786],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
         indexAppendMaxRotList.append(indexPalmbMaxAttrs)
+        midAppendMaxRotList.append(midPalmbMaxAttrs)
+        ringAppendMaxRotList.append(ringPalmbMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyPalmbMaxAttrs)            
         
         #palm_b min(-3) val:                 
         indexPalmbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -520,6 +571,9 @@ class FingerModule(object):
         pinkyThumbaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
         indexAppendMaxRotList.append(indexThumbaMaxAttrs)
+        midAppendMaxRotList.append(midThumbaMaxAttrs)
+        ringAppendMaxRotList.append(ringThumbaMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyThumbaMaxAttrs)            
         
         #thumba min(-3) val:                 
         indexThumbaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -537,6 +591,9 @@ class FingerModule(object):
         pinkyThumbbMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                
         
         indexAppendMaxRotList.append(indexThumbbMaxAttrs)
+        midAppendMaxRotList.append(midThumbbMaxAttrs)
+        ringAppendMaxRotList.append(ringThumbbMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyThumbbMaxAttrs)            
         
         #thumbb min(-3) val:                 
         indexThumbbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -553,7 +610,10 @@ class FingerModule(object):
         ringThumbcMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
         pinkyThumbcMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
          
-        indexAppendMaxRotList.append(indexThumbcMaxAttrs)        
+        indexAppendMaxRotList.append(indexThumbcMaxAttrs)    
+        midAppendMaxRotList.append(midThumbcMaxAttrs)
+        ringAppendMaxRotList.append(ringThumbcMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyThumbcMaxAttrs)    
         
         #thumbc min(-3) val: 
         indexThumbcMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -571,6 +631,9 @@ class FingerModule(object):
         pinkyThumbdMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
          
         indexAppendMaxRotList.append(indexThumbdMaxAttrs)
+        midAppendMaxRotList.append(midThumbdMaxAttrs)
+        ringAppendMaxRotList.append(ringThumbdMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyThumbdMaxAttrs)            
         
         #thumbd min(-3) val: 
         indexThumbdMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -588,6 +651,9 @@ class FingerModule(object):
         pinkyIndexCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
                                  
         indexAppendMaxRotList.append(indexIndexCurlMaxAttrs)
+        midAppendMaxRotList.append(midIndexCurlMaxAttrs)
+        ringAppendMaxRotList.append(ringIndexCurlMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyIndexCurlMaxAttrs)            
         
         #index_curl min(-3) val:                 
         indexIndexCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
@@ -605,6 +671,9 @@ class FingerModule(object):
         pinkyMiddleCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
         indexAppendMaxRotList.append(indexMiddleCurlMaxAttrs)
+        midAppendMaxRotList.append(midMiddleCurlMaxAttrs)
+        ringAppendMaxRotList.append(ringMiddleCurlMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyMiddleCurlMaxAttrs)            
         
         #middle_curl min(-3) val:                 
         indexMiddleCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -621,7 +690,10 @@ class FingerModule(object):
         ringRingCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
         pinkyRingCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                
         
-        indexAppendMaxRotList.append(indexGrabaMaxAttrs)
+        indexAppendMaxRotList.append(indexRingCurlMaxAttrs)
+        midAppendMaxRotList.append(midRingCurlMaxAttrs)
+        ringAppendMaxRotList.append(ringRingCurlMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyRingCurlMaxAttrs)            
         
         #ring_curl min(-3) val:                 
         indexRingCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -638,8 +710,10 @@ class FingerModule(object):
         ringPinkyCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         pinkyPinkyCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0]]
                          
-        
         indexAppendMaxRotList.append(indexPinkyCurlMaxAttrs)
+        midAppendMaxRotList.append(midPinkyCurlMaxAttrs)
+        ringAppendMaxRotList.append(ringPinkyCurlMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyPinkyCurlMaxAttrs)            
         
         #pinky_curl min(-3) val:                 
         indexPinkyCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
@@ -655,9 +729,11 @@ class FingerModule(object):
         midPointMaxAttrs = [[0.0, 0.0, 0.0],[1.6502186, 52.116256, -4.3852106],[0.0, 99.9835, 0.0],[0.0, 76.63128, 0.0]]
         ringPointMaxAttrs = [[0.0, 0.0, 0.0],[-5.1919839, 62.997629, -1.741267],[0.0, 97.862165, 0.0],[0.0, 78.57743, 0.0]]
         pinkyPointMaxAttrs = [[0.0, 0.0, 0.0],[-11.35146, 70.628056, 0.91715981],[0.0, 83.653515, 0.0],[0.0, 83.653515, 0.0]]
-                        
-        
+                                
         indexAppendMaxRotList.append(indexPointMaxAttrs)
+        midAppendMaxRotList.append(midPointMaxAttrs)
+        ringAppendMaxRotList.append(ringPointMaxAttrs)
+        pinkyAppendMaxRotList.append(pinkyPointMaxAttrs)    
         
         #point min(-3) val:                 
         indexPointMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 2.34108130208, 0.0],[0.0, 2.34108130208, 0.0]]
