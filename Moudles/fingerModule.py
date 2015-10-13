@@ -321,6 +321,9 @@ class FingerModule(object):
         pinkyFistbMinRotList = [[0.0, 0.0, 0.0],[3.37166184668, -27.4071741155, -1.16628417085],[0.0, -27.2388580576, 0.0],[0.0, -28.4642617121, 0.0]]
 
         indexAppendMinRotList.append(indexFistbMinRotList)
+        midAppendMinRotList.append(midFistbMinRotList)        
+        ringAppendMinRotList.append(ringFistbMinRotList)    
+        pinkyAppendMinRotList.append(pinkyFistbMinRotList)            
         
         #relax_a        
         #relax_a max(10) val:        
@@ -341,6 +344,9 @@ class FingerModule(object):
         pinkyRelaxaMinRotList = [[0.0, 0.0, 0.0],[-3.7148726673, -7.98393590273, -4.74795583361],[0.0, -13.7186819746, 0.0],[0.0, -13.7186819746, 0.0]]
          
         indexAppendMinRotList.append(indexRelaxaMinRotList) 
+        midAppendMinRotList.append(midRelaxaMinRotList)        
+        ringAppendMinRotList.append(ringRelaxaMinRotList)    
+        pinkyAppendMinRotList.append(pinkyRelaxaMinRotList)            
         
         #relax_b        
         #relax_b max(10) val:        
@@ -361,6 +367,9 @@ class FingerModule(object):
         pinkyRelaxbMinRotList = [[0.0, 0.0, 0.0],[3.04113989245, -6.09821425613, 0.0],[0.0, -4.84964199343, 0.0],[0.0, -4.84964199343, 0.0]]
                  
         indexAppendMinRotList.append(indexRelaxbMinRotList)
+        midAppendMinRotList.append(midFistaMinRotList)        
+        ringAppendMinRotList.append(ringFistaMinRotList)    
+        pinkyAppendMinRotList.append(pinkyFistaMinRotList)            
             
         #relax_c        
         #relax_c max(10) val:        
@@ -381,6 +390,9 @@ class FingerModule(object):
         pinkyRelaxcMinRotList = [[0.0, 0.0, 0.0],[1.14397733976, -16.3533737924, -1.59865341533],[0.0, -13.8161171568, 0.0],[0.0, -13.8161171568, 0.0]]
                  
         indexAppendMinRotList.append(indexRelaxcMinRotList)
+        midAppendMinRotList.append(midRelaxcMinRotList)        
+        ringAppendMinRotList.append(ringRelaxcMinRotList)    
+        pinkyAppendMinRotList.append(pinkyRelaxcMinRotList)            
         
         #relax_d        
         #relax_d max(10) val:              
@@ -401,6 +413,9 @@ class FingerModule(object):
         pinkyRelaxdMinRotList = [[0.0, 0.0, 0.0],[4.71696534913, -9.92305375801, 0.0],[0.0, -4.84964199343, 0.0],[0.0, -4.84964199343, 0.0]]
                          
         indexAppendMinRotList.append(indexRelaxdMinRotList)
+        midAppendMinRotList.append(midRelaxdMinRotList)        
+        ringAppendMinRotList.append(ringRelaxdMinRotList)    
+        pinkyAppendMinRotList.append(pinkyRelaxdMinRotList)         
         
         #relax_e         
         #relax_e max(10) val:                     
@@ -416,352 +431,442 @@ class FingerModule(object):
                 
         #relax_e min(-3) val:
         indexRelaxeMinRotList = [[0.0, 0.0, 0.0],[-1.58493940724, -9.40355275552, 0.962994550952],[0.0, -1.52939260387, 0.0],[0.0, -3.65989711932, 0.0]]
-        midRelaxdMinRotList = [[0.0, 0.0, 0.0],[0.0, -14.0399988485, 0.0],[0.0, -11.5560003809, 0.0],[0.0, -11.5560003809, 0.0]]
-        ringRelaxdMinRotList = [[0.0, 0.0, 0.0],[1.46644448156, -15.6636355533, -1.88151040577],[0.0, -14.1919116307, 0.0],[0.0, -14.1919116307, 0.0]]
-        pinkyRelaxdMinRotList = [[0.0, 0.0, 0.0],[3.4046228407, -16.6868815882, -2.85749193878],[0.0, -13.8161171568, 0.0],[0.0, -13.8161171568, 0.0]]
+        midRelaxeMinRotList = [[0.0, 0.0, 0.0],[0.0, -14.0399988485, 0.0],[0.0, -11.5560003809, 0.0],[0.0, -11.5560003809, 0.0]]
+        ringRelaxeMinRotList = [[0.0, 0.0, 0.0],[1.46644448156, -15.6636355533, -1.88151040577],[0.0, -14.1919116307, 0.0],[0.0, -14.1919116307, 0.0]]
+        pinkyRelaxeMinRotList = [[0.0, 0.0, 0.0],[3.4046228407, -16.6868815882, -2.85749193878],[0.0, -13.8161171568, 0.0],[0.0, -13.8161171568, 0.0]]
                  
-        indexAppendMinRotList.append(indexRelaxeMinRotList)        
+        indexAppendMinRotList.append(indexRelaxeMinRotList)   
+        midAppendMinRotList.append(midRelaxeMinRotList)        
+        ringAppendMinRotList.append(ringRelaxeMinRotList)    
+        pinkyAppendMinRotList.append(pinkyRelaxeMinRotList)                 
          
         #grab_a 
         #grab_a max(10) val:        
-        indexGrabaMaxAttrs = [[0.0, 0.0, 0.0],[-1.7635041, -8.5214628, -16.147383],[0.0, 41.94425, 0.0],[0.0, 44.280939, 0.0]]
-        midGrabaMaxAttrs = [[0.0, 0.0, 0.0],[-0.030713774, -5.1010537, -3.0009306],[0.0, 40.029996, 0.0],[0.0, 41.086042, 0.0]]
-        ringGrabaMaxAttrs = [[-2.9928762, 0.0, 0.0],[3.6224929, -2.4102271, 4.7080181],[0.0, 40.898433, 0.0],[0.0, 41.482517, 0.0]]
-        pinkyGrabaMaxAttrs = [[-1.8613005, 0.056215787, 1.7302502],[1.4394069, 0.14493989, 16.418532],[0.0, 43.58425, 0.0],[0.0, 52.072421, 0.0]]
+        indexGrabaMaxRotList = [[0.0, 0.0, 0.0],[-1.7635041, -8.5214628, -16.147383],[0.0, 41.94425, 0.0],[0.0, 44.280939, 0.0]]
+        midGrabaMaxRotList = [[0.0, 0.0, 0.0],[-0.030713774, -5.1010537, -3.0009306],[0.0, 40.029996, 0.0],[0.0, 41.086042, 0.0]]
+        ringGrabaMaxRotList = [[-2.9928762, 0.0, 0.0],[3.6224929, -2.4102271, 4.7080181],[0.0, 40.898433, 0.0],[0.0, 41.482517, 0.0]]
+        pinkyGrabaMaxRotList = [[-1.8613005, 0.056215787, 1.7302502],[1.4394069, 0.14493989, 16.418532],[0.0, 43.58425, 0.0],[0.0, 52.072421, 0.0]]
         
-        indexAppendMaxRotList.append(indexGrabaMaxAttrs)
-        midAppendMaxRotList.append(midGrabaMaxAttrs)
-        ringAppendMaxRotList.append(ringGrabaMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyGrabaMaxAttrs)            
+        indexAppendMaxRotList.append(indexGrabaMaxRotList)
+        midAppendMaxRotList.append(midGrabaMaxRotList)
+        ringAppendMaxRotList.append(ringGrabaMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyGrabaMaxRotList)            
         
         #grab_a min(-3) val: 
-        indexGrabaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 2.55643895266, 4.84421472464],[0.0, -12.5832744564, 0.0],[0.0, -13.284281742, 0.0]]
-        midGrabaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 1.53031619331, 0.900279164949],[0.0, -12.0089988007, 0.0],[0.0, -12.3258143315, 0.0]]
-        ringGrabaMinAttrs = [[0.897862892745, 0.0, 0.0],[-1.08674781614, 0.0, -1.4124054644],[0.0, -12.2695308218, 0.0],[0.0, -12.4447552972, 0.0]]
-        pinkyGrabaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -4.92555972899],[0.0, -13.0752754812, 0.0],[0.0, -15.6217261951, 0.0]]
+        indexGrabaMinRotList = [[0.0, 0.0, 0.0],[0.0, 2.55643895266, 4.84421472464],[0.0, -12.5832744564, 0.0],[0.0, -13.284281742, 0.0]]
+        midGrabaMinRotList = [[0.0, 0.0, 0.0],[0.0, 1.53031619331, 0.900279164949],[0.0, -12.0089988007, 0.0],[0.0, -12.3258143315, 0.0]]
+        ringGrabaMinRotList = [[0.897862892745, 0.0, 0.0],[-1.08674781614, 0.0, -1.4124054644],[0.0, -12.2695308218, 0.0],[0.0, -12.4447552972, 0.0]]
+        pinkyGrabaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, -4.92555972899],[0.0, -13.0752754812, 0.0],[0.0, -15.6217261951, 0.0]]
                          
-        indexAppendMinRotList.append(indexGrabaMinAttrs)        
+        indexAppendMinRotList.append(indexGrabaMinRotList)   
+        midAppendMinRotList.append(midGrabaMinRotList)        
+        ringAppendMinRotList.append(ringGrabaMinRotList)    
+        pinkyAppendMinRotList.append(pinkyGrabaMinRotList)                 
                 
         #grab_b 
         #grab_b max(10) val:                 
-        indexGrabbMaxAttrs = [[0.0, 0.0, 0.0],[-1.7635041, -8.5214628, -16.147383],[0.0, 20.931244, -1.7567324e-08],[0.0, 23.267933, -1.7348401e-08]]
-        midGrabbMaxAttrs = [[0.0, 0.0, 0.0],[-0.030713774, -2.9912371, -3.0009306],[0.0, 31.691439, -1.7747642e-08],[8.5345485e-09, 32.747485, -1.5588491e-08]]
-        ringGrabbMaxAttrs = [[-2.9928762, 0.0, 0.0],[-1.9605419, 10.418159, 11.084858],[0.0, 39.844309, 0.0],[0.0, 40.428393, 0.0]]
-        pinkyGrabbMaxAttrs = [[-1.8613005, 0.056215787, 1.7302502],[-1.9825828, 29.626945, 18.362295],[0.0, 35.245693, 0.0],[0.0, 34.28776, 0.0]]
+        indexGrabbMaxRotList = [[0.0, 0.0, 0.0],[-1.7635041, -8.5214628, -16.147383],[0.0, 20.931244, -1.7567324e-08],[0.0, 23.267933, -1.7348401e-08]]
+        midGrabbMaxRotList = [[0.0, 0.0, 0.0],[-0.030713774, -2.9912371, -3.0009306],[0.0, 31.691439, -1.7747642e-08],[8.5345485e-09, 32.747485, -1.5588491e-08]]
+        ringGrabbMaxRotList = [[-2.9928762, 0.0, 0.0],[-1.9605419, 10.418159, 11.084858],[0.0, 39.844309, 0.0],[0.0, 40.428393, 0.0]]
+        pinkyGrabbMaxRotList = [[-1.8613005, 0.056215787, 1.7302502],[-1.9825828, 29.626945, 18.362295],[0.0, 35.245693, 0.0],[0.0, 34.28776, 0.0]]
                          
-        indexAppendMaxRotList.append(indexGrabbMaxAttrs)
-        midAppendMaxRotList.append(midGrabbMaxAttrs)
-        ringAppendMaxRotList.append(ringGrabbMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyGrabbMaxAttrs)            
+        indexAppendMaxRotList.append(indexGrabbMaxRotList)
+        midAppendMaxRotList.append(midGrabbMaxRotList)
+        ringAppendMaxRotList.append(ringGrabbMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyGrabbMaxRotList)            
         
         #grab_b min(-3) val:                 
-        indexGrabbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 2.55643895266, 4.84421472464],[0.0, -6.27937348304, 0.0],[0.0, -6.98037935086, 0.0]]
-        midGrabbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.897371185757, 0.900279164949],[0.0, -9.5074318884, 0.0],[0.0, -9.82424536423, 0.0]]
-        ringGrabbMinAttrs = [[0.897862892745, 0.0, 0.0],[0.0, -3.12544759854, -3.32545729794],[0.0, -11.9532935107, 0.0],[0.0, -12.1285162186, 0.0]]
-        pinkyGrabbMinAttrs = [[0.0, 0.0, 0.0],[0.0, -8.8880835737, -5.50868833157],[0.0, -10.5737077603, 0.0],[0.0, -10.2863291471, 0.0]]
+        indexGrabbMinRotList = [[0.0, 0.0, 0.0],[0.0, 2.55643895266, 4.84421472464],[0.0, -6.27937348304, 0.0],[0.0, -6.98037935086, 0.0]]
+        midGrabbMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.897371185757, 0.900279164949],[0.0, -9.5074318884, 0.0],[0.0, -9.82424536423, 0.0]]
+        ringGrabbMinRotList = [[0.897862892745, 0.0, 0.0],[0.0, -3.12544759854, -3.32545729794],[0.0, -11.9532935107, 0.0],[0.0, -12.1285162186, 0.0]]
+        pinkyGrabbMinRotList = [[0.0, 0.0, 0.0],[0.0, -8.8880835737, -5.50868833157],[0.0, -10.5737077603, 0.0],[0.0, -10.2863291471, 0.0]]
                             
-        indexAppendMinRotList.append(indexGrabbMinAttrs)                   
+        indexAppendMinRotList.append(indexGrabbMinRotList)       
+        midAppendMinRotList.append(midGrabbMinRotList)        
+        ringAppendMinRotList.append(ringGrabbMinRotList)    
+        pinkyAppendMinRotList.append(pinkyGrabbMinRotList)                        
                 
         #Spreada 
         #Spreada max(10) val:                 
-        indexSpreadaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -25.582658],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midSpreadaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringSpreadaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 8.8561972],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkySpreadaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 22.877102],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexSpreadaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, -25.582658],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midSpreadaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringSpreadaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 8.8561972],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkySpreadaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 22.877102],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
-        indexAppendMaxRotList.append(indexSpreadaMaxAttrs)
-        midAppendMaxRotList.append(midSpreadaMaxAttrs)
-        ringAppendMaxRotList.append(ringSpreadaMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkySpreadaMaxAttrs)             
+        indexAppendMaxRotList.append(indexSpreadaMaxRotList)
+        midAppendMaxRotList.append(midSpreadaMaxRotList)
+        ringAppendMaxRotList.append(ringSpreadaMaxRotList)
+        pinkyAppendMaxRotList.append(pinkySpreadaMaxRotList)             
         
         #Spreada min(-3) val:                 
-        indexSpreadaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 7.67479746336],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midSpreadaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringSpreadaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -2.65685910148],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkySpreadaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -6.86313075324],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexSpreadaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 7.67479746336],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midSpreadaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringSpreadaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, -2.65685910148],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkySpreadaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, -6.86313075324],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
               
-        indexAppendMinRotList.append(indexSpreadaMinAttrs)  
+        indexAppendMinRotList.append(indexSpreadaMinRotList)  
+        midAppendMinRotList.append(midSpreadaMinRotList)        
+        ringAppendMinRotList.append(ringSpreadaMinRotList)    
+        pinkyAppendMinRotList.append(pinkySpreadaMinRotList)            
 
 
         #Spreadb 
         #Spreadb max(10) val:                 
-        indexSpreadbMaxAttrs = [[0.0, 0.0, 0.0],[8.7247019, -10.394853, -18.082124],[0.0, -8.2723094, -1.7277899e-08],[0.0, -8.2723094, -1.6642118e-08]]
-        midSpreadbMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, -8.2723094, 3.5543707e-08],[0.0, -8.2723094, 1.7958196e-08]]
-        ringSpreadbMaxAttrs = [[0.0, 0.0, 0.0],[-10.955866, 7.5271701, 2.1637058],[0.0, -8.2723094, -1.7297596e-08],[0.0, -8.2723094, -1.7446468e-08]]
-        pinkySpreadbMaxAttrs = [[0.0, 0.0, 0.0],[-3.4375475, 29.857157, 26.640187],[0.0, -8.2723094, 0.0],[0.0, -8.2723094, 0.0]]
+        indexSpreadbMaxRotList = [[0.0, 0.0, 0.0],[8.7247019, -10.394853, -18.082124],[0.0, -8.2723094, -1.7277899e-08],[0.0, -8.2723094, -1.6642118e-08]]
+        midSpreadbMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, -8.2723094, 3.5543707e-08],[0.0, -8.2723094, 1.7958196e-08]]
+        ringSpreadbMaxRotList = [[0.0, 0.0, 0.0],[-10.955866, 7.5271701, 2.1637058],[0.0, -8.2723094, -1.7297596e-08],[0.0, -8.2723094, -1.7446468e-08]]
+        pinkySpreadbMaxRotList = [[0.0, 0.0, 0.0],[-3.4375475, 29.857157, 26.640187],[0.0, -8.2723094, 0.0],[0.0, -8.2723094, 0.0]]
                          
-        indexAppendMaxRotList.append(indexSpreadbMaxAttrs)
-        midAppendMaxRotList.append(midSpreadbMaxAttrs)
-        ringAppendMaxRotList.append(ringSpreadbMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkySpreadbMaxAttrs)            
+        indexAppendMaxRotList.append(indexSpreadbMaxRotList)
+        midAppendMaxRotList.append(midSpreadbMaxRotList)
+        ringAppendMaxRotList.append(ringSpreadbMaxRotList)
+        pinkyAppendMaxRotList.append(pinkySpreadbMaxRotList)            
         
         #Spreadb min(-3) val:                 
-        indexSpreadbMinAttrs = [[0.0, 0.0, 0.0],[-2.61741043801, 3.11845608838, 5.42463689589],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
-        midSpreadbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
-        ringSpreadbMinAttrs = [[0.0, 0.0, 0.0],[3.28675999708, -2.25815105805, 0.0],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
-        pinkySpreadbMinAttrs = [[0.0, 0.0, 0.0],[1.03126421643, -8.95714757769, -7.99205549907],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
+        indexSpreadbMinRotList = [[0.0, 0.0, 0.0],[-2.61741043801, 3.11845608838, 5.42463689589],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
+        midSpreadbMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
+        ringSpreadbMinRotList = [[0.0, 0.0, 0.0],[3.28675999708, -2.25815105805, 0.0],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
+        pinkySpreadbMinRotList = [[0.0, 0.0, 0.0],[1.03126421643, -8.95714757769, -7.99205549907],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
                          
-        indexAppendMinRotList.append(indexSpreadbMinAttrs)  
+        indexAppendMinRotList.append(indexSpreadbMinRotList) 
+        midAppendMinRotList.append(midSpreadbMinRotList)        
+        ringAppendMinRotList.append(ringSpreadbMinRotList)    
+        pinkyAppendMinRotList.append(pinkySpreadbMinRotList)             
 
         #hand 
         #hand max(10) val:                 
-        indexHandMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 5.9506481],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midHandMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.96022806],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringHandMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -3.8924184],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyHandMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -8.3619136],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexHandMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 5.9506481],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midHandMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.96022806],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringHandMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, -3.8924184],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyHandMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, -8.3619136],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
                          
-        indexAppendMaxRotList.append(indexHandMaxAttrs)
-        midAppendMaxRotList.append(midHandMaxAttrs)
-        ringAppendMaxRotList.append(ringHandMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyHandMaxAttrs)            
+        indexAppendMaxRotList.append(indexHandMaxRotList)
+        midAppendMaxRotList.append(midHandMaxRotList)
+        ringAppendMaxRotList.append(ringHandMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyHandMaxRotList)            
         
         #hand min(-3) val:                 
-        indexHandMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, -1.78519442026],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midHandMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringHandMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 1.16772562065],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyHandMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 2.5085741245],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]       
+        indexHandMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, -1.78519442026],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midHandMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringHandMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 1.16772562065],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyHandMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 2.5085741245],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]       
                 
-        indexAppendMinRotList.append(indexHandMinAttrs)  
+        indexAppendMinRotList.append(indexHandMinRotList) 
+        midAppendMinRotList.append(midHandMinRotList)        
+        ringAppendMinRotList.append(ringHandMinRotList)    
+        pinkyAppendMinRotList.append(pinkyHandMinRotList)             
 
         #palm_a 
         #palm_a max(10) val:                 
-        indexPalmaMaxAttrs = [[9.5015777, 0.0, 0.0],[12.129516, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midPalmaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringPalmaMaxAttrs = [[-24.239371, -0.30426803, -0.74108914],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyPalmaMaxAttrs = [[-17.534821, 1.0340395, -2.1197015],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]        
+        indexPalmaMaxRotList = [[9.5015777, 0.0, 0.0],[12.129516, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midPalmaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringPalmaMaxRotList = [[-24.239371, -0.30426803, -0.74108914],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyPalmaMaxRotList = [[-17.534821, 1.0340395, -2.1197015],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]        
         
-        indexAppendMaxRotList.append(indexPalmaMaxAttrs)
-        midAppendMaxRotList.append(midPalmaMaxAttrs)
-        ringAppendMaxRotList.append(ringPalmaMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyPalmaMaxAttrs)            
+        indexAppendMaxRotList.append(indexPalmaMaxRotList)
+        midAppendMaxRotList.append(midPalmaMaxRotList)
+        ringAppendMaxRotList.append(ringPalmaMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyPalmaMaxRotList)            
         
         #palm_a min(-3) val:                 
-        indexPalmaMinAttrs = [[-2.85047358591, 0.0, 0.0],[-3.6388550315, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midPalmaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringPalmaMinAttrs = [[7.27181158401, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyPalmaMinAttrs = [[5.2604463016, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] 
+        indexPalmaMinRotList = [[-2.85047358591, 0.0, 0.0],[-3.6388550315, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midPalmaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringPalmaMinRotList = [[7.27181158401, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyPalmaMinRotList = [[5.2604463016, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]] 
                 
-        indexAppendMinRotList.append(indexPalmaMinAttrs)  
+        indexAppendMinRotList.append(indexPalmaMinRotList)  
+        midAppendMinRotList.append(midPalmaMinRotList)        
+        ringAppendMinRotList.append(ringPalmaMinRotList)    
+        pinkyAppendMinRotList.append(pinkyPalmaMinRotList)            
         
         #palm_b 
         #palm_b max(10) val:                 
-        indexPalmbMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midPalmbMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringPalmbMaxAttrs = [[-6.8414008, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyPalmbMaxAttrs = [[-13.947657, 1.9094432, -0.4750786],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexPalmbMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midPalmbMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringPalmbMaxRotList = [[-6.8414008, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyPalmbMaxRotList = [[-13.947657, 1.9094432, -0.4750786],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
-        indexAppendMaxRotList.append(indexPalmbMaxAttrs)
-        midAppendMaxRotList.append(midPalmbMaxAttrs)
-        ringAppendMaxRotList.append(ringPalmbMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyPalmbMaxAttrs)            
+        indexAppendMaxRotList.append(indexPalmbMaxRotList)
+        midAppendMaxRotList.append(midPalmbMaxRotList)
+        ringAppendMaxRotList.append(ringPalmbMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyPalmbMaxRotList)            
         
         #palm_b min(-3) val:                 
-        indexPalmbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midPalmbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringPalmbMinAttrs = [[2.05242044873, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyPalmbMinAttrs = [[4.18429703895, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexPalmbMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midPalmbMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringPalmbMinRotList = [[2.05242044873, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyPalmbMinRotList = [[4.18429703895, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
-        indexAppendMinRotList.append(indexPalmbMinAttrs)
+        indexAppendMinRotList.append(indexPalmbMinRotList)
+        midAppendMinRotList.append(midPalmbMinRotList)        
+        ringAppendMinRotList.append(ringPalmbMinRotList)    
+        pinkyAppendMinRotList.append(pinkyPalmbMinRotList)            
           
         #thumba 
         #thumba max(10) val:                 
-        indexThumbaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midThumbaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringThumbaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyThumbaMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexThumbaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midThumbaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringThumbaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyThumbaMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
-        indexAppendMaxRotList.append(indexThumbaMaxAttrs)
-        midAppendMaxRotList.append(midThumbaMaxAttrs)
-        ringAppendMaxRotList.append(ringThumbaMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyThumbaMaxAttrs)            
+        indexAppendMaxRotList.append(indexThumbaMaxRotList)
+        midAppendMaxRotList.append(midThumbaMaxRotList)
+        ringAppendMaxRotList.append(ringThumbaMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyThumbaMaxRotList)            
         
         #thumba min(-3) val:                 
-        indexThumbaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midThumbaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringThumbaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyThumbaMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                 
+        indexThumbaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midThumbaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringThumbaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyThumbaMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                 
                 
-        indexAppendMinRotList.append(indexThumbaMinAttrs)                  
+        indexAppendMinRotList.append(indexThumbaMinRotList)         
+        midAppendMinRotList.append(midThumbaMinRotList)        
+        ringAppendMinRotList.append(ringThumbaMinRotList)    
+        pinkyAppendMinRotList.append(pinkyThumbaMinRotList)                     
         
         #thumbb 
         #thumbb max(10) val:                 
-        indexThumbbMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midThumbbMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringThumbbMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyThumbbMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                
+        indexThumbbMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midThumbbMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringThumbbMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyThumbbMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                
         
-        indexAppendMaxRotList.append(indexThumbbMaxAttrs)
-        midAppendMaxRotList.append(midThumbbMaxAttrs)
-        ringAppendMaxRotList.append(ringThumbbMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyThumbbMaxAttrs)            
+        indexAppendMaxRotList.append(indexThumbbMaxRotList)
+        midAppendMaxRotList.append(midThumbbMaxRotList)
+        ringAppendMaxRotList.append(ringThumbbMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyThumbbMaxRotList)            
         
         #thumbb min(-3) val:                 
-        indexThumbbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midThumbbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringThumbbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyThumbbMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                
+        indexThumbbMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midThumbbMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringThumbbMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyThumbbMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                
                 
-        indexAppendMinRotList.append(indexThumbbMinAttrs)  
+        indexAppendMinRotList.append(indexThumbbMinRotList)  
+        midAppendMinRotList.append(midThumbbMinRotList)        
+        ringAppendMinRotList.append(ringThumbbMinRotList)    
+        pinkyAppendMinRotList.append(pinkyThumbbMinRotList)            
 
         #thumbc 
         #thumbc max(10) val:   
-        indexThumbcMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
-        midThumbcMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543707e-08]]
-        ringThumbcMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
-        pinkyThumbcMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexThumbcMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
+        midThumbcMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543707e-08]]
+        ringThumbcMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
+        pinkyThumbcMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
          
-        indexAppendMaxRotList.append(indexThumbcMaxAttrs)    
-        midAppendMaxRotList.append(midThumbcMaxAttrs)
-        ringAppendMaxRotList.append(ringThumbcMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyThumbcMaxAttrs)    
+        indexAppendMaxRotList.append(indexThumbcMaxRotList)    
+        midAppendMaxRotList.append(midThumbcMaxRotList)
+        ringAppendMaxRotList.append(ringThumbcMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyThumbcMaxRotList)    
         
         #thumbc min(-3) val: 
-        indexThumbcMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midThumbcMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringThumbcMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyThumbcMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexThumbcMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midThumbcMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringThumbcMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyThumbcMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
          
-        indexAppendMinRotList.append(indexThumbcMinAttrs)
+        indexAppendMinRotList.append(indexThumbcMinRotList)
+        midAppendMinRotList.append(midThumbcMinRotList)        
+        ringAppendMinRotList.append(ringThumbcMinRotList)    
+        pinkyAppendMinRotList.append(pinkyThumbcMinRotList)            
         
         #thumbd 
         #thumbd max(10) val:   
-        indexThumbdMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
-        midThumbdMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543707e-08]]
-        ringThumbdMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
-        pinkyThumbdMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexThumbdMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
+        midThumbdMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543707e-08]]
+        ringThumbdMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
+        pinkyThumbdMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
          
-        indexAppendMaxRotList.append(indexThumbdMaxAttrs)
-        midAppendMaxRotList.append(midThumbdMaxAttrs)
-        ringAppendMaxRotList.append(ringThumbdMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyThumbdMaxAttrs)            
+        indexAppendMaxRotList.append(indexThumbdMaxRotList)
+        midAppendMaxRotList.append(midThumbdMaxRotList)
+        ringAppendMaxRotList.append(ringThumbdMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyThumbdMaxRotList)            
         
         #thumbd min(-3) val: 
-        indexThumbdMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midThumbdMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringThumbdMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyThumbdMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexThumbdMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midThumbdMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringThumbdMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyThumbdMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
 
-        indexAppendMinRotList.append(indexThumbdMinAttrs)
+        indexAppendMinRotList.append(indexThumbdMinRotList)
+        midAppendMinRotList.append(midThumbdMinRotList)        
+        ringAppendMinRotList.append(ringThumbdMinRotList)    
+        pinkyAppendMinRotList.append(pinkyThumbdMinRotList)            
         
         #index_curl 
         #index_curl max(10) val:                 
-        indexIndexCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0]]
-        midIndexCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringIndexCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyIndexCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexIndexCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0]]
+        midIndexCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringIndexCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyIndexCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
                                  
-        indexAppendMaxRotList.append(indexIndexCurlMaxAttrs)
-        midAppendMaxRotList.append(midIndexCurlMaxAttrs)
-        ringAppendMaxRotList.append(ringIndexCurlMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyIndexCurlMaxAttrs)            
+        indexAppendMaxRotList.append(indexIndexCurlMaxRotList)
+        midAppendMaxRotList.append(midIndexCurlMaxRotList)
+        ringAppendMaxRotList.append(ringIndexCurlMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyIndexCurlMaxRotList)            
         
         #index_curl min(-3) val:                 
-        indexIndexCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
-        midIndexCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringIndexCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyIndexCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexIndexCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
+        midIndexCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringIndexCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyIndexCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
                                          
-        indexAppendMinRotList.append(indexIndexCurlMinAttrs)  
+        indexAppendMinRotList.append(indexIndexCurlMinRotList)  
+        midAppendMinRotList.append(midIndexCurlMinRotList)        
+        ringAppendMinRotList.append(ringIndexCurlMinRotList)    
+        pinkyAppendMinRotList.append(pinkyIndexCurlMinRotList)            
 
         #middle_curl 
         #middle_curl max(10) val:                 
-        indexMiddleCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midMiddleCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0]]
-        ringMiddleCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyMiddleCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexMiddleCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midMiddleCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0]]
+        ringMiddleCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyMiddleCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
         
-        indexAppendMaxRotList.append(indexMiddleCurlMaxAttrs)
-        midAppendMaxRotList.append(midMiddleCurlMaxAttrs)
-        ringAppendMaxRotList.append(ringMiddleCurlMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyMiddleCurlMaxAttrs)            
+        indexAppendMaxRotList.append(indexMiddleCurlMaxRotList)
+        midAppendMaxRotList.append(midMiddleCurlMaxRotList)
+        ringAppendMaxRotList.append(ringMiddleCurlMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyMiddleCurlMaxRotList)            
         
         #middle_curl min(-3) val:                 
-        indexMiddleCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midMiddleCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
-        ringMiddleCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyMiddleCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]               
+        indexMiddleCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midMiddleCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
+        ringMiddleCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyMiddleCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]               
                 
-        indexAppendMinRotList.append(indexMiddleCurlMinAttrs)  
+        indexAppendMinRotList.append(indexMiddleCurlMinRotList)  
+        midAppendMinRotList.append(midMiddleCurlMinRotList)        
+        ringAppendMinRotList.append(ringMiddleCurlMinRotList)    
+        pinkyAppendMinRotList.append(pinkyMiddleCurlMinRotList)            
 
         #ring_curl 
         #ring_curl max(10) val:                 
-        indexRingCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midRingCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringRingCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
-        pinkyRingCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                
+        indexRingCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midRingCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringRingCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
+        pinkyRingCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]                
         
-        indexAppendMaxRotList.append(indexRingCurlMaxAttrs)
-        midAppendMaxRotList.append(midRingCurlMaxAttrs)
-        ringAppendMaxRotList.append(ringRingCurlMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyRingCurlMaxAttrs)            
+        indexAppendMaxRotList.append(indexRingCurlMaxRotList)
+        midAppendMaxRotList.append(midRingCurlMaxRotList)
+        ringAppendMaxRotList.append(ringRingCurlMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyRingCurlMaxRotList)            
         
         #ring_curl min(-3) val:                 
-        indexRingCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midRingCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringRingCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
-        pinkyRingCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        indexRingCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midRingCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringRingCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
+        pinkyRingCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
                  
-        indexAppendMinRotList.append(indexRingCurlMinAttrs)
+        indexAppendMinRotList.append(indexRingCurlMinRotList)
+        midAppendMinRotList.append(midRingCurlMinRotList)        
+        ringAppendMinRotList.append(ringRingCurlMinRotList)    
+        pinkyAppendMinRotList.append(pinkyRingCurlMinRotList)            
         
         #pinky_curl 
         #pinky_curl max(10) val:                 
-        indexPinkyCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midPinkyCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringPinkyCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkyPinkyCurlMaxAttrs = [[0.0, 0.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0]]
+        indexPinkyCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midPinkyCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringPinkyCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkyPinkyCurlMaxRotList = [[0.0, 0.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0]]
                          
-        indexAppendMaxRotList.append(indexPinkyCurlMaxAttrs)
-        midAppendMaxRotList.append(midPinkyCurlMaxAttrs)
-        ringAppendMaxRotList.append(ringPinkyCurlMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyPinkyCurlMaxAttrs)            
+        indexAppendMaxRotList.append(indexPinkyCurlMaxRotList)
+        midAppendMaxRotList.append(midPinkyCurlMaxRotList)
+        ringAppendMaxRotList.append(ringPinkyCurlMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyPinkyCurlMaxRotList)            
         
         #pinky_curl min(-3) val:                 
-        indexPinkyCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        midPinkyCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        ringPinkyCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
-        pinkPinkyCurlMinAttrs = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
+        indexPinkyCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        midPinkyCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        ringPinkyCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        pinkPinkyCurlMinRotList = [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
                            
-        indexAppendMinRotList.append(indexPinkyCurlMinAttrs)                            
+        indexAppendMinRotList.append(indexPinkyCurlMinRotList)       
+        midAppendMinRotList.append(midPinkyCurlMinRotList)        
+        ringAppendMinRotList.append(ringPinkyCurlMinRotList)    
+        pinkyAppendMinRotList.append(pinkPinkyCurlMinRotList)                                 
 
         #point 
         #point max(10) val:                 
-        indexPointMaxAttrs = [[0.0, 0.0, 0.0],[-0.48240779, 0.29722213, -0.10914528],[0.0, -7.8036046, 0.0],[0.0, -7.8036046, 0.0]]
-        midPointMaxAttrs = [[0.0, 0.0, 0.0],[1.6502186, 52.116256, -4.3852106],[0.0, 99.9835, 0.0],[0.0, 76.63128, 0.0]]
-        ringPointMaxAttrs = [[0.0, 0.0, 0.0],[-5.1919839, 62.997629, -1.741267],[0.0, 97.862165, 0.0],[0.0, 78.57743, 0.0]]
-        pinkyPointMaxAttrs = [[0.0, 0.0, 0.0],[-11.35146, 70.628056, 0.91715981],[0.0, 83.653515, 0.0],[0.0, 83.653515, 0.0]]
+        indexPointMaxRotList = [[0.0, 0.0, 0.0],[-0.48240779, 0.29722213, -0.10914528],[0.0, -7.8036046, 0.0],[0.0, -7.8036046, 0.0]]
+        midPointMaxRotList = [[0.0, 0.0, 0.0],[1.6502186, 52.116256, -4.3852106],[0.0, 99.9835, 0.0],[0.0, 76.63128, 0.0]]
+        ringPointMaxRotList = [[0.0, 0.0, 0.0],[-5.1919839, 62.997629, -1.741267],[0.0, 97.862165, 0.0],[0.0, 78.57743, 0.0]]
+        pinkyPointMaxRotList = [[0.0, 0.0, 0.0],[-11.35146, 70.628056, 0.91715981],[0.0, 83.653515, 0.0],[0.0, 83.653515, 0.0]]
                                 
-        indexAppendMaxRotList.append(indexPointMaxAttrs)
-        midAppendMaxRotList.append(midPointMaxAttrs)
-        ringAppendMaxRotList.append(ringPointMaxAttrs)
-        pinkyAppendMaxRotList.append(pinkyPointMaxAttrs)    
+        indexAppendMaxRotList.append(indexPointMaxRotList)
+        midAppendMaxRotList.append(midPointMaxRotList)
+        ringAppendMaxRotList.append(ringPointMaxRotList)
+        pinkyAppendMaxRotList.append(pinkyPointMaxRotList)    
         
         #point min(-3) val:                 
-        indexPointMinAttrs = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 2.34108130208, 0.0],[0.0, 2.34108130208, 0.0]]
-        midPointMinAttrs = [[0.0, 0.0, 0.0],[0.0, -15.6348762585, 1.3155631832],[0.0, -29.9950512267, 0.0],[0.0, -22.9893817888, 0.0]]
-        ringPointMinAttrs = [[0.0, 0.0, 0.0],[1.55759534157, -18.8992888563, 0.0],[0.0, -29.358649066, 0.0],[0.0, -23.5732288764, 0.0]]
-        pinkyPointMinAttrs = [[0.0, 0.0, 0.0],[3.40543798067, -21.1884157715, 0.0],[0.0, -25.0960539922, 0.0],[0.0, -25.0960539922, 0.0]]
+        indexPointMinRotList = [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 2.34108130208, 0.0],[0.0, 2.34108130208, 0.0]]
+        midPointMinRotList = [[0.0, 0.0, 0.0],[0.0, -15.6348762585, 1.3155631832],[0.0, -29.9950512267, 0.0],[0.0, -22.9893817888, 0.0]]
+        ringPointMinRotList = [[0.0, 0.0, 0.0],[1.55759534157, -18.8992888563, 0.0],[0.0, -29.358649066, 0.0],[0.0, -23.5732288764, 0.0]]
+        pinkyPointMinRotList = [[0.0, 0.0, 0.0],[3.40543798067, -21.1884157715, 0.0],[0.0, -25.0960539922, 0.0],[0.0, -25.0960539922, 0.0]]
                              
-        indexAppendMinRotList.append(indexPointMinAttrs)          
-
-
-########
+        indexAppendMinRotList.append(indexPointMinRotList)       
+        midAppendMinRotList.append(midPointMinRotList)        
+        ringAppendMinRotList.append(ringPointMinRotList)    
+        pinkyAppendMinRotList.append(pinkyPointMinRotList)               
+        
         
         #set attr list:
         indexRotAttrs = []
+        midRotAttrs = []
+        ringRotAttrs = []
+        pinkyRotAttrs = []                        
         
+        #set attr for each rot attr
         for selfAttr in self.attrs:
-            #set attr
+            
+            #index
             for indexSdk in self.indexSdks:
                 for ch in chr:
                     attr = indexSdk + '.r' + ch
-                    indexRotAttrs.append(attr)            
+                    indexRotAttrs.append(attr)
+
+            #mid
+            for midSdk in self.midSdks:
+                for ch in chr:
+                    attr = midSdk + '.r' + ch
+                    midRotAttrs.append(attr)                    
+
+            #ring
+            for ringSdk in self.ringSdks:
+                for ch in chr:
+                    attr = ringSdk + '.r' + ch
+                    ringRotAttrs.append(attr)                    
+                    
+            #pinky
+            for pinkySdk in self.pinkySdks:
+                for ch in chr:
+                    attr = pinkySdk + '.r' + ch
+                    pinkyRotAttrs.append(attr)                    
 
             #set default(0) sdk
             #set index default:
             for indexSdk in self.indexSdks:
                 for ch in chr:            
                     pm.setDrivenKeyframe(indexSdk + '.r' + ch,v = 0, 
-                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)            
+                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)
+                    
+            #set mid default:
+            for midSdk in self.midSdks:
+                for ch in chr:            
+                    pm.setDrivenKeyframe(midSdk + '.r' + ch,v = 0, 
+                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)   
+                    
+            #set ring default:
+            for ringSdk in self.ringSdks:
+                for ch in chr:            
+                    pm.setDrivenKeyframe(ringSdk + '.r' + ch,v = 0, 
+                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)   
+                    
+            #set index default:
+            for pinkySdk in self.pinkySdks:
+                for ch in chr:            
+                    pm.setDrivenKeyframe(pinkySdk + '.r' + ch,v = 0, 
+                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)                                                                           
                       
         #get/set rotate Max val to main rot list:
         #get index list
@@ -771,10 +876,50 @@ class FingerModule(object):
                     val = value[num]
                     indexMainMaxRotList.append(val)
         
+        #get mid list
+        for number,valueList in enumerate(midAppendMaxRotList):
+            for value in valueList:
+                for num in [0,1,2]:
+                    val = value[num]
+                    midMainMaxRotList.append(val)
+                    
+        #get ring list
+        for number,valueList in enumerate(ringAppendMaxRotList):
+            for value in valueList:
+                for num in [0,1,2]:
+                    val = value[num]
+                    ringMainMaxRotList.append(val)                            
+
+        #get pinky list
+        for number,valueList in enumerate(pinkyAppendMaxRotList):
+            for value in valueList:
+                for num in [0,1,2]:
+                    val = value[num]
+                    pinkyMainMaxRotList.append(val)        
+        
         #set dic max(10) val
+        #set index
         for number,attrList in enumerate(indexRotAttrs):
             pm.setDrivenKeyframe(attrList,v = indexMainMaxRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)    
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)
+            
+        #set dic max(10) val
+        #set mid
+        for number,attrList in enumerate(midRotAttrs):
+            pm.setDrivenKeyframe(attrList,v = midMainMaxRotList[number],
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)  
+            
+        #set dic max(10) val
+        #set ring
+        for number,attrList in enumerate(ringRotAttrs):
+            pm.setDrivenKeyframe(attrList,v = ringMainMaxRotList[number],
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)  
+            
+        #set dic max(10) val
+        #set pinky
+        for number,attrList in enumerate(pinkyRotAttrs):
+            pm.setDrivenKeyframe(attrList,v = pinkyMainMaxRotList[number],
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)                                          
             
         #get/set rotate Min val to main rot list:
         #get index list
@@ -783,11 +928,48 @@ class FingerModule(object):
                 for num in [0,1,2]:
                     val = value[num]
                     indexMainMinRotList.append(val)
+                    
+        #get mid list
+        for number,valueList in enumerate(midAppendMinRotList):
+            for value in valueList:
+                for num in [0,1,2]:
+                    val = value[num]
+                    midMainMinRotList.append(val)
+                    
+        #get ring list
+        for number,valueList in enumerate(ringAppendMinRotList):
+            for value in valueList:
+                for num in [0,1,2]:
+                    val = value[num]
+                    ringMainMinRotList.append(val)
+                    
+        #get pinky list
+        for number,valueList in enumerate(pinkyAppendMinRotList):
+            for value in valueList:
+                for num in [0,1,2]:
+                    val = value[num]
+                    pinkyMainMinRotList.append(val)                                                            
         
-        #set dic max(-3) val
+        #set dic min(-3) val
+        #index min(-3) val
         for number,attrList in enumerate(indexRotAttrs):
             pm.setDrivenKeyframe(attrList,v = indexMainMinRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)             
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)
+
+        #mid min(-3) val
+        for number,attrList in enumerate(midRotAttrs):
+            pm.setDrivenKeyframe(attrList,v = midMainMinRotList[number],
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)      
+            
+        #ring min(-3) val
+        for number,attrList in enumerate(ringRotAttrs):
+            pm.setDrivenKeyframe(attrList,v = ringMainMinRotList[number],
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)      
+            
+        #pinky min(-3) val
+        for number,attrList in enumerate(pinkyRotAttrs):
+            pm.setDrivenKeyframe(attrList,v = pinkyMainMinRotList[number],
+                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)                                                       
         
         def __cleanUp():
             pass                        
