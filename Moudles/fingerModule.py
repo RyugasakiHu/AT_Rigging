@@ -302,8 +302,207 @@ class FingerModule(object):
         #prepare chr:
         chr = ['x','y','z']
         
-        #index min ring pinky list:
-        #set Append val List:
+        #finger list:
+        #set Append val List fot thumb:
+        thumbAppendMaxRotList = []
+        thumbAppendMinRotList = []
+
+
+        #fist 10:
+        thumbFistaMaxRotList = [[0.0, 1.1667451, 0.0],[7.7256914, 98.47196, -6.9225698],[-5.0864835, 109.12878, -14.33877],[0.0, 121.35306, 0.0]]
+        thumbAppendMaxRotList.append(thumbFistaMaxRotList)
+        
+        #fist -3:
+        thumbFistaMinRotList = [[0.0, 0.0, 0.0],[-2.3177073578, -29.5415885482, 2.0767709177],[1.52594527386, -32.7386315224, 4.30163088994],[0.0, -36.4059179235, 0.0]]
+        thumbAppendMinRotList.append(thumbFistaMinRotList)
+        
+        #fistB 10:
+        thumbFistbMaxRotList = [[0.0, 0.0, 0.0],[4.4223436, 66.184789, 1.8546305],[0.0, 101.20612, 0.0],[0.0, 75.878746, 0.0]]
+        thumbAppendMaxRotList.append(thumbFistbMaxRotList) 
+        
+        #fistB -3:
+        thumbFistbMinRotList = [[0.0, 0.0, 0.0],[-1.32670302602, -19.8554351973, 0.0],[0.0, -30.3618382339, 0.0],[0.0, -22.7636215909, 0.0]] 
+        thumbAppendMinRotList.append(thumbFistbMinRotList)
+               
+        #relaxA 10:
+        thumbRelaxaMaxRotList = [[0.0, 0.0, 0.0],[-0.89780606, -8.5116474, -9.925511],[0.0, 15.239331, 0.0],[0.0, 15.239331, 0.0]]
+        thumbAppendMaxRotList.append(thumbRelaxaMaxRotList)
+        
+        relaxA -3:
+        [[0.0, 0.0, 0.0],[0.0, 2.55349438396, 2.97765346574],[0.0, -4.57179902403, 0.0],[0.0, -4.57179902403, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        relaxB 10:
+        [[0.0, 0.0, 0.0],[4.6833866, 5.8816114, -0.1751071],[0.0, 10.100644, 0.0],[0.0, 10.100644, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        relaxB -3:
+        [[0.0, 0.0, 0.0],[-1.40501603744, -1.76448329217, 0.0],[0.0, -3.0301932355, 0.0],[0.0, -3.0301932355, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        relaxC 10:
+        [[0.0, 0.0, 0.0],[5.2831314, 31.345176, -3.2099818],[0.0, 22.91704, 0.0],[0.0, 22.91704, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        relaxC -3:
+        [[0.0, 0.0, 0.0],[-1.58493940724, -9.40355275552, 0.962994550952],[0.0, -6.87511250747, 0.0],[0.0, -6.87511250747, 0.0]]
+        thumbAppendMinRotList.append()
+
+        relaxD 10:
+        [[0.0, 0.0, 0.0],[5.4160948, 12.535184, 1.2137211],[0.0, 10.100644, -1.7270777e-08],[6.8093491e-09, 10.100644, -1.6329651e-08]]
+        thumbAppendMaxRotList.append()
+        
+        relaxD -3:
+        [[0.0, 0.0, 0.0],[-1.62482857459, -3.76055524696, 0.0],[0.0, -3.0301932355, 0.0],[0.0, -3.0301932355, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        relaxE 10:
+        [[0.0, 0.0, 0.0],[5.2831314, 31.345176, -3.2099818],[9.2055523e-09, 5.0979753, -1.5113549e-08],[1.0512118e-08, 12.199657, -1.4235765e-08]]
+        thumbAppendMaxRotList.append()
+        
+        relaxE -3:
+        [[0.0, 0.0, 0.0],[-1.58493940724, -9.40355275552, 0.962994550952],[0.0, -1.52939260387, 0.0],[0.0, -3.65989711932, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        grab_a 10:
+        [[0.0, 0.0, 0.0],[-1.7635041, -8.5214628, -16.147383],[0.0, 41.94425, 0.0],[0.0, 44.280939, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        grab_a -3:
+        [[0.0, 0.0, 0.0],[0.0, 2.55643895266, 4.84421472464],[0.0, -12.5832744564, 0.0],[0.0, -13.284281742, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        Grab_b 10:
+        [[0.0, 0.0, 0.0],[-1.7635041, -8.5214628, -16.147383],[0.0, 20.931244, -1.7567324e-08],[0.0, 23.267933, -1.7348401e-08]]
+        thumbAppendMaxRotList.append()
+        
+        Grab_b -3:
+        [[0.0, 0.0, 0.0],[0.0, 2.55643895266, 4.84421472464],[0.0, -6.27937348304, 0.0],[0.0, -6.98037935086, 0.0]]
+        thumbAppendMinRotList.append()        
+                
+        spread_a 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, -25.582658],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        spread_a -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 7.67479746336],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        spread_b 10:
+        [[0.0, 0.0, 0.0],[8.7247019, -10.394853, -18.082124],[0.0, -8.2723094, -1.7277899e-08],[0.0, -8.2723094, -1.6642118e-08]]
+        thumbAppendMaxRotList.append()
+        
+        spread_b -3:
+        [[0.0, 0.0, 0.0],[-2.61741043801, 3.11845608838, 5.42463689589],[0.0, 2.48169284085, 0.0],[0.0, 2.48169284085, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        hand 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 5.9506481],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        hand -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, -1.78519442026],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        palm1 10:
+        [[9.5015777, 0.0, 0.0],[12.129516, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        palm1 -3:
+        [[-2.85047358591, 0.0, 0.0],[-3.6388550315, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        palm2 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        palm2 -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        fa1 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        fa1 -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        fa2 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        fa2 -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        Fa3 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543707e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
+        thumbAppendMaxRotList.append()
+        
+        Fa3 -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        Fa4 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08],[0.0, 0.0, 3.5543708e-08]]
+        thumbAppendMaxRotList.append()
+        
+        Fa4 -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()        
+        
+        fb 10:
+        [[0.0, 0.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0],[0.0, 90.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        fb -3:
+        [[0.0, 0.0, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0],[0.0, -27.0000020556, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        fc 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        fc -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        fd 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        fd -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        fe 10:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        fe -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        close_relax 10:
+        [[0.0, 0.0, 0.0],[5.9633763, 15.700059, 0.54465106],[0.0, 81.977047, -1.7016228e-08],[1.7517221e-08, 55.126766, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        close_relax -3:
+        [[0.0, 0.0, 0.0],[-1.78901296209, -4.71001766824, 0.0],[0.0, -24.5931117458, 0.0],[0.0, -16.5380308993, 0.0]]
+        thumbAppendMinRotList.append()
+        
+        #point 10:
+        [[0.0, 0.0, 0.0],[-0.48240779, 0.29722213, -0.10914528],[0.0, -7.8036046, 0.0],[0.0, -7.8036046, 0.0]]
+        thumbAppendMaxRotList.append()
+        
+        #point -3:
+        [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0],[0.0, 2.34108130208, 0.0],[0.0, 2.34108130208, 0.0]]
+        thumbAppendMinRotList.append()
+    
+            
+        
+        #set Append val List for index min ring pinky:
         indexAppendMaxRotList = []
         indexAppendMinRotList = []
         midAppendMaxRotList = []
@@ -313,7 +512,7 @@ class FingerModule(object):
         pinkyAppendMaxRotList = []
         pinkyAppendMinRotList = []                
         
-        #set Main extreme list
+        #set Main extreme list for index min ring pinky:
         indexMainMaxRotList = []
         indexMainMinRotList = []
         midMainMaxRotList = []
