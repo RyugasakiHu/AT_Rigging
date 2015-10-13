@@ -5,11 +5,13 @@ from Modules import control,hierarchy,limbModule
 
 class FingerModule(object):
     
+    posThumbArray = [(6.4540,13.8587,0.0015),(6.6541,13.7464,0.1988),(6.8466,13.6588,0.3228),(7.0855,13.5695,0.453)]
     posIndexArray = [[6.58,14.03,-0.04],[6.94,14.03,-0.04],[7.3,14.03,-0.04],[7.515,14.03,-0.04],[7.74,14.03,-0.04]]
     posMiddleArray = [[6.539,14.05,-0.22],[6.9,14.05,-0.22],[7.361,14.05,-0.22],[7.58,14.05,-0.22],[7.88,14.05,-0.22]]
     posRingArray = [[6.58,14.055,-0.413],[6.94,14.055,-0.413],[7.3,14.055,-0.413],[7.515,14.055,-0.413],[7.74,14.055,-0.413]]
     posPinkyArray = [[6.746,14.03,-0.585],[6.94,14.03,-0.585],[7.134,14.03,-0.585],[7.276,14.03,-0.585],[7.5,14.03,-0.585]]
     
+    rotThumbArrary = [[45.007,38.874,17.922],[57.442,33.9,47.31],[58.095,33.758,47.498],[57.894,36.279,48.717]]
     rotIndexArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotMiddleArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotRingArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
@@ -40,16 +42,34 @@ class FingerModule(object):
         #nameList
         self.fingerName = ['thumb','index','middle','ring','pinky']
         self.fingerJoint = ['Base','Root','Tip','Mid','End','Partial']
+        self.thumbJoint = ['Base','Root','Tip','Mid','End','Partial']
         
     def buildGuides(self):
         
         self.guides = []
         self.guideGrp = []
         
+        self.thumbGuides = []
         self.indexGuides = []
         self.middleGuides = []
         self.ringGuides = []
         self.pinkyGuides = []
+
+        #thumb
+        for num,obj in enumerate(self.posThumbArray):
+            name = nameUtils.getUniqueName(self.side,self.fingerName[1] + self.thumbJoint[num],'gud')
+            loc = pm.spaceLocator(n = name)
+            loc.t.set(obj)
+            loc.r.set(self.rotThumbArrary[num])
+            self.thumbGuides.append(loc)
+            
+        self.tempThumbGuides = list(self.thumbGuides)
+        self.tempThumbGuides.reverse()
+        for i in range(len(self.tempThumbGuides)):
+            if i != (len(self.tempThumbGuides) - 1):
+                pm.parent(self.tempThumbGuides[i],self.tempThumbGuides[i + 1])
+        self.tempThumbGuides.reverse()
+        self.guides.append(self.tempThumbGuides[0])        
             
         #index    
         for num,obj in enumerate(self.posIndexArray):
@@ -117,11 +137,11 @@ class FingerModule(object):
         
         #guide grp       
         guideName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-#         self.guideGrp = pm.group(self.tempIndexGuides[0],n = guideName) 
         self.guideGrp = pm.group(self.tempIndexGuides[0],self.tempMiddleGuides[0],
-                                 self.tempRingGuides[0],self.tempPinkyGuides[0],n = guideName)
+                                 self.tempRingGuides[0],self.tempPinkyGuides[0],
+                                 self.tempThumbGuides[0],n = guideName)
 
-        self.guideGrp.v.set(0)
+        self.guideGrp.v.set(1)
         
         #connect to the limb
         self.lm = limbModule.LimbModule()
@@ -131,39 +151,45 @@ class FingerModule(object):
         
         self.lm.build()  
         #build index
+        #thumb info
+        self.guideThumbPos = [x.getTranslation(space = 'world') for x in self.thumbGuides]
+        self.guideThumbRot = [x.getRotation(space = 'world') for x in self.thumbGuides]
+                
+        #thumb jj
+        self.thumbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.thumbBlendChain.fromList(self.guideThumbPos,self.guideThumbRot)               
+        
         #index info
         self.guideIndexPos = [x.getTranslation(space = 'world') for x in self.indexGuides]
         self.guideIndexRot = [x.getRotation(space = 'world') for x in self.indexGuides]
 
         #index jj
         self.indexBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.indexBlendChain.fromList(self.guideIndexPos,self.guideIndexPos)        
+        self.indexBlendChain.fromList(self.guideIndexPos,self.guideIndexRot)        
         
         #mid info
-        self.guideIndexPos = [x.getTranslation(space = 'world') for x in self.middleGuides]
-        self.guideIndexRot = [x.getRotation(space = 'world') for x in self.middleGuides] 
+        self.guideMidPos = [x.getTranslation(space = 'world') for x in self.middleGuides]
+        self.guideMidRot = [x.getRotation(space = 'world') for x in self.middleGuides] 
         
         #mid jj
         self.midBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.midBlendChain.fromList(self.guideIndexPos,self.guideIndexPos)        
+        self.midBlendChain.fromList(self.guideMidPos,self.guideMidRot)        
         
         #ring info
-        self.guideIndexPos = [x.getTranslation(space = 'world') for x in self.ringGuides]
-        self.guideIndexRot = [x.getRotation(space = 'world') for x in self.ringGuides] 
+        self.guideRingPos = [x.getTranslation(space = 'world') for x in self.ringGuides]
+        self.guideRingRot = [x.getRotation(space = 'world') for x in self.ringGuides] 
         
         #ring jj
         self.ringBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.ringBlendChain.fromList(self.guideIndexPos,self.guideIndexPos) 
+        self.ringBlendChain.fromList(self.guideRingPos,self.guideRingRot) 
         
         #pinky info
-        self.guideIndexPos = [x.getTranslation(space = 'world') for x in self.pinkyGuides]
-        self.guideIndexRot = [x.getRotation(space = 'world') for x in self.pinkyGuides] 
+        self.guidePinkyPos = [x.getTranslation(space = 'world') for x in self.pinkyGuides]
+        self.guidePinkyRot = [x.getRotation(space = 'world') for x in self.pinkyGuides] 
         
         #pinky jj
         self.pinkyBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.pinkyBlendChain.fromList(self.guideIndexPos,self.guideIndexPos) 
-        
-
+        self.pinkyBlendChain.fromList(self.guidePinkyPos,self.guidePinkyRot) 
                                    
         self.__handAttr()
         self.__fingerCC()
@@ -180,6 +206,24 @@ class FingerModule(object):
         control.addFloatAttr(self.lm.config_node.control,self.attrs,-3,10)
 
     def __fingerCC(self):
+        
+        #create thumb cc ctrl
+        self.thumbSdks = []
+        for num,thumbJoint in enumerate(self.thumbBlendChain.chain):
+            #correct jj name
+            pm.rename(thumbJoint,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJoint[num],'jj'))
+            if num < self.thumbBlendChain.chainLength() - 1:
+                #create sdk and correct cc name
+                cc = control.Control(self.side,self.baseName,size = thumbJoint.getRadius() / 5) 
+                cc.circleCtrl()
+                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJoint[num],'cc'))
+                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJoint[num],'SDK'))
+                self.indexSdks.append(cc.controlGrp)
+                #align cc grp
+                pm.xform(cc.controlGrp,ws = 1,matrix = thumbJoint.worldMatrix.get())
+                #parent jj
+                cc.controlGrp.setParent(thumbJoint)
+                self.thumbBlendChain.chain[num + 1].setParent(cc.control)           
         
         #create index cc ctrl
         self.indexSdks = []
@@ -367,9 +411,9 @@ class FingerModule(object):
         pinkyRelaxbMinRotList = [[0.0, 0.0, 0.0],[3.04113989245, -6.09821425613, 0.0],[0.0, -4.84964199343, 0.0],[0.0, -4.84964199343, 0.0]]
                  
         indexAppendMinRotList.append(indexRelaxbMinRotList)
-        midAppendMinRotList.append(midFistaMinRotList)        
-        ringAppendMinRotList.append(ringFistaMinRotList)    
-        pinkyAppendMinRotList.append(pinkyFistaMinRotList)            
+        midAppendMinRotList.append(midRelaxbMinRotList)        
+        ringAppendMinRotList.append(ringRelaxbMinRotList)    
+        pinkyAppendMinRotList.append(pinkyRelaxbMinRotList)            
             
         #relax_c        
         #relax_c max(10) val:        
