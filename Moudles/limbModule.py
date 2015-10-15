@@ -3,11 +3,11 @@ from subModules import fkChain,ikChain,boneChain,ribbon
 from Utils import nameUtils
 from Modules import control,hierarchy
 
-#ribbon distance loc set 
 class LimbModule(object):
     
-    posArray = [[0,12,0],[8,12,-2],[16,12,0],[18,12,0]]
+#     posArray = [[2,14,-0.2],[4,14,-0.3],[6.15,14,-0.2],[6.4,14,-0.2]]
     
+    posArray = [[2,14,-0.2],[4,14,-0.3],[6.15,14,-0.2]]
     rotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
     def __init__(self,baseName = 'arm',side = 'l',size = 1.5,
@@ -50,6 +50,7 @@ class LimbModule(object):
         self.ribbonData = ['ShoulderElbow','EblowWrist','Elbow']
         
         self.hi = None
+        
          
     def buildGuides(self):
         
@@ -74,6 +75,7 @@ class LimbModule(object):
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(self.guides[0],n = name)
                      
+               
     def build(self):
         
         self.guidePos = [x.getTranslation(space = 'world') for x in self.guides]
@@ -85,16 +87,16 @@ class LimbModule(object):
         
         #fk first 
         self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
-        self.fkChain.fromList(self.guidePos,self.guideRot)
+        self.fkChain.fromList(self.guidePos,self.guideRot,skipLast = 0)
         
         #then ik
         self.ikChain = ikChain.IkChain(self.baseName,self.side,self.size,self.solver,type = 'ikRP')
         self.ikChain.fromList(self.guidePos,self.guideRot)
         
         #ik cc connect ori
-        self.ikChain.ikCtrl.control.rx.connect(self.ikChain.chain[-2].rx)
-        self.ikChain.ikCtrl.control.ry.connect(self.ikChain.chain[-2].ry)
-        self.ikChain.ikCtrl.control.rz.connect(self.ikChain.chain[-2].rz)
+        self.ikChain.ikCtrl.control.rx.connect(self.ikChain.chain[-1].rx)
+        self.ikChain.ikCtrl.control.ry.connect(self.ikChain.chain[-1].ry)
+        self.ikChain.ikCtrl.control.rz.connect(self.ikChain.chain[-1].rz)
         
         #set cc
         pm.addAttr(self.config_node.control,ln = '__',at = 'enum',en = 'ArmCtrl:')
@@ -129,19 +131,22 @@ class LimbModule(object):
         reverseNode.outputX.connect(self.config_node.textObj[0].v)             
         
         #set pos
+        scaleValue = 1 * self.ikChain.length/16
+        size = 1.5 * self.ikChain.length / 16
         pm.xform(self.config_node.controlGrp,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
         self.config_node.controlGrp.rx.set(0)
         self.config_node.controlGrp.ry.set(0)
         self.config_node.controlGrp.rz.set(0)
-        pm.move(self.guidePos[2][0],self.guidePos[2][1] + 2 * self.size,self.guidePos[2][2],self.config_node.controlGrp)
+        self.config_node.controlGrp.sx.set(scaleValue)
+        self.config_node.controlGrp.sy.set(scaleValue)
+        self.config_node.controlGrp.sz.set(scaleValue)
+        pm.move(self.guidePos[2][0],self.guidePos[2][1] + 2 * size,self.guidePos[2][2],self.config_node.controlGrp)
         wrist_pos = pm.xform(self.blendChain.chain[2],query=1,ws=1,rp=1)
         pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.config_node.controlGrp + '.rotatePivot')
         pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.config_node.controlGrp + '.scalePivot')
         pm.pointConstraint(self.blendChain.chain[2],self.config_node.controlGrp,mo = 1)
 #         pm.orientConstraint(self.blendChain.chain[2],self.config_node.controlGrp,mo = 1)   
         control.lockAndHideAttr(self.config_node.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])     
-        
-        
     
     def __setRibbonUpper(self):
         '''
@@ -307,7 +312,7 @@ class LimbModule(object):
     def __cleanUp(self):
         
         #add cc ctrl
-        control.addSwitchAttr(self.config_node.control,['CC']) 
+        control.addFloatAttr(self.config_node.control,['CC'],0,1) 
         
         #ccDef grp and v
         self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp')) 
@@ -349,7 +354,11 @@ class LimbModule(object):
         #jj grp
         self.sklGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.stretchStartLoc,
                                n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
-
+        
+        armInitial =  self.blendChain.chain[0].getTranslation(space = 'world')
+        pm.move(armInitial[0],armInitial[1],armInitial[2],self.sklGrp + '.rotatePivot')
+        pm.move(armInitial[0],armInitial[1],armInitial[2],self.sklGrp + '.scalePivot')
+        
         for b in (self.ikChain,self.fkChain,self.blendChain):
             b.chain[0].setParent(self.sklGrp)
             
