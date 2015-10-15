@@ -36,6 +36,14 @@ class FingerModule(object):
         self.ringSdks = []
         self.pinkySdks = []   
         
+        #jj
+        self.thumbGrp = None
+        self.indexGrp = None
+        self.midGrp = None
+        self.ringGrp = None
+        self.pinkyGrp = None       
+        self.handGrp = None
+        
         #attrs
         self.attrs = ['fist_a','firs_b','relax_a','relax_b','relax_c',
                       'relax_d','relax_e','grab_a','grab_b','spread_a',
@@ -161,7 +169,12 @@ class FingerModule(object):
                 
         #thumb jj
         self.thumbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.thumbBlendChain.fromList(self.guideThumbPos,self.guideThumbRot,autoOrient = 0)       
+        self.thumbBlendChain.fromList(self.guideThumbPos,self.guideThumbRot,autoOrient = 0)
+        
+        self.thumbGrp = pm.group(self.thumbBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[0],'grp'))
+        thumbInitial =  self.thumbBlendChain.chain[0].getTranslation(space = 'world')
+        pm.move(thumbInitial[0],thumbInitial[1],thumbInitial[2],self.thumbGrp + '.rotatePivot')
+        pm.move(thumbInitial[0],thumbInitial[1],thumbInitial[2],self.thumbGrp + '.scalePivot')       
         
         #index info
         self.guideIndexPos = [x.getTranslation(space = 'world') for x in self.indexGuides]
@@ -171,45 +184,63 @@ class FingerModule(object):
         self.indexBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
         self.indexBlendChain.fromList(self.guideIndexPos,self.guideIndexRot)        
         
+        self.indexGrp = pm.group(self.indexBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[1],'grp'))
+        indexInitial =  self.indexBlendChain.chain[0].getTranslation(space = 'world')
+        pm.move(indexInitial[0],indexInitial[1],indexInitial[2],self.indexGrp + '.rotatePivot')
+        pm.move(indexInitial[0],indexInitial[1],indexInitial[2],self.indexGrp + '.scalePivot') 
+        
         #mid info
         self.guideMidPos = [x.getTranslation(space = 'world') for x in self.middleGuides]
         self.guideMidRot = [x.getRotation(space = 'world') for x in self.middleGuides] 
         
         #mid jj
         self.midBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.midBlendChain.fromList(self.guideMidPos,self.guideMidRot)        
+        self.midBlendChain.fromList(self.guideMidPos,self.guideMidRot)
         
+        self.midGrp = pm.group(self.midBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[2],'grp'))
+        midInitial =  self.midBlendChain.chain[0].getTranslation(space = 'world')
+        pm.move(midInitial[0],midInitial[1],midInitial[2],self.midGrp + '.rotatePivot')
+        pm.move(midInitial[0],midInitial[1],midInitial[2],self.midGrp + '.scalePivot')  
+               
         #ring info
         self.guideRingPos = [x.getTranslation(space = 'world') for x in self.ringGuides]
         self.guideRingRot = [x.getRotation(space = 'world') for x in self.ringGuides] 
         
         #ring jj
         self.ringBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.ringBlendChain.fromList(self.guideRingPos,self.guideRingRot) 
+        self.ringBlendChain.fromList(self.guideRingPos,self.guideRingRot)
         
+        self.ringGrp = pm.group(self.ringBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[3],'grp'))
+        ringInitial =  self.ringBlendChain.chain[0].getTranslation(space = 'world')
+        pm.move(ringInitial[0],ringInitial[1],ringInitial[2],self.ringGrp + '.rotatePivot')
+        pm.move(ringInitial[0],ringInitial[1],ringInitial[2],self.ringGrp + '.scalePivot')
+          
         #pinky info
         self.guidePinkyPos = [x.getTranslation(space = 'world') for x in self.pinkyGuides]
         self.guidePinkyRot = [x.getRotation(space = 'world') for x in self.pinkyGuides] 
         
         #pinky jj
         self.pinkyBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.pinkyBlendChain.fromList(self.guidePinkyPos,self.guidePinkyRot) 
-                                   
-        self.__handAttr()
+        self.pinkyBlendChain.fromList(self.guidePinkyPos,self.guidePinkyRot)
+        
+        self.pinkyGrp = pm.group(self.pinkyBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[4],'grp'))
+        pinkyInitial =  self.pinkyBlendChain.chain[0].getTranslation(space = 'world')
+        pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.rotatePivot')
+        pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.scalePivot')               
+ 
         self.__fingerCC()
         self.__setSDK()
+        self.__connectArm()
 #         self.__nodeConnect()
+    
+    def __fingerCC(self):
         
-    def __handAttr(self):
-           
         #set cc
         pm.addAttr(self.lm.config_node.control,ln = '___',at = 'enum',en = 'HandDrives:')
         pm.setAttr(self.lm.config_node.control + '.___',e = 1,channelBox = 1)
         
         #add attr
-        control.addFloatAttr(self.lm.config_node.control,self.attrs,-3,10)
-
-    def __fingerCC(self):
+        control.addFloatAttr(self.lm.config_node.control,self.attrs,-3,10)        
         
         #create thumb cc ctrl     
         for num,thumbJoint in enumerate(self.thumbBlendChain.chain):
@@ -1152,6 +1183,10 @@ class FingerModule(object):
         def __cleanUp():
             pass                        
                  
+    def __connectArm(self):
+        
+        #set whole grp
+        self.handGrp = pm.group(self.thumbGrp,self.indexGrp,self.midGrp,self.ringGrp,self.pinkyGrp,n = nameUtils.getUniqueName(self.side,'hand','grp'))
         
 # import maya.cmds as mc
 # 
@@ -1185,3 +1220,9 @@ class FingerModule(object):
 # fg = fingerModule.FingerModule()
 # fg.buildGuides()
 # #fg.build()
+
+        
+
+        
+        
+        
