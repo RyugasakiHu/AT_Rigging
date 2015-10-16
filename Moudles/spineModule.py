@@ -7,12 +7,16 @@ class SpineModule(object):
 
     posSpineArray = [[],[],[]]
 
-    def __init__(self,baseName = 'spine',size = 0.5,):
+    def __init__(self,baseName = 'spine',size = 0.5,segment = 9):
         
+        #self para
         self.side = 'c'
         self.baseName = baseName 
         self.size = size
+        self.segment = segment
+        self.length  = None
         
+        #guide para
         self.guideCc = None
         self.guideTrv = None
         self.guides = None
@@ -31,12 +35,15 @@ class SpineModule(object):
         #build curve
         self.guideCc = pm.curve(d = 3,p = [[0,9.040668,0.0623416],[0,10.507795,0.181759],[0,11.991982,0.164699],
                                          [0,13.322632,-0.108255],[0,14.397388,-0.0570757]],k = [0,0,0,1,2,2,2],
-                              n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','gud'))         
-
+                              n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','gud'))      
+        curveInfo = pm.createNode('curveInfo',n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','cvINFO'))
+        self.guideCc.getShape().worldSpace.connect(curveInfo.inputCurve)
+        self.length = curveInfo.arcLength.get()
+        
     def build(self):
         
         #build Trv
-        self.guideTrv = pm.joint(p = [0,0,0])
+        self.guideTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.side,self.baseName,'trv'))
         moPathName = nameUtils.getUniqueName(self.side,self.baseName,'MOP')
         moPathNode = pm.pathAnimation(self.guideCc,self.guideTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
                          worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)        
@@ -45,8 +52,8 @@ class SpineModule(object):
         #set Trv Loc:
         trvPosList = []
 
-        for num in range(0,9):
-            trvDis = num * 0.125
+        for num in range(0,self.segment):
+            trvDis = num * (1 / float(self.segment-1))
             pm.setAttr(moPathNode + '.uValue',trvDis)
             trvPos = self.guideTrv.getTranslation(space = 'world')
             trvPosList.append(trvPos)
@@ -69,9 +76,47 @@ class SpineModule(object):
                 pm.parent(tempGuides[i],tempGuides[i + 1])            
         
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')        
-        self.guideGrp = pm.group(self.guideCc,self.guides[0],n = name)   
+        self.guideGrp = pm.group(self.guideCc,self.guides[0],self.guideTrv,n = name)   
         
-            
+        #create jj
+        self.guideSpinePos = [x.getTranslation(space = 'world') for x in self.guides]
+        self.guideSpineRot = [x.getRotation(space = 'world') for x in self.guides]
+        
+        self.spineBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.spineBlendChain.fromList(self.guideSpinePos,self.guideSpineRot)
+        
+        #create IKRibbonSpine
+        #ribbon spine info:
+        curveInfo = [0,(self.segment - 1) / 4,(self.segment - 1) / 2,
+                     ((self.segment - 1) / 2 + (self.segment - 1)) / 2,
+                     (self.segment - 1)]
+        ribbonCurve = []
+        
+        #create curve
+        for jjInfo in curveInfo:
+            ribonJjPos = self.spineBlendChain.chain[jjInfo].getTranslation(space = 'world') 
+            ribbonCurve.append(ribonJjPos)
+        
+        #set ribbon offset
+        offset = 0.0
+        if self.length / self.segment <= 1:
+            offset = 0.5
+        else :
+            offset = self.length / ((self.segment - 1) / 2)
+        
+        ribbonCurveL = pm.curve(d = 3,p = [ribbonCurve[0],ribbonCurve[1],ribbonCurve[2],ribbonCurve[3],ribbonCurve[4]],
+                                k = [0,0,0,1,2,2,2],n = nameUtils.getUniqueName(self.side,self.baseName + '_ribbonL','gud'))
+
+        pm.move(offset,0,0,ribbonCurveL)         
+
+        ribbonCurveR = pm.curve(d = 3,p = [ribbonCurve[0],ribbonCurve[1],ribbonCurve[2],ribbonCurve[3],ribbonCurve[4]],
+                                k = [0,0,0,1,2,2,2],n = nameUtils.getUniqueName(self.side,self.baseName + '_ribbonR','gud')) 
+         
+        pm.move(-offset,0,0,ribbonCurveR)     
+        
+        #create ribbon surf
+        
+                
             
 # import maya.cmds as mc
 # from see import see
