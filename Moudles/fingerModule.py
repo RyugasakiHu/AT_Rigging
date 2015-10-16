@@ -26,7 +26,7 @@ class FingerModule(object):
         
         #guides 
         self.guides = None
-        self.guideGrp = None        
+        self.guideGrp = None     
         
         #cc
         self.config_node = None
@@ -58,6 +58,11 @@ class FingerModule(object):
         
     def buildGuides(self):
         
+        #connect to the limb
+        self.lm = limbModule.LimbModule()
+        self.lm.buildGuides()
+        
+        #build guides        
         self.guides = []
         self.guideGrp = []
         
@@ -155,10 +160,6 @@ class FingerModule(object):
 
         self.guideGrp.v.set(0)
         
-        #connect to the limb
-        self.lm = limbModule.LimbModule()
-        self.lm.buildGuides()
-        
     def build(self):
         
         self.lm.build()  
@@ -231,7 +232,6 @@ class FingerModule(object):
         self.__fingerCC()
         self.__setSDK()
         self.__connectArm()
-#         self.__nodeConnect()
     
     def __fingerCC(self):
         
@@ -1179,14 +1179,51 @@ class FingerModule(object):
         for number,attrList in enumerate(pinkyRotAttrs):
             pm.setDrivenKeyframe(attrList,v = pinkyMainMinRotList[number],
                                  cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)                                                       
-        
-        def __cleanUp():
-            pass                        
                  
     def __connectArm(self):
         
         #set whole grp
         self.handGrp = pm.group(self.thumbGrp,self.indexGrp,self.midGrp,self.ringGrp,self.pinkyGrp,n = nameUtils.getUniqueName(self.side,'hand','grp'))
+        handGrpPiv = self.lm.blendChain.chain[-1].getTranslation(space = 'world')
+        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],self.handGrp + '.rotatePivot')
+        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],self.handGrp + '.scalePivot')
+        pm.pointConstraint(self.lm.blendChain.chain[-1],self.handGrp,mo = 0)
+        
+        #create bridge loc and grp
+        #create bri loc
+        ikBri = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'armIK_bri','loc'))
+        fkBri = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'armFK_bri','loc'))
+        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],ikBri)
+        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],fkBri)
+        
+        #create bri grp
+        ikBriGrp = pm.group(ikBri,n = nameUtils.getUniqueName(self.side,'armIK_bri','grp'))
+        fkBriGrp = pm.group(fkBri,n = nameUtils.getUniqueName(self.side,'armFK_bri','grp'))
+        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],ikBriGrp + '.rotatePivot')
+        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],fkBriGrp + '.scalePivot')
+        ikBriGrp.v.set(0)
+        fkBriGrp.v.set(0)        
+        
+        #parent bridge
+        ikBriGrp.setParent(self.lm.ikChain.ikCtrl.control)
+        fkBriGrp.setParent(self.lm.fkChain.chain[-1])
+        
+        #create OC
+        pm.orientConstraint(ikBri,fkBri,self.handGrp,mo = 0)
+        pm.connectAttr(self.lm.config_node.control + '.IKFK',self.handGrp + '_orientConstraint1.CN_l_armIK_bri_0_locW0')
+        
+        #createNode
+        reverseNode = pm.createNode('reverse',n = nameUtils.getUniqueName(self.side,'hand','REV'))
+        pm.connectAttr(self.lm.config_node.control + '.IKFK',reverseNode.inputX)
+        pm.connectAttr(reverseNode.outputX,self.handGrp + '_orientConstraint1.CN_l_armFK_bri_0_locW1')
+        
+        #clean up
+        self.handGrp.setParent(self.lm.hi.SKL)
+        self.guideGrp.setParent(self.lm.hi.GUD)
+        
+    
+#         pm.createNode('')
+#         self.handGrp.setParent(self.lm.blendChain.chain[-1])
         
 # import maya.cmds as mc
 # 
@@ -1220,9 +1257,3 @@ class FingerModule(object):
 # fg = fingerModule.FingerModule()
 # fg.buildGuides()
 # #fg.build()
-
-        
-
-        
-        
-        
