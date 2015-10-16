@@ -15,6 +15,7 @@ class SpineModule(object):
         
         self.guideCc = None
         self.guideTrv = None
+        self.guides = None
         self.guideGrp = None
         
         
@@ -24,35 +25,51 @@ class SpineModule(object):
         self.hi = hierarchy.Hierarchy(characterName = 'test')
         self.hi.build()        
         
+        #group
+        self.guides = []
+        
         #build curve
         self.guideCc = pm.curve(d = 3,p = [[0,9.040668,0.0623416],[0,10.507795,0.181759],[0,11.991982,0.164699],
                                          [0,13.322632,-0.108255],[0,14.397388,-0.0570757]],k = [0,0,0,1,2,2,2],
-                              n = nameUtils.getUniqueName(self.side,self.baseName,'gud'))
+                              n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','gud'))         
+
+    def build(self):
         
         #build Trv
         self.guideTrv = pm.joint(p = [0,0,0])
         moPathName = nameUtils.getUniqueName(self.side,self.baseName,'MOP')
-        pm.pathAnimation(self.guideCc,self.guideTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
-                         worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)
+        moPathNode = pm.pathAnimation(self.guideCc,self.guideTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
+                         worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)        
+        pm.disconnectAttr(moPathNode + '_uValue.output',moPathNode + '.uValue')
         
-#         CN_c_spine_0_MOP_uValue.output CN_c_spine_0_MOP.uValue
-        moPathNode = pm.select(moPathName)
-        moPathNode.output.Disconnect(moPathNode.uValue)
-        
-        
-        
-        
-        
-        
-        
-        
-        #group
-        name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(self.guideCc,n = name)        
+        #set Trv Loc:
+        trvPosList = []
 
-    def build(self):
+        for num in range(0,9):
+            trvDis = num * 0.125
+            pm.setAttr(moPathNode + '.uValue',trvDis)
+            trvPos = self.guideTrv.getTranslation(space = 'world')
+            trvPosList.append(trvPos)
+
+        #set loc
+        #set loc grp
+        for i,p in enumerate(trvPosList):
+            trvName = nameUtils.getUniqueName(self.side,self.baseName,'gud')
+            loc = pm.spaceLocator(n = trvName)
+            loc.t.set(p)
+            self.guides.append(loc)
+            loc.setParent(self.guideGrp)
+            
+        tempGuides = list(self.guides)
+        tempGuides.reverse()
         
-        pass
+        #set loc grp
+        for i in range(len(tempGuides)):
+            if i != (len(tempGuides) - 1):
+                pm.parent(tempGuides[i],tempGuides[i + 1])            
+        
+        name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')        
+        self.guideGrp = pm.group(self.guideCc,self.guides[0],n = name)   
         
             
             
