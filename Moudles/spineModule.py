@@ -46,7 +46,7 @@ class SpineModule(object):
         self.guideTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.side,self.baseName,'trv'))
         moPathName = nameUtils.getUniqueName(self.side,self.baseName,'MOP')
         moPathNode = pm.pathAnimation(self.guideCc,self.guideTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
-                         worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)        
+                                      worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)        
         pm.disconnectAttr(moPathNode + '_uValue.output',moPathNode + '.uValue')
         
         #set Trv Loc:
@@ -104,6 +104,7 @@ class SpineModule(object):
         else :
             offset = self.length / ((self.segment - 1) / 2)
         
+        #set ribbon cur
         ribbonCurveL = pm.curve(d = 3,p = [ribbonCurve[0],ribbonCurve[1],ribbonCurve[2],ribbonCurve[3],ribbonCurve[4]],
                                 k = [0,0,0,1,2,2,2],n = nameUtils.getUniqueName(self.side,self.baseName + '_ribbonL','gud'))
 
@@ -114,7 +115,29 @@ class SpineModule(object):
          
         pm.move(-offset,0,0,ribbonCurveR)     
         
+        ribbonCurveR.setParent(self.guideGrp)
+        ribbonCurveL.setParent(self.guideGrp)
+        
         #create ribbon surf
+        ribbonSurf = pm.loft(ribbonCurveR,ribbonCurveL,ch = 0,u = 1,c = 0,ar = 1,d = 3,ss = 1, rn = 0,po = 0,rsn = 1,
+                             n = nameUtils.getUniqueName(self.side,self.baseName + '_ribbon','surf'))
+        
+        ribbonClusList = []
+        ribbonJc = []
+        
+        for num in [0,2,4]:
+            pos = pm.select(ribbonSurf[0] + '.cv[' + str(num) + '][0:3]',r = 1)
+            clus = pm.cluster()
+            pm.rename(clus[1],nameUtils.getUniqueName(self.side,self.baseName + '_ribbon','cls'))
+            ribbonClusList.append(clus)
+            pm.select(cl = 1)
+            
+        for num,x in enumerate(ribbonClusList):
+            jc = pm.joint(p = x[1].getRotatePivot(),n = nameUtils.getUniqueName(self.side,self.baseName + '_ribbon','jc'))
+            ribbonJc.append(jc)
+            pm.select(cl = 1)
+            pm.delete(ribbonClusList[num])
+        
         
                 
             
