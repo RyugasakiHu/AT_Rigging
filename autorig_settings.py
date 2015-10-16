@@ -10,6 +10,7 @@ suffix = ['jj',# joint joint
           'jc',# joint control          
           'je',# joint end
           'ik',# ik joint
+          'trv',#travel joint
           'ikRP',# ik Rotate Plane
           'ikSC',# ik Single Chain
           'ikNF',# ik no flip
@@ -24,7 +25,8 @@ suffix = ['jj',# joint joint
           'gud',# guide
           'off',# offset
           'cog',# cog
-          'cvINNFO',# curveinfo
+          'surf',#surface
+          'cvINFO',# curveinfo
           'MOP',# motion Path Node
           'RANG',# setrangeNode
           'GUD',# guide grp
