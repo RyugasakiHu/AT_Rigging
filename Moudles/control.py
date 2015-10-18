@@ -1,7 +1,7 @@
 #import maya.cmds as mc
 import pymel.core as pm
 from Utils import nameUtils,xformUtils
-from Modules import control
+
 
 class Control(object):
 
@@ -20,11 +20,11 @@ class Control(object):
     
     def microCtrl(self):
         
-        #set cc and ccllimit
+        #set cc and cc limit
         self.control = pm.circle(name = self.baseName + '_cc',ch = 0,o = 1 ,nr = [0,0,1],r = 0.2)[0]
         pm.transformLimits( tx=(-1, 1), ty=(-1, 1))
         pm.transformLimits( etx=(True, True), ety=(True, True))
-        control.lockAndHideAttr(self.control,['tz','rx','ry','rz','sx','sy','sz','v'])
+        lockAndHideAttr(self.control,['tz','rx','ry','rz','sx','sy','sz','v'])
         
         #set boundary
         boundary = pm.curve(name = self.baseName + '_bdr',d = 1,
@@ -49,6 +49,28 @@ class Control(object):
         self.__finalizeCc()       
         self.__colorSet() 
         
+    def bodyCtrl(self):
+
+        self.__buildName()
+        
+        if self.controlName :
+            #que
+            insideCircle = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size)
+            outsideCircleF = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size * 3 / 4)
+            outsideCircleB = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size * 3 / 4)
+            
+            pm.move(0.5,0,0,outsideCircleF[0].getShape().cv,r = 1)
+            pm.parent(outsideCircleF[0].getShape(),insideCircle,shape = 1,add = 1)
+            pm.delete(outsideCircleF)
+
+            pm.move(-0.5,0,0,outsideCircleB[0].getShape().cv,r = 1)
+            pm.parent(outsideCircleB[0].getShape(),insideCircle,shape = 1,add = 1)   
+            pm.delete(outsideCircleB)   
+
+        self.control = insideCircle[0]
+        self.__finalizeCc()       
+        self.__colorSet() 
+
     def cogCtrlTest(self):
         self.__buildHierachyName()
         if not self.controlName :
@@ -78,7 +100,7 @@ class Control(object):
         self.__buildName()
         
         if self.controlName :
-            #que
+            
             self.control = pm.curve(name = self.controlName , d = 1,p = [(-0.5,0.5,0.5),(0.5,0.5,0.5),(0.5,0.5,-0.5),(-0.5,0.5,-0.5),
                                                           (-0.5,0.5,0.5),(-0.5,-0.5,0.5),(-0.5,-0.5,-0.5),(0.5,-0.5,-0.5),
                                                           (0.5,-0.5,0.5),(0.5,-0.5,0.5),(-0.5,-0.5,0.5),(0.5,-0.5,0.5),
@@ -212,13 +234,15 @@ class Control(object):
         '''
         this def set the color,c = yellow,l = blue,r = red
         '''
-        self.control.getShape().overrideEnabled.set(1)
-        if self.side == 'c':
-            self.control.getShape().overrideColor.set(17) 
-        elif self.side == 'l':
-            self.control.getShape().overrideColor.set(6) 
-        elif self.side == 'r':        
-            self.control.getShape().overrideColor.set(13)        
+        for shape in self.control.getShapes():
+            #open override
+            shape.overrideEnabled.set(1)
+            if self.side == 'm':
+                shape.overrideColor.set(17) 
+            elif self.side == 'l':
+                shape.overrideColor.set(6) 
+            elif self.side == 'r':        
+                shape.overrideColor.set(13)        
             
 def lockAndHideAttr(objName,attrs):
     '''
@@ -231,23 +255,11 @@ def lockAndHideAttr(objName,attrs):
     
     for attr in attrs:
         pm.setAttr(objName + "." + attr,l=True,k=False,cb=False)
-        
-def addSwitchAttr(objName,attrs):
-    
-    '''
-    this function add switch addr
-    @para attrs: list 
-    '''
-    
-    if not objName:
-        return 
-    for attr in attrs:
-        pm.addAttr(objName, ln = attr, at ="float",min = 0,max = 1,dv = 0,h = False,k = True )
                         
 def addFloatAttr(objName,attrs,minV,maxV):
     
     '''
-    this function add mutiple attr
+    this function add single/multiple attr
     @para attrs: list 
     '''
     
