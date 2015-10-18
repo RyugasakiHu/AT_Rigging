@@ -7,10 +7,10 @@ class SpineModule(object):
 
     posSpineArray = [[],[],[]]
 
-    def __init__(self,baseName = 'spine',size = 0.5,segment = 9):
+    def __init__(self,side = 'm',baseName = 'spine',size = 0.5,segment = 9):
         
         #self para
-        self.side = 'c'
+        self.side = side
         self.baseName = baseName 
         self.size = size
         self.segment = segment
@@ -21,6 +21,9 @@ class SpineModule(object):
         self.guideTrv = None
         self.guides = None
         self.guideGrp = None
+        
+        #nameList
+        self.nameList = ['Hip','Mid','Chest']
         
         
     def buildGuides(self):
@@ -77,12 +80,13 @@ class SpineModule(object):
         
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')        
         self.guideGrp = pm.group(self.guideCc,self.guides[0],self.guideTrv,n = name)   
+        self.guideGrp.v.set(0)
         
         #create jj
         self.guideSpinePos = [x.getTranslation(space = 'world') for x in self.guides]
         self.guideSpineRot = [x.getRotation(space = 'world') for x in self.guides]
         
-        self.spineBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.spineBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'fk')
         self.spineBlendChain.fromList(self.guideSpinePos,self.guideSpineRot)
         
         #create IKRibbonSpine
@@ -124,7 +128,9 @@ class SpineModule(object):
         
         ribbonClusList = []
         ribbonJc = []
+        spineCc = []
         
+        #get Jc pos
         for num in [0,2,4]:
             pos = pm.select(ribbonSurf[0] + '.cv[' + str(num) + '][0:3]',r = 1)
             clus = pm.cluster()
@@ -132,14 +138,61 @@ class SpineModule(object):
             ribbonClusList.append(clus)
             pm.select(cl = 1)
             
+        #set Jc and Jc ctrl    
         for num,x in enumerate(ribbonClusList):
-            jc = pm.joint(p = x[1].getRotatePivot(),n = nameUtils.getUniqueName(self.side,self.baseName + '_ribbon','jc'))
+            jc = pm.joint(p = x[1].getRotatePivot(),
+                          n = nameUtils.getUniqueName(self.side,self.baseName + self.nameList[num],'jc'),
+                          radius = self.length / 3)
             ribbonJc.append(jc)
             pm.select(cl = 1)
             pm.delete(ribbonClusList[num])
+            pm.select(cl = 1)
+            cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.length / 2) 
+            cc.circleCtrl()
+            spineCc.append(cc.control)
+            pm.xform(cc.controlGrp,ws = 1,matrix = jc.worldMatrix.get())
+            pm.setAttr(cc.controlGrp + '.rz',90)
         
+        #skin Jc
+        for num,jc in enumerate(ribbonJc):
+            jc.setParent(spineCc[num])
+
+        pm.skinCluster(ribbonJc[0],ribbonJc[1],ribbonJc[2],ribbonSurf[0],
+                       tsb = 1,ih = 1,mi = 3,dr = 4,rui = 1)
         
-                
+        #set fol
+        #create / rename fol
+        pm.select(ribbonSurf[0],r = 1)
+        pm.runtime.CreateHair(9,1,2,0,0,0,0,5,0,2,2,1)
+        pm.select('*surfFollicle*',r = 1)
+        folSel = pm.select('*surfFollicleShape*',tgl = 1)
+        fol = pm.ls(sl = 1)
+        folList = []
+               
+        for i in range(len(fol)):
+            j = i + 1
+            pm.rename(fol[i],nameUtils.getUniqueName(self.side,self.baseName,'fol'))
+            folList.append(fol[i])
+             
+        #clean scene    
+        pm.parent(w = 1)
+        pm.delete('hairSystem*')
+        pm.delete('curve*')
+        pm.delete('nucleus*')           
+        pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')  )
+        
+        #rebuild fol pos
+        for num,fol in enumerate(folList):
+            pm.setAttr(fol + '.parameterU',(num * (1 / float(self.segment - 1))))
+            jj = pm.joint(p = (0,0,0),n = nameUtils.getUniqueName(self.side,self.baseName,'jj'),
+                          radius = self.length / 5)
+            jj.setParent(fol)
+            jj.translateX.set(0)
+            jj.translateY.set(0)
+            jj.translateZ.set(0)
+        
+
+
             
 # import maya.cmds as mc
 # from see import see
