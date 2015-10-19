@@ -34,6 +34,7 @@ class SpineModule(object):
         self.stretchLength = None
         self.stretchStartLoc = None
         self.stretchEndLoc = None
+        self.stretchCube = None
         
         #nameList
         self.nameList = ['Hip','Mid','Chest']
@@ -218,20 +219,21 @@ class SpineModule(object):
         
         #rebuild fol pos
         self.spineIkBlendJoint = []
+        self.stretchCube = []
         for num,fol in enumerate(folList):
             pm.setAttr(fol + '.parameterU',(num * (1 / float(self.segment - 1))))
             jj = pm.joint(p = (0,0,0),n = nameUtils.getUniqueName(self.side,self.baseName,'jj'),
                           radius = self.length / 5)
             self.spineIkBlendJoint.append(jj)
             jj.setParent(fol)
-            tempCube = pm.polyCube(ch = 1,o = 1,w = 1,h = 1,d = 1,cuv = 4,
-                                   n = nameUtils.getUniqueName(self.side,self.baseName,'cube'))
+            tempCube = pm.polyCube(ch = 1,o = 1,w = float(self.length / 5),h = float(self.length / 10),
+                                   d = float(self.length / 5),cuv = 4,n = nameUtils.getUniqueName(self.side,self.baseName,'cube'))
             tempCube[0].setParent(jj)
+            tempCube[0].v.set(0)
+            self.stretchCube.append(tempCube[0])
             jj.translateX.set(0)
             jj.translateY.set(0)
             jj.translateZ.set(0)
-
-            
             
         #create spine grp
         self.spineGrp = pm.group(self.spineCc[0].getParent(),self.spineCc[1].getParent(),self.spineCc[2].getParent(),folGrp,ribbonSurf[0],
@@ -293,21 +295,28 @@ class SpineModule(object):
         for num,remapNode in enumerate(remapList):
             multipleNode.outputX.connect(remapNode.inputValue)
             remapNode.inputMax.set(2)
-            remapNode.outputMin.set(2)
-            remapNode.outputMax.set(0)
+            remapNode.outputMin.set(3)
+            remapNode.outputMax.set(-1)
             if self.segment - num - 1 != num:
-                print remapNode
                 remapNode.outValue.connect(self.spineIkBlendJoint[num].sx)
                 remapNode.outValue.connect(self.spineIkBlendJoint[num].sz)
                 remapNode.outValue.connect(self.spineIkBlendJoint[self.segment - num - 1].sx)
                 remapNode.outValue.connect(self.spineIkBlendJoint[self.segment - num - 1].sz)
-                remapNode.value[2].value_FloatValue.set(0.5)
+                remapNode.value[0].value_FloatValue.set(num * float(1 / float(self.segment - 1)))
+                remapNode.value[0].value_Position.set(0)                
+                remapNode.value[1].value_FloatValue.set(float(1 - (num * float(1 / float(self.segment - 1)))))
+                remapNode.value[1].value_Position.set(1)                
+                remapNode.value[2].value_FloatValue.set(0.5)       
                 remapNode.value[2].value_Position.set(0.5)
-                remapNode.value[2].value_Interp.set(1)             
+                remapNode.value[2].value_Interp.set(1)       
                 
             else:
                 remapNode.outValue.connect(self.spineIkBlendJoint[num].sx)
                 remapNode.outValue.connect(self.spineIkBlendJoint[num].sz)
+                remapNode.value[0].value_FloatValue.set(num * float(1 / float(self.segment - 1)))
+                remapNode.value[0].value_Position.set(0)   
+                remapNode.value[1].value_FloatValue.set(float(1 - (num * float(1 / float(self.segment - 1)))))
+                remapNode.value[1].value_Position.set(1)                                                        
                 remapNode.value[2].value_FloatValue.set(0.5)
                 remapNode.value[2].value_Position.set(0.5)
                 remapNode.value[2].value_Interp.set(1)                 
