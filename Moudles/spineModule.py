@@ -7,20 +7,23 @@ class SpineModule(object):
 
     posSpineArray = [[],[],[]]
 
-    def __init__(self,side = 'm',baseName = 'spine',size = 0.5,segment = 9):
+    def __init__(self,side = 'm',baseName = 'spine',segment = 9):
         
         #self para
         self.side = side
         self.baseName = baseName 
-        self.size = size
         self.segment = segment
         self.length  = None
+        self.size = None
         
         #guide para
         self.guideCc = None
         self.guideTrv = None
         self.guides = None
         self.guideGrp = None
+        
+        #ctrl
+        self.config_node = None
         
         #nameList
         self.nameList = ['Hip','Mid','Chest']
@@ -82,12 +85,32 @@ class SpineModule(object):
         self.guideGrp = pm.group(self.guideCc,self.guides[0],self.guideTrv,n = name)   
         self.guideGrp.v.set(0)
         
-        #create jj
+        self.__bodyCtrl()
+        self.__fkJj()
+        self.__ikJj()
+        
+    def __bodyCtrl(self):
+         
+        self.config_node = control.Control(self.side,self.baseName + 'Cc',size = self.length / 2) 
+        self.config_node.bodyCtrl()
+        
+        midPos = pm.xform(self.guides[(self.segment - 1) / 2],query=1,ws=1,rp=1)
+        
+        #move the target object
+        pm.move(midPos[0],midPos[1],midPos[2] - self.length / 1.5,self.config_node.controlGrp,a=True)
+        pm.setAttr(self.config_node.controlGrp + '.ry',90)
+        self.config_node.controlGrp.setParent(self.hi.CC)
+        
+    def __fkJj(self):
+        
+        #create fk jj
         self.guideSpinePos = [x.getTranslation(space = 'world') for x in self.guides]
         self.guideSpineRot = [x.getRotation(space = 'world') for x in self.guides]
         
         self.spineBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'fk')
         self.spineBlendChain.fromList(self.guideSpinePos,self.guideSpineRot)
+    
+    def __ikJj(self):    
         
         #create IKRibbonSpine
         #ribbon spine info:
@@ -163,7 +186,7 @@ class SpineModule(object):
         #set fol
         #create / rename fol
         pm.select(ribbonSurf[0],r = 1)
-        pm.runtime.CreateHair(9,1,2,0,0,0,0,5,0,2,2,1)
+        pm.runtime.CreateHair(9,1,2,0,0,0,0,5,0,1,2,1)
         pm.select('*surfFollicle*',r = 1)
         folSel = pm.select('*surfFollicleShape*',tgl = 1)
         fol = pm.ls(sl = 1)
@@ -178,20 +201,26 @@ class SpineModule(object):
         pm.parent(w = 1)
         pm.delete('hairSystem*')
         pm.delete('curve*')
-        pm.delete('nucleus*')           
-        pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')  )
+        pm.delete('nucleus*')   
+        pm.delete('pfxHair1')        
+        folGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')  )
         
         #rebuild fol pos
         for num,fol in enumerate(folList):
             pm.setAttr(fol + '.parameterU',(num * (1 / float(self.segment - 1))))
             jj = pm.joint(p = (0,0,0),n = nameUtils.getUniqueName(self.side,self.baseName,'jj'),
                           radius = self.length / 5)
+            
             jj.setParent(fol)
             jj.translateX.set(0)
             jj.translateY.set(0)
             jj.translateZ.set(0)
         
-
+        #create spine grp
+        pm.group(spineCc[0].getParent(),spineCc[1].getParent(),spineCc[2].getParent(),folGrp,ribbonSurf[0],
+                 n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
+        ribbonSurf[0].inheritsTransform.set(0)
+        folGrp.inheritsTransform.set(0)
 
             
 # import maya.cmds as mc
