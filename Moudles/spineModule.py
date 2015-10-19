@@ -17,6 +17,9 @@ class SpineModule(object):
         self.size = None
         self.spineFkBlendChain = None
         self.spineIkBlendJoint = None
+        self.spineFkRevBlendChain = None 
+        self.spineFkGrp = None
+        self.spineIkGrp = None
         
         #guide para
         self.guideCc = None
@@ -27,7 +30,6 @@ class SpineModule(object):
         #ctrl
         self.ribbonJc = None
         self.spineCc = None
-        self.spineGrp = None
         self.config_node = None
         
         #stretch
@@ -81,6 +83,7 @@ class SpineModule(object):
             trvName = nameUtils.getUniqueName(self.side,self.baseName,'gud')
             loc = pm.spaceLocator(n = trvName)
             loc.t.set(p)
+            loc.r.set(0,90,0)
             self.guides.append(loc)
             loc.setParent(self.guideGrp)
             
@@ -100,6 +103,7 @@ class SpineModule(object):
         self.__fkJj()
         self.__ikJj()
         self.__SquashStretch()
+#         self.__enchanceFk()
         
     def __bodyCtrl(self):
          
@@ -113,15 +117,55 @@ class SpineModule(object):
         pm.setAttr(self.config_node.controlGrp + '.ry',90)
         self.config_node.controlGrp.setParent(self.hi.CC)
         
+        #lock and hide
+        control.lockAndHideAttr(self.config_node.control,['sx','sy','sz','v'])
+        
+        #add attr
+        control.addFloatAttr(self.config_node.control,['volume'],0,1)
+        pm.addAttr(self.config_node.control,ln = '______',at = 'enum',en = '0')
+        pm.setAttr(self.config_node.control + '.______',e = 1,channelBox = 1)
+        control.addFloatAttr(self.config_node.control,
+                             ['bend_up','bend_mid','bend_lo'],-3600,3600)
+
+        pm.addAttr(self.config_node.control,ln = '_______',at = 'enum',en = '0')
+        pm.setAttr(self.config_node.control + '._______',e = 1,channelBox = 1)
+        control.addFloatAttr(self.config_node.control,
+                             ['bend_up_rev','bend_mid_rev','bend_lo_rev'],-3600,3600)        
+        
+        
     def __fkJj(self):
         
         #create fk jj
-        self.guideSpinePos = [x.getTranslation(space = 'world') for x in self.guides]
-        self.guideSpineRot = [x.getRotation(space = 'world') for x in self.guides]
+        self.spineFkRevBlendChain = []        
+        self.guideSpineFkPos = [x.getTranslation(space = 'world') for x in self.guides]
+        self.guideSpineFkRot = [x.getRotation(space = 'world') for x in self.guides]
         
         self.spineFkBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'fk')
-        self.spineFkBlendChain.fromList(self.guideSpinePos,self.guideSpineRot)
-    
+        self.spineFkBlendChain.fromList(self.guideSpineFkPos,self.guideSpineFkRot,autoOrient = 0)
+        
+        self.spineFkGrp = pm.group(self.spineFkBlendChain.chain[0],
+                                   n = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','grp'))
+        
+        self.spineFkGrp.setParent(self.config_node.control)
+        
+        #create revFk
+        self.guides.reverse()
+        self.guideSpineRevFkPos = [x.getTranslation(space = 'world') for x in self.guides]
+        self.guideSpineRevFkRot = [x.getRotation(space = 'world') for x in self.guides]
+        
+        self.spineRevFkBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'fk')
+        self.spineRevFkBlendChain.fromList(self.guideSpineFkPos,self.guideSpineFkRot,autoOrient = 0)        
+
+
+        #set Rotate
+        for num,chain in enumerate(self.spineFkBlendChain.chain):
+            if 1 <= num <= (self.segment / 3):
+                self.config_node.control.bend_lo.connect(chain.rz)
+            elif (self.segment / 3) < num < ((self.segment / 3) * 2):
+                self.config_node.control.bend_mid.connect(chain.rz)
+            elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
+                self.config_node.control.bend_up.connect(chain.rz)
+                 
     def __ikJj(self):    
         
         #create IKRibbonSpine
@@ -236,13 +280,16 @@ class SpineModule(object):
             jj.translateZ.set(0)
             
         #create spine grp
-        self.spineGrp = pm.group(self.spineCc[0].getParent(),self.spineCc[1].getParent(),self.spineCc[2].getParent(),folGrp,ribbonSurf[0],
-                 n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
+        self.spineIkGrp = pm.group(self.spineCc[0].getParent(),self.spineCc[1].getParent(),self.spineCc[2].getParent(),folGrp,ribbonSurf[0],
+                                 n = nameUtils.getUniqueName(self.side,self.baseName + 'Ik','grp'))
         ribbonSurf[0].inheritsTransform.set(0)
         folGrp.inheritsTransform.set(0)
         
         #clean
-        self.spineGrp.setParent(self.config_node.control)
+        self.spineIkGrp.setParent(self.config_node.control)
+        
+        #temp
+        self.spineIkGrp.v.set(0)
         
         '''put chest ctrl under chest cc'''
         '''put leg under hip cc'''
@@ -255,13 +302,14 @@ class SpineModule(object):
         distanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','dist')
         multipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','MDN')
         conditionNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','COND')
-        colorBlueRemapValueName = nameUtils.getUniqueName(self.side,self.baseName + 'Blue','RV')
-        colorRedRemapValueName = nameUtils.getUniqueName(self.side,self.baseName + 'Red','RV')
+        colorRedRemapValueName = nameUtils.getUniqueName(self.side,self.baseName + 'Red','RV')        
+        colorGreenRemapValueName = nameUtils.getUniqueName(self.side,self.baseName + 'Green','RV')
 #         expressionNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','EXP')
+        stretchSwitchNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','BCN')
         
-        #remap Node
+        #remap Node for ikJj scale
         remapNodeRed = pm.createNode('remapValue',n = colorRedRemapValueName)
-        remapNodeBlue = pm.createNode('remapValue',n = colorBlueRemapValueName)
+        remapNodeGreen = pm.createNode('remapValue',n = colorGreenRemapValueName)
         remapNodeNum = ((self.segment - 1) / 2) + 1
         remapList = []
         for num in range(0,remapNodeNum):
@@ -273,6 +321,7 @@ class SpineModule(object):
         distBetweenNode = pm.createNode('distanceBetween',n = distanceBetweenNodeName)
         multipleNode = pm.createNode('multiplyDivide',n = multipleNodeName)
         conditionNode = pm.createNode('condition',n = conditionNodeName)
+        stretchSwitchNode = pm.createNode('blendColors',n = conditionNodeName)
         
         #set command
         self.stretchStartLoc = pm.spaceLocator(n = startLocName)
@@ -291,6 +340,9 @@ class SpineModule(object):
         self.stretchStartLoc.worldPosition[0].connect(distBetweenNode.point1) 
         self.stretchEndLoc.worldPosition[0].connect(distBetweenNode.point2) 
         self.stretchLength = distBetweenNode.distance.get()
+        self.config_node.control.volume.connect(stretchSwitchNode.blender)
+        stretchSwitchNode.color1R.set(1)
+        multipleNode.outputX.connect(stretchSwitchNode.color2R)
         
         #multiple    
         distBetweenNode.distance.connect(multipleNode.input1X)
@@ -299,7 +351,7 @@ class SpineModule(object):
         
         #remap    
         for num,remapNode in enumerate(remapList):
-            multipleNode.outputX.connect(remapNode.inputValue)
+            stretchSwitchNode.outputR.connect(remapNode.inputValue)
             remapNode.inputMax.set(2)
             remapNode.outputMin.set(3)
             remapNode.outputMax.set(-1)
@@ -331,29 +383,31 @@ class SpineModule(object):
         conditionNode.secondTerm.set(1)
         conditionNode.operation.set(2)
         conditionNode.colorIfTrueR.set(0)
-        conditionNode.colorIfFalseR.set(1)        
-        conditionNode.colorIfTrueG.set(1)
+        conditionNode.colorIfFalseR.set(0)        
+        conditionNode.colorIfTrueG.set(0)
         conditionNode.colorIfFalseG.set(0)
         conditionNode.colorIfTrueB.set(0)
         conditionNode.colorIfFalseB.set(0)
         
-        #bug fix
-        multipleNode.outputX.connect(remapNodeRed.inputValue)
-        multipleNode.outputX.connect(remapNodeBlue.inputValue)
+        #bug spotted!!!
+        stretchSwitchNode.outputR.connect(remapNodeRed.inputValue)
+        stretchSwitchNode.outputR.connect(remapNodeGreen.inputValue)
         remapNodeRed.inputMin.set(1)
         remapNodeRed.inputMax.set(2)
         remapNodeRed.outputMin.set(0)
         remapNodeRed.outputMax.set(1)
-        remapNodeBlue.inputMin.set(1)
-        remapNodeBlue.inputMax.set(2)
-        remapNodeBlue.outputMin.set(0)
-        remapNodeBlue.outputMax.set(1)        
+        remapNodeGreen.inputMin.set(0)
+        remapNodeGreen.inputMax.set(1)
+        remapNodeGreen.outputMin.set(1)
+        remapNodeGreen.outputMax.set(0)   
+        remapNodeRed.outValue.connect(conditionNode.colorIfTrueR)   
+        remapNodeGreen.outValue.connect(conditionNode.colorIfFalseG)    
 #         print materials +  '.incandescenceR = ' + conditionNode + '.outColorR'
 #         print materials +  '.incandescenceG = ' + conditionNode + '.outColorG'
 #         print materials +  '.incandescenceB = ' + conditionNode + '.outColorB'
-#         conditionNode.outColor.outColorR.connect(materials.incandescence.incandescenceR)
-#         conditionNode.outColor.outColorG.connect(materials.incandescence.incandescenceG)
-#         conditionNode.outColor.outColorB.connect(materials.incandescence.incandescenceB)
+        conditionNode.outColor.outColorR.connect(materials.incandescence.incandescenceR)
+        conditionNode.outColor.outColorG.connect(materials.incandescence.incandescenceG)
+        conditionNode.outColor.outColorB.connect(materials.incandescence.incandescenceB)
         
 # import maya.cmds as mc
 # from see import see
