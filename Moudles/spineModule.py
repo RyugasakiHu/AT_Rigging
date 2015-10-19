@@ -229,7 +229,7 @@ class SpineModule(object):
             tempCube = pm.polyCube(ch = 1,o = 1,w = float(self.length / 5),h = float(self.length / 10),
                                    d = float(self.length / 5),cuv = 4,n = nameUtils.getUniqueName(self.side,self.baseName,'cube'))
             tempCube[0].setParent(jj)
-            tempCube[0].v.set(0)
+#             tempCube[0].v.set(0)
             self.stretchCube.append(tempCube[0])
             jj.translateX.set(0)
             jj.translateY.set(0)
@@ -247,16 +247,21 @@ class SpineModule(object):
         '''put chest ctrl under chest cc'''
         '''put leg under hip cc'''
         
-   
     def __SquashStretch(self):
         
-        #create Name
+        #perpare Name
         startLocName = nameUtils.getUniqueName(self.side,self.baseName + '_StretchStart','loc')
         endLocName = nameUtils.getUniqueName(self.side,self.baseName + '_StretchEnd','loc')
         distanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','dist')
         multipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','MDN')
+        conditionNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','COND')
+        colorBlueRemapValueName = nameUtils.getUniqueName(self.side,self.baseName + 'Blue','RV')
+        colorRedRemapValueName = nameUtils.getUniqueName(self.side,self.baseName + 'Red','RV')
+#         expressionNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','EXP')
         
         #remap Node
+        remapNodeRed = pm.createNode('remapValue',n = colorRedRemapValueName)
+        remapNodeBlue = pm.createNode('remapValue',n = colorBlueRemapValueName)
         remapNodeNum = ((self.segment - 1) / 2) + 1
         remapList = []
         for num in range(0,remapNodeNum):
@@ -267,6 +272,7 @@ class SpineModule(object):
         #createNode
         distBetweenNode = pm.createNode('distanceBetween',n = distanceBetweenNodeName)
         multipleNode = pm.createNode('multiplyDivide',n = multipleNodeName)
+        conditionNode = pm.createNode('condition',n = conditionNodeName)
         
         #set command
         self.stretchStartLoc = pm.spaceLocator(n = startLocName)
@@ -297,30 +303,58 @@ class SpineModule(object):
             remapNode.inputMax.set(2)
             remapNode.outputMin.set(3)
             remapNode.outputMax.set(-1)
-            if self.segment - num - 1 != num:
+            if (self.segment - num - 1) != num:
                 remapNode.outValue.connect(self.spineIkBlendJoint[num].sx)
                 remapNode.outValue.connect(self.spineIkBlendJoint[num].sz)
                 remapNode.outValue.connect(self.spineIkBlendJoint[self.segment - num - 1].sx)
                 remapNode.outValue.connect(self.spineIkBlendJoint[self.segment - num - 1].sz)
-                remapNode.value[0].value_FloatValue.set(num * float(1 / float(self.segment - 1)))
-                remapNode.value[0].value_Position.set(0)                
-                remapNode.value[1].value_FloatValue.set(float(1 - (num * float(1 / float(self.segment - 1)))))
-                remapNode.value[1].value_Position.set(1)                
-                remapNode.value[2].value_FloatValue.set(0.5)       
-                remapNode.value[2].value_Position.set(0.5)
-                remapNode.value[2].value_Interp.set(1)       
                 
             else:
                 remapNode.outValue.connect(self.spineIkBlendJoint[num].sx)
                 remapNode.outValue.connect(self.spineIkBlendJoint[num].sz)
-                remapNode.value[0].value_FloatValue.set(num * float(1 / float(self.segment - 1)))
-                remapNode.value[0].value_Position.set(0)   
-                remapNode.value[1].value_FloatValue.set(float(1 - (num * float(1 / float(self.segment - 1)))))
-                remapNode.value[1].value_Position.set(1)                                                        
-                remapNode.value[2].value_FloatValue.set(0.5)
-                remapNode.value[2].value_Position.set(0.5)
-                remapNode.value[2].value_Interp.set(1)                 
-            
+                
+            remapNode.value[0].value_FloatValue.set(num * float(1 / float(self.segment - 1)))
+            remapNode.value[0].value_Position.set(0)   
+            remapNode.value[1].value_FloatValue.set(float(1 - (num * float(1 / float(self.segment - 1)))))
+            remapNode.value[1].value_Position.set(1)                                                        
+            remapNode.value[2].value_FloatValue.set(0.5)
+            remapNode.value[2].value_Position.set(0.5)
+            remapNode.value[2].value_Interp.set(1)
+                                 
+        #create shader
+        materials = pm.shadingNode('blinn',asShader = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Stretch','MAT'))
+        shadingGroup = pm.sets(renderable = 1,noSurfaceShader = 1,empty = 1,name = nameUtils.getUniqueName(self.side,self.baseName + 'Stretch','SG'))
+        materials.outColor.connect(shadingGroup.surfaceShader)
+
+        #condition node
+        multipleNode.outputX.connect(conditionNode.firstTerm)
+        conditionNode.secondTerm.set(1)
+        conditionNode.operation.set(2)
+        conditionNode.colorIfTrueR.set(0)
+        conditionNode.colorIfFalseR.set(1)        
+        conditionNode.colorIfTrueG.set(1)
+        conditionNode.colorIfFalseG.set(0)
+        conditionNode.colorIfTrueB.set(0)
+        conditionNode.colorIfFalseB.set(0)
+        
+        #bug fix
+        multipleNode.outputX.connect(remapNodeRed.inputValue)
+        multipleNode.outputX.connect(remapNodeBlue.inputValue)
+        remapNodeRed.inputMin.set(1)
+        remapNodeRed.inputMax.set(2)
+        remapNodeRed.outputMin.set(0)
+        remapNodeRed.outputMax.set(1)
+        remapNodeBlue.inputMin.set(1)
+        remapNodeBlue.inputMax.set(2)
+        remapNodeBlue.outputMin.set(0)
+        remapNodeBlue.outputMax.set(1)        
+#         print materials +  '.incandescenceR = ' + conditionNode + '.outColorR'
+#         print materials +  '.incandescenceG = ' + conditionNode + '.outColorG'
+#         print materials +  '.incandescenceB = ' + conditionNode + '.outColorB'
+#         conditionNode.outColor.outColorR.connect(materials.incandescence.incandescenceR)
+#         conditionNode.outColor.outColorG.connect(materials.incandescence.incandescenceG)
+#         conditionNode.outColor.outColorB.connect(materials.incandescence.incandescenceB)
+        
 # import maya.cmds as mc
 # from see import see
 # pathOfFiles = 'C:\Users\UV\Desktop\Rigging workshop/'
