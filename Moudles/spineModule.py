@@ -15,6 +15,8 @@ class SpineModule(object):
         self.segment = segment
         self.length  = None
         self.size = None
+        self.spineFkBlendChain = None
+        self.spineIkBlendJoint = None
         
         #guide para
         self.guideCc = None
@@ -23,7 +25,15 @@ class SpineModule(object):
         self.guideGrp = None
         
         #ctrl
+        self.ribbonJc = None
+        self.spineCc = None
+        self.spineGrp = None
         self.config_node = None
+        
+        #stretch
+        self.stretchLength = None
+        self.stretchStartLoc = None
+        self.stretchEndLoc = None
         
         #nameList
         self.nameList = ['Hip','Mid','Chest']
@@ -88,6 +98,7 @@ class SpineModule(object):
         self.__bodyCtrl()
         self.__fkJj()
         self.__ikJj()
+        self.__SquashStretch()
         
     def __bodyCtrl(self):
          
@@ -107,8 +118,8 @@ class SpineModule(object):
         self.guideSpinePos = [x.getTranslation(space = 'world') for x in self.guides]
         self.guideSpineRot = [x.getRotation(space = 'world') for x in self.guides]
         
-        self.spineBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'fk')
-        self.spineBlendChain.fromList(self.guideSpinePos,self.guideSpineRot)
+        self.spineFkBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'fk')
+        self.spineFkBlendChain.fromList(self.guideSpinePos,self.guideSpineRot)
     
     def __ikJj(self):    
         
@@ -121,7 +132,7 @@ class SpineModule(object):
         
         #create curve
         for jjInfo in curveInfo:
-            ribonJjPos = self.spineBlendChain.chain[jjInfo].getTranslation(space = 'world') 
+            ribonJjPos = self.spineFkBlendChain.chain[jjInfo].getTranslation(space = 'world') 
             ribbonCurve.append(ribonJjPos)
         
         #set ribbon offset
@@ -150,8 +161,8 @@ class SpineModule(object):
                              n = nameUtils.getUniqueName(self.side,self.baseName + '_ribbon','surf'))
         
         ribbonClusList = []
-        ribbonJc = []
-        spineCc = []
+        self.ribbonJc = []
+        self.spineCc = []
         
         #get Jc pos
         for num in [0,2,4]:
@@ -166,21 +177,21 @@ class SpineModule(object):
             jc = pm.joint(p = x[1].getRotatePivot(),
                           n = nameUtils.getUniqueName(self.side,self.baseName + self.nameList[num],'jc'),
                           radius = self.length / 3)
-            ribbonJc.append(jc)
+            self.ribbonJc.append(jc)
             pm.select(cl = 1)
             pm.delete(ribbonClusList[num])
             pm.select(cl = 1)
             cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.length / 2) 
             cc.circleCtrl()
-            spineCc.append(cc.control)
+            self.spineCc.append(cc.control)
             pm.xform(cc.controlGrp,ws = 1,matrix = jc.worldMatrix.get())
             pm.setAttr(cc.controlGrp + '.rz',90)
         
         #skin Jc
-        for num,jc in enumerate(ribbonJc):
-            jc.setParent(spineCc[num])
+        for num,jc in enumerate(self.ribbonJc):
+            jc.setParent(self.spineCc[num])
 
-        pm.skinCluster(ribbonJc[0],ribbonJc[1],ribbonJc[2],ribbonSurf[0],
+        pm.skinCluster(self.ribbonJc[0],self.ribbonJc[1],self.ribbonJc[2],ribbonSurf[0],
                        tsb = 1,ih = 1,mi = 3,dr = 4,rui = 1)
         
         #set fol
@@ -206,22 +217,100 @@ class SpineModule(object):
         folGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')  )
         
         #rebuild fol pos
+        self.spineIkBlendJoint = []
         for num,fol in enumerate(folList):
             pm.setAttr(fol + '.parameterU',(num * (1 / float(self.segment - 1))))
             jj = pm.joint(p = (0,0,0),n = nameUtils.getUniqueName(self.side,self.baseName,'jj'),
                           radius = self.length / 5)
-            
+            self.spineIkBlendJoint.append(jj)
             jj.setParent(fol)
+            tempCube = pm.polyCube(ch = 1,o = 1,w = 1,h = 1,d = 1,cuv = 4,
+                                   n = nameUtils.getUniqueName(self.side,self.baseName,'cube'))
+            tempCube[0].setParent(jj)
             jj.translateX.set(0)
             jj.translateY.set(0)
             jj.translateZ.set(0)
-        
+
+            
+            
         #create spine grp
-        pm.group(spineCc[0].getParent(),spineCc[1].getParent(),spineCc[2].getParent(),folGrp,ribbonSurf[0],
+        self.spineGrp = pm.group(self.spineCc[0].getParent(),self.spineCc[1].getParent(),self.spineCc[2].getParent(),folGrp,ribbonSurf[0],
                  n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
         ribbonSurf[0].inheritsTransform.set(0)
         folGrp.inheritsTransform.set(0)
-
+        
+        #clean
+        self.spineGrp.setParent(self.config_node.control)
+        
+        '''put chest ctrl under chest cc'''
+        '''put leg under hip cc'''
+        
+   
+    def __SquashStretch(self):
+        
+        #create Name
+        startLocName = nameUtils.getUniqueName(self.side,self.baseName + '_StretchStart','loc')
+        endLocName = nameUtils.getUniqueName(self.side,self.baseName + '_StretchEnd','loc')
+        distanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','dist')
+        multipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','MDN')
+        
+        #remap Node
+        remapNodeNum = ((self.segment - 1) / 2) + 1
+        remapList = []
+        for num in range(0,remapNodeNum):
+            remapNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_Stretch','RV')
+            remapNode = pm.createNode('remapValue',n = remapNodeName)
+            remapList.append(remapNode)
+        
+        #createNode
+        distBetweenNode = pm.createNode('distanceBetween',n = distanceBetweenNodeName)
+        multipleNode = pm.createNode('multiplyDivide',n = multipleNodeName)
+        
+        #set command
+        self.stretchStartLoc = pm.spaceLocator(n = startLocName)
+        self.stretchEndLoc = pm.spaceLocator(n = endLocName)
+        
+        #align loc
+        startPos = self.ribbonJc[0].worldMatrix.get()
+        endPos = self.ribbonJc[-1].worldMatrix.get()
+        pm.xform(self.stretchStartLoc,matrix = startPos)
+        pm.xform(self.stretchEndLoc,matrix = endPos)
+        self.stretchStartLoc.setParent(self.spineCc[0])
+        self.stretchEndLoc.setParent(self.spineCc[-1])
+        
+        #connect
+        #stretch
+        self.stretchStartLoc.worldPosition[0].connect(distBetweenNode.point1) 
+        self.stretchEndLoc.worldPosition[0].connect(distBetweenNode.point2) 
+        self.stretchLength = distBetweenNode.distance.get()
+        
+        #multiple    
+        distBetweenNode.distance.connect(multipleNode.input1X)
+        multipleNode.input2X.set(self.stretchLength)
+        multipleNode.operation.set(2)
+        
+        #remap    
+        for num,remapNode in enumerate(remapList):
+            multipleNode.outputX.connect(remapNode.inputValue)
+            remapNode.inputMax.set(2)
+            remapNode.outputMin.set(2)
+            remapNode.outputMax.set(0)
+            if self.segment - num - 1 != num:
+                print remapNode
+                remapNode.outValue.connect(self.spineIkBlendJoint[num].sx)
+                remapNode.outValue.connect(self.spineIkBlendJoint[num].sz)
+                remapNode.outValue.connect(self.spineIkBlendJoint[self.segment - num - 1].sx)
+                remapNode.outValue.connect(self.spineIkBlendJoint[self.segment - num - 1].sz)
+                remapNode.value[2].value_FloatValue.set(0.5)
+                remapNode.value[2].value_Position.set(0.5)
+                remapNode.value[2].value_Interp.set(1)             
+                
+            else:
+                remapNode.outValue.connect(self.spineIkBlendJoint[num].sx)
+                remapNode.outValue.connect(self.spineIkBlendJoint[num].sz)
+                remapNode.value[2].value_FloatValue.set(0.5)
+                remapNode.value[2].value_Position.set(0.5)
+                remapNode.value[2].value_Interp.set(1)                 
             
 # import maya.cmds as mc
 # from see import see
@@ -249,4 +338,4 @@ class SpineModule(object):
 # from Modules import spineModule
 # rp = spineModule.SpineModule()
 # rp.buildGuides()
-# rp.build()         
+# rp.build()              
