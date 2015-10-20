@@ -102,8 +102,8 @@ class SpineModule(object):
         
         self.__bodyCtrl()
         self.__fkJj()
-        self.__ikJj()
-        self.__SquashStretch()
+#         self.__ikJj()
+#         self.__SquashStretch()
 #         self.__enchanceFk()
         
     def __bodyCtrl(self):
@@ -183,9 +183,9 @@ class SpineModule(object):
             fkJj.ry.connect(fkMultipleNode.input1Y)
             fkJj.rz.connect(fkMultipleNode.input1Z)
             
-            fkMultipleNode.input2X.set(1)
+            fkMultipleNode.input2X.set(-1)
             fkMultipleNode.input2Y.set(-1)
-            fkMultipleNode.input2Z.set(1)
+            fkMultipleNode.input2Z.set(-1)
             
             fkMultipleNode.outputX.connect(fkPlusMinusAverageNode.input3D[0].input3Dx)
             fkMultipleNode.outputY.connect(fkPlusMinusAverageNode.input3D[0].input3Dy)
@@ -198,26 +198,17 @@ class SpineModule(object):
         self.spineFkGrp.setParent(self.config_node.control)
         
         #create revFk
-        self.revFkGuides = []
-        self.trvPosList
-        for num,pos in enumerate(self.trvPosList):
-            revFkName = nameUtils.getUniqueName(self.side,self.baseName + 'RevFk','gud')
-            loc = pm.spaceLocator(n = revFkName)
-            loc.t.set(pos)
-            self.revFkGuides.append(loc)
-            loc.setParent(self.guideGrp)
-        
-        for num,fk in enumerate(self.revFkGuides):
-            if num != len(self.revFkGuides) - 1:
-                pm.parent(self.revFkGuides[num],self.revFkGuides[num + 1])
-                
-        self.revFkGuides.reverse()    
-        self.guideSpineRevFkPos = [x.getTranslation(space = 'world') for x in self.revFkGuides]
-        self.guideSpineRevFkRot = [x.getRotation(space = 'world') for x in self.revFkGuides]
+        self.guideSpineRevFkPos = [x.getTranslation(space = 'world') for x in self.fkGuides]
+        self.guideSpineRevFkRot = [x.getRotation(space = 'world') for x in self.fkGuides]
  
-        self.spineRevFkBlendChain = boneChain.BoneChain(self.baseName + 'Rev',self.side,type = 'fk')
-        self.spineRevFkBlendChain.fromList(self.guideSpineRevFkPos,self.guideSpineRevFkRot,autoOrient = 1)       
-        self.spineRevFkBlendChain.chain[0].setParent(self.spineFkBlendChain.chain[-1])
+        self.spineFkRevBlendChain = boneChain.BoneChain(self.baseName + 'Rev',self.side,type = 'fk')
+        self.spineFkRevBlendChain.fromList(self.guideSpineRevFkPos,self.guideSpineRevFkRot,autoOrient = 1)  
+        
+        print self.spineFkRevBlendChain.chain
+        #reroot skl
+        pm.select(self.spineFkRevBlendChain.chain[-1])
+        pm.runtime.RerootSkeleton()     
+        self.spineFkRevBlendChain.chain[-1].setParent(self.spineFkBlendChain.chain[-1])
 
         #set Rotate
         #nodename
@@ -227,7 +218,7 @@ class SpineModule(object):
         multiplefkRevTwistNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkRevTwist','MDN')
         multiplefkSideNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkSide','MDN')
         multiplefkRevSideNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkRevSide','MDN')                
-         
+          
         #nodecreate
         multiplefkBendNode = pm.createNode('multiplyDivide',n = multiplefkBendNodeName)
         multiplefkRevBendNode = pm.createNode('multiplyDivide',n = multiplefkRevBendNodeName)
@@ -235,7 +226,7 @@ class SpineModule(object):
         multiplefkRevTwistNode = pm.createNode('multiplyDivide',n = multiplefkRevTwistNodeName)
         multiplefkSideNode = pm.createNode('multiplyDivide',n = multiplefkSideNodeName)
         multiplefkRevSideNode = pm.createNode('multiplyDivide',n = multiplefkRevSideNodeName)        
-        
+         
         #connect
         #bend
         self.config_node.control.bend_lo.connect(multiplefkBendNode.input1X)
@@ -244,17 +235,17 @@ class SpineModule(object):
         self.config_node.control.bend_lo_rev.connect(multiplefkRevBendNode.input1X)
         self.config_node.control.bend_mid_rev.connect(multiplefkRevBendNode.input1Y)
         self.config_node.control.bend_up_rev.connect(multiplefkRevBendNode.input1Z)
-        
+         
         multiplefkBendNode.input2X.set(-1)
         multiplefkBendNode.input2Y.set(-1)
         multiplefkBendNode.input2Z.set(-1)
         multiplefkBendNode.operation.set(1)
-        
+         
         multiplefkRevBendNode.input2X.set(-1)
         multiplefkRevBendNode.input2Y.set(-1)
         multiplefkRevBendNode.input2Z.set(-1)
         multiplefkRevBendNode.operation.set(1)        
-        
+         
         #twist
         self.config_node.control.twist_lo.connect(multiplefkTwistNode.input1X)
         self.config_node.control.twist_mid.connect(multiplefkTwistNode.input1Y)
@@ -262,17 +253,17 @@ class SpineModule(object):
         self.config_node.control.twist_lo_rev.connect(multiplefkRevTwistNode.input1X)
         self.config_node.control.twist_mid_rev.connect(multiplefkRevTwistNode.input1Y)
         self.config_node.control.twist_up_rev.connect(multiplefkRevTwistNode.input1Z)
-        
+         
         multiplefkTwistNode.input2X.set(-1)
         multiplefkTwistNode.input2Y.set(-1)
         multiplefkTwistNode.input2Z.set(-1)
         multiplefkTwistNode.operation.set(1)
-        
+         
         multiplefkRevTwistNode.input2X.set(-1)
         multiplefkRevTwistNode.input2Y.set(-1)
         multiplefkRevTwistNode.input2Z.set(-1)
         multiplefkRevTwistNode.operation.set(1)        
-        
+         
         #side
         self.config_node.control.side_lo.connect(multiplefkSideNode.input1X)
         self.config_node.control.side_mid.connect(multiplefkSideNode.input1Y)
@@ -280,17 +271,17 @@ class SpineModule(object):
         self.config_node.control.side_lo_rev.connect(multiplefkRevSideNode.input1X)
         self.config_node.control.side_mid_rev.connect(multiplefkRevSideNode.input1Y)
         self.config_node.control.side_up_rev.connect(multiplefkRevSideNode.input1Z)
-        
+         
         multiplefkSideNode.input2X.set(-1)
         multiplefkSideNode.input2Y.set(-1)
         multiplefkSideNode.input2Z.set(-1)
         multiplefkSideNode.operation.set(1)
-        
+         
         multiplefkRevSideNode.input2X.set(-1)
         multiplefkRevSideNode.input2Y.set(-1)
         multiplefkRevSideNode.input2Z.set(-1)
         multiplefkRevSideNode.operation.set(1)                     
-        
+         
         #fk
         for num,chain in enumerate(self.spineFkBlendChain.chain):
             #lo
@@ -308,36 +299,36 @@ class SpineModule(object):
                 multiplefkBendNode.outputZ.connect(chain.rz)
                 multiplefkSideNode.outputZ.connect(chain.ry)
                 multiplefkTwistNode.outputZ.connect(chain.rx)
-           
+            
         #revFk        
-        self.spineRevFkBlendChain.chain.reverse()
-        for num,chain in enumerate(self.spineRevFkBlendChain.chain):
+        self.spineFkRevBlendChain.chain.reverse()
+        for num,chain in enumerate(self.spineFkRevBlendChain.chain):
             #lo
             if 1 <= num <= (self.segment / 3 - 1):
                 multiplefkRevBendNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
                 multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
                 multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
-                
+                 
                 fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)
                 fkPlusMinusAverageList[num].output3D.output3Dy.connect(chain.ry)
                 fkPlusMinusAverageList[num].output3D.output3Dx.connect(chain.rx)
-                
+                 
             #mid              
             if (self.segment / 3 - 1) < num < ((self.segment / 3) * 2):
                 multiplefkRevBendNode.outputY.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
                 multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
                 multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
-                
+                 
                 fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)
                 fkPlusMinusAverageList[num].output3D.output3Dy.connect(chain.ry)
                 fkPlusMinusAverageList[num].output3D.output3Dx.connect(chain.rx)
-                
+                 
             #up    
             elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
                 multiplefkRevBendNode.outputZ.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
                 multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
                 multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
-                
+                 
                 fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)     
                 fkPlusMinusAverageList[num].output3D.output3Dy.connect(chain.ry)
                 fkPlusMinusAverageList[num].output3D.output3Dx.connect(chain.rx)
