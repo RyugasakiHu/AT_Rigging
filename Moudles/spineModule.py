@@ -102,9 +102,9 @@ class SpineModule(object):
         
         self.__bodyCtrl()
         self.__fkJj()
-#         self.__ikJj()
-#         self.__SquashStretch()
-#         self.__enchanceFk()
+        self.__ikJj()
+        self.__squashStretch()
+        self.__combine()
         
     def __bodyCtrl(self):
          
@@ -204,7 +204,6 @@ class SpineModule(object):
         self.spineFkRevBlendChain = boneChain.BoneChain(self.baseName + 'Rev',self.side,type = 'fk')
         self.spineFkRevBlendChain.fromList(self.guideSpineRevFkPos,self.guideSpineRevFkRot,autoOrient = 1)  
         
-        print self.spineFkRevBlendChain.chain
         #reroot skl
         pm.select(self.spineFkRevBlendChain.chain[-1])
         pm.runtime.RerootSkeleton()     
@@ -314,7 +313,7 @@ class SpineModule(object):
                 fkPlusMinusAverageList[num].output3D.output3Dx.connect(chain.rx)
                  
             #mid              
-            if (self.segment / 3 - 1) < num < ((self.segment / 3) * 2):
+            elif (self.segment / 3 - 1) < num < ((self.segment / 3) * 2):
                 multiplefkRevBendNode.outputY.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
                 multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
                 multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
@@ -440,7 +439,7 @@ class SpineModule(object):
             tempCube = pm.polyCube(ch = 1,o = 1,w = float(self.length / 5),h = float(self.length / 10),
                                    d = float(self.length / 5),cuv = 4,n = nameUtils.getUniqueName(self.side,self.baseName,'cube'))
             tempCube[0].setParent(jj)
-#             tempCube[0].v.set(0)
+            tempCube[0].v.set(0)
             self.stretchCube.append(tempCube[0])
             jj.translateX.set(0)
             jj.translateY.set(0)
@@ -448,7 +447,7 @@ class SpineModule(object):
             
         #create spine grp
         self.spineIkGrp = pm.group(self.spineCc[0].getParent(),self.spineCc[1].getParent(),self.spineCc[2].getParent(),folGrp,ribbonSurf[0],
-                                 n = nameUtils.getUniqueName(self.side,self.baseName + 'Ik','grp'))
+                                   n = nameUtils.getUniqueName(self.side,self.baseName + 'Ik','grp'))
         ribbonSurf[0].inheritsTransform.set(0)
         folGrp.inheritsTransform.set(0)
         
@@ -456,12 +455,12 @@ class SpineModule(object):
         self.spineIkGrp.setParent(self.config_node.control)
         
         #temp
-        self.spineIkGrp.v.set(0)
+        self.spineIkGrp.v.set(1)
         
         '''put chest ctrl under chest cc'''
         '''put leg under hip cc'''
         
-    def __SquashStretch(self):
+    def __squashStretch(self):
         
         #perpare Name
         startLocName = nameUtils.getUniqueName(self.side,self.baseName + '_StretchStart','loc')
@@ -576,6 +575,15 @@ class SpineModule(object):
         conditionNode.outColor.outColorG.connect(materials.incandescence.incandescenceG)
         conditionNode.outColor.outColorB.connect(materials.incandescence.incandescenceB)
 
+    def __combine(self):
+        
+        hip = self.spineCc[0].getParent()
+        mid = self.spineCc[1].getParent()
+        chest = self.spineCc[2].getParent()
+        
+        hip.setParent(self.spineFkRevBlendChain.chain[-1])
+        chest.setParent(self.spineFkRevBlendChain.chain[0])
+        mid.setParent(self.spineFkRevBlendChain.chain[(self.segment - 1) / 2])
         
 # import maya.cmds as mc
 # from see import see
@@ -604,3 +612,4 @@ class SpineModule(object):
 # rp = spineModule.SpineModule()
 # rp.buildGuides()
 # rp.build()              
+
