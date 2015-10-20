@@ -22,10 +22,12 @@ class SpineModule(object):
         self.spineIkGrp = None
         
         #guide para
+        self.trvPosList = None
         self.guideCc = None
         self.guideTrv = None
-        self.guides = None
-        self.guideGrp = None
+        self.guideGrp = None        
+        self.fkGuides = None
+        self.revFkGuides = None
         
         #ctrl
         self.ribbonJc = None
@@ -49,12 +51,12 @@ class SpineModule(object):
         self.hi.build()        
         
         #group
-        self.guides = []
+        self.fkGuides = []
         
         #build curve
         self.guideCc = pm.curve(d = 3,p = [[0,9.040668,0.0623416],[0,10.507795,0.181759],[0,11.991982,0.164699],
-                                         [0,13.322632,-0.108255],[0,14.397388,-0.0570757]],k = [0,0,0,1,2,2,2],
-                              n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','gud'))      
+                                [0,13.322632,-0.108255],[0,14.397388,-0.0570757]],k = [0,0,0,1,2,2,2],
+                                n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','gud'))      
         curveInfo = pm.createNode('curveInfo',n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','cvINFO'))
         self.guideCc.getShape().worldSpace.connect(curveInfo.inputCurve)
         self.length = curveInfo.arcLength.get()
@@ -69,25 +71,25 @@ class SpineModule(object):
         pm.disconnectAttr(moPathNode + '_uValue.output',moPathNode + '.uValue')
         
         #set Trv Loc:
-        trvPosList = []
+        self.trvPosList = []
 
         for num in range(0,self.segment):
             trvDis = num * (1 / float(self.segment-1))
             pm.setAttr(moPathNode + '.uValue',trvDis)
             trvPos = self.guideTrv.getTranslation(space = 'world')
-            trvPosList.append(trvPos)
+            self.trvPosList.append(trvPos)
 
         #set loc
         #set loc grp
-        for i,p in enumerate(trvPosList):
-            trvName = nameUtils.getUniqueName(self.side,self.baseName,'gud')
+        for i,p in enumerate(self.trvPosList):
+            trvName = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','gud')
             loc = pm.spaceLocator(n = trvName)
             loc.t.set(p)
-            loc.r.set(0,90,0)
-            self.guides.append(loc)
+            loc.r.set(0,0,90)
+            self.fkGuides.append(loc)
             loc.setParent(self.guideGrp)
             
-        tempGuides = list(self.guides)
+        tempGuides = list(self.fkGuides)
         tempGuides.reverse()
         
         #set loc grp
@@ -96,7 +98,7 @@ class SpineModule(object):
                 pm.parent(tempGuides[i],tempGuides[i + 1])            
         
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')        
-        self.guideGrp = pm.group(self.guideCc,self.guides[0],self.guideTrv,n = name)   
+        self.guideGrp = pm.group(self.guideCc,self.fkGuides[0],self.guideTrv,n = name)   
         self.guideGrp.v.set(0)
         
         self.__bodyCtrl()
@@ -110,7 +112,7 @@ class SpineModule(object):
         self.config_node = control.Control(self.side,self.baseName + 'Cc',size = self.length / 2) 
         self.config_node.bodyCtrl()
         
-        midPos = pm.xform(self.guides[(self.segment - 1) / 2],query=1,ws=1,rp=1)
+        midPos = pm.xform(self.fkGuides[(self.segment - 1) / 2],query=1,ws=1,rp=1)
         
         #move the target object
         pm.move(midPos[0],midPos[1],midPos[2] - self.length / 1.5,self.config_node.controlGrp,a=True)
@@ -137,34 +139,103 @@ class SpineModule(object):
         
         #create fk jj
         self.spineFkRevBlendChain = []        
-        self.guideSpineFkPos = [x.getTranslation(space = 'world') for x in self.guides]
-        self.guideSpineFkRot = [x.getRotation(space = 'world') for x in self.guides]
+        self.guideSpineFkPos = [x.getTranslation(space = 'world') for x in self.fkGuides]
+        self.guideSpineFkRot = [x.getRotation(space = 'world') for x in self.fkGuides]
         
         self.spineFkBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'fk')
-        self.spineFkBlendChain.fromList(self.guideSpineFkPos,self.guideSpineFkRot,autoOrient = 0)
+        self.spineFkBlendChain.fromList(self.guideSpineFkPos,self.guideSpineFkRot,autoOrient = 1)
         
+        #create revFk MDN node
+        fkMultipleNodeList = []
+        for num,fkJj in enumerate(self.spineFkBlendChain.chain):
+            fkMultipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','MDN')
+            fkMultipleNode = pm.createNode('multiplyDivide',n = fkMultipleNodeName)
+            fkMultipleNodeList.append(fkMultipleNode)
+            fkJj.rx.connect(fkMultipleNode.input1X)
+            fkJj.ry.connect(fkMultipleNode.input1Y)
+            fkJj.rz.connect(fkMultipleNode.input1Z)
+            fkMultipleNode.input2X.set(-1)
+            fkMultipleNode.input2Y.set(-1)
+            fkMultipleNode.input2Z.set(-1)
+            
+        #clean up
         self.spineFkGrp = pm.group(self.spineFkBlendChain.chain[0],
                                    n = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','grp'))
         
         self.spineFkGrp.setParent(self.config_node.control)
         
         #create revFk
-        self.guides.reverse()
-        self.guideSpineRevFkPos = [x.getTranslation(space = 'world') for x in self.guides]
-        self.guideSpineRevFkRot = [x.getRotation(space = 'world') for x in self.guides]
+        self.revFkGuides = []
+        self.trvPosList
+        for num,pos in enumerate(self.trvPosList):
+            revFkName = nameUtils.getUniqueName(self.side,self.baseName + 'RevFk','gud')
+            loc = pm.spaceLocator(n = revFkName)
+            loc.t.set(pos)
+            self.revFkGuides.append(loc)
+            loc.setParent(self.guideGrp)
         
-        self.spineRevFkBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'fk')
-        self.spineRevFkBlendChain.fromList(self.guideSpineFkPos,self.guideSpineFkRot,autoOrient = 0)        
-
+        for num,fk in enumerate(self.revFkGuides):
+            if num != len(self.revFkGuides) - 1:
+                pm.parent(self.revFkGuides[num],self.revFkGuides[num + 1])
+                
+        self.revFkGuides.reverse()    
+        self.guideSpineRevFkPos = [x.getTranslation(space = 'world') for x in self.revFkGuides]
+        self.guideSpineRevFkRot = [x.getRotation(space = 'world') for x in self.revFkGuides]
+ 
+        self.spineRevFkBlendChain = boneChain.BoneChain(self.baseName + 'Rev',self.side,type = 'fk')
+        self.spineRevFkBlendChain.fromList(self.guideSpineRevFkPos,self.guideSpineRevFkRot,autoOrient = 1)       
+        self.spineRevFkBlendChain.chain[0].setParent(self.spineFkBlendChain.chain[-1])
 
         #set Rotate
+        '''
+        this part could be delete (z axis trash node)
+        '''
+        #nodename
+        multiplefkBendNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkBend','MDN')
+        multiplefkRevBendNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkRevBend','MDN')
+         
+        #nodecreate
+        multiplefkBendNode = pm.createNode('multiplyDivide',n = multiplefkBendNodeName)
+        multiplefkRevBendNode = pm.createNode('multiplyDivide',n = multiplefkRevBendNodeName)
+        
+        #connect
+        self.config_node.control.bend_lo.connect(multiplefkBendNode.input1X)
+        self.config_node.control.bend_mid.connect(multiplefkBendNode.input1Y)
+        self.config_node.control.bend_up.connect(multiplefkBendNode.input1Z)
+        self.config_node.control.bend_lo_rev.connect(multiplefkRevBendNode.input1X)
+        self.config_node.control.bend_mid_rev.connect(multiplefkRevBendNode.input1Y)
+        self.config_node.control.bend_up_rev.connect(multiplefkRevBendNode.input1Z)
+        
+        multiplefkBendNode.input2X.set(-1)
+        multiplefkBendNode.input2Y.set(-1)
+        multiplefkBendNode.input2Z.set(-1)
+        multiplefkBendNode.operation.set(1)
+        
+        multiplefkRevBendNode.input2X.set(-1)
+        multiplefkRevBendNode.input2Y.set(-1)
+        multiplefkRevBendNode.input2Z.set(-1)
+        multiplefkRevBendNode.operation.set(1)        
+        
+        #fk
         for num,chain in enumerate(self.spineFkBlendChain.chain):
             if 1 <= num <= (self.segment / 3):
-                self.config_node.control.bend_lo.connect(chain.rz)
+                multiplefkBendNode.outputX.connect(chain.rz)
             elif (self.segment / 3) < num < ((self.segment / 3) * 2):
-                self.config_node.control.bend_mid.connect(chain.rz)
+                multiplefkBendNode.outputY.connect(chain.rz)
             elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
-                self.config_node.control.bend_up.connect(chain.rz)
+                multiplefkBendNode.outputZ.connect(chain.rz)
+           
+        #revFk        
+        for num,chain in enumerate(self.spineRevFkBlendChain.chain):
+            fkMultipleNodeList[num].outputX.connect(chain.rz)
+#             if 1 <= num <= (self.segment / 3 - 1):
+#                 multiplefkRevBendNode.outputX.connect(chain.rz)
+#             elif (self.segment / 3 - 1) < num < ((self.segment / 3) * 2):
+#                 multiplefkRevBendNode.outputY.connect(chain.rz)
+#             elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
+#                 multiplefkRevBendNode.outputZ.connect(chain.rz)     
+#                 
+
                  
     def __ikJj(self):    
         
