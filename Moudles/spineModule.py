@@ -147,17 +147,29 @@ class SpineModule(object):
         
         #create revFk MDN node
         fkMultipleNodeList = []
+        fkPlusMinusAverageList = []
         for num,fkJj in enumerate(self.spineFkBlendChain.chain):
             fkMultipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','MDN')
             fkMultipleNode = pm.createNode('multiplyDivide',n = fkMultipleNodeName)
             fkMultipleNodeList.append(fkMultipleNode)
+            
+            fkPlusMinusAverageNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','PMA')
+            fkPlusMinusAverageNode = pm.createNode('plusMinusAverage',n = fkPlusMinusAverageNodeName)
+            fkPlusMinusAverageNode.operation.set(1)
+            fkPlusMinusAverageList.append(fkPlusMinusAverageNode)         
+
             fkJj.rx.connect(fkMultipleNode.input1X)
             fkJj.ry.connect(fkMultipleNode.input1Y)
             fkJj.rz.connect(fkMultipleNode.input1Z)
-            fkMultipleNode.input2X.set(-1)
-            fkMultipleNode.input2Y.set(-1)
-            fkMultipleNode.input2Z.set(-1)
             
+            fkMultipleNode.input2X.set(1)
+            fkMultipleNode.input2Y.set(1)
+            fkMultipleNode.input2Z.set(1)
+            
+            fkMultipleNode.outputX.connect(fkPlusMinusAverageNode.input3D[0].input3Dx)
+            fkMultipleNode.outputY.connect(fkPlusMinusAverageNode.input3D[0].input3Dy)
+            fkMultipleNode.outputZ.connect(fkPlusMinusAverageNode.input3D[0].input3Dz)
+                
         #clean up
         self.spineFkGrp = pm.group(self.spineFkBlendChain.chain[0],
                                    n = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','grp'))
@@ -187,9 +199,6 @@ class SpineModule(object):
         self.spineRevFkBlendChain.chain[0].setParent(self.spineFkBlendChain.chain[-1])
 
         #set Rotate
-        '''
-        this part could be delete (z axis trash node)
-        '''
         #nodename
         multiplefkBendNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkBend','MDN')
         multiplefkRevBendNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkRevBend','MDN')
@@ -218,23 +227,31 @@ class SpineModule(object):
         
         #fk
         for num,chain in enumerate(self.spineFkBlendChain.chain):
+            #lo
             if 1 <= num <= (self.segment / 3):
                 multiplefkBendNode.outputX.connect(chain.rz)
+            #mid    
             elif (self.segment / 3) < num < ((self.segment / 3) * 2):
                 multiplefkBendNode.outputY.connect(chain.rz)
+            #up    
             elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
                 multiplefkBendNode.outputZ.connect(chain.rz)
            
         #revFk        
+        self.spineRevFkBlendChain.chain.reverse()
         for num,chain in enumerate(self.spineRevFkBlendChain.chain):
-            fkMultipleNodeList[num].outputX.connect(chain.rz)
-#             if 1 <= num <= (self.segment / 3 - 1):
-#                 multiplefkRevBendNode.outputX.connect(chain.rz)
-#             elif (self.segment / 3 - 1) < num < ((self.segment / 3) * 2):
-#                 multiplefkRevBendNode.outputY.connect(chain.rz)
-#             elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
-#                 multiplefkRevBendNode.outputZ.connect(chain.rz)     
-#                 
+            #lo
+            if 1 <= num <= (self.segment / 3 - 1):
+                multiplefkRevBendNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
+                fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)
+            #mid              
+            if (self.segment / 3 - 1) < num < ((self.segment / 3) * 2):
+                multiplefkRevBendNode.outputY.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
+                fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)
+            #up    
+            elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
+                multiplefkRevBendNode.outputZ.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
+                fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)     
 
                  
     def __ikJj(self):    
@@ -479,31 +496,3 @@ class SpineModule(object):
         conditionNode.outColor.outColorR.connect(materials.incandescence.incandescenceR)
         conditionNode.outColor.outColorG.connect(materials.incandescence.incandescenceG)
         conditionNode.outColor.outColorB.connect(materials.incandescence.incandescenceB)
-        
-# import maya.cmds as mc
-# from see import see
-# pathOfFiles = 'C:\Users\UV\Desktop\Rigging workshop/'
-# fileType = 'obj'
-# files = mc.getFileList(folder = pathOfFiles,fs = '*.%s' % fileType)
-# mc.file(new = 1,f = 1)
-#  
-# if len(files) == 0:
-#     mc.warning('no files found')
-# else:
-#     for fi in files:
-#         print pathOfFiles + fi
-#         mc.file(pathOfFiles + fi,i = True)
-#          
-# import sys
-# myPath = 'C:/eclipse/test/OOP/AutoRig'
-#  
-# if not myPath in sys.path:
-#     sys.path.append(myPath)    
-#      
-# import reloadMain
-# reload(reloadMain)   
-#  
-# from Modules import spineModule
-# rp = spineModule.SpineModule()
-# rp.buildGuides()
-# rp.build()              
