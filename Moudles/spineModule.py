@@ -85,7 +85,6 @@ class SpineModule(object):
             trvName = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','gud')
             loc = pm.spaceLocator(n = trvName)
             loc.t.set(p)
-            loc.r.set(0,0,90)
             self.fkGuides.append(loc)
             loc.setParent(self.guideGrp)
             
@@ -124,6 +123,7 @@ class SpineModule(object):
         
         #add attr
         control.addFloatAttr(self.config_node.control,['volume'],0,1)
+        #bend
         pm.addAttr(self.config_node.control,ln = '______',at = 'enum',en = '0')
         pm.setAttr(self.config_node.control + '.______',e = 1,channelBox = 1)
         control.addFloatAttr(self.config_node.control,
@@ -132,8 +132,29 @@ class SpineModule(object):
         pm.addAttr(self.config_node.control,ln = '_______',at = 'enum',en = '0')
         pm.setAttr(self.config_node.control + '._______',e = 1,channelBox = 1)
         control.addFloatAttr(self.config_node.control,
-                             ['bend_up_rev','bend_mid_rev','bend_lo_rev'],-3600,3600)        
+                             ['bend_up_rev','bend_mid_rev','bend_lo_rev'],-3600,3600)
         
+        #side
+        pm.addAttr(self.config_node.control,ln = '__________',at = 'enum',en = '0')
+        pm.setAttr(self.config_node.control + '.__________',e = 1,channelBox = 1)
+        control.addFloatAttr(self.config_node.control,
+                             ['side_up','side_mid','side_lo'],-3600,3600)
+
+        pm.addAttr(self.config_node.control,ln = '___________',at = 'enum',en = '0')
+        pm.setAttr(self.config_node.control + '.___________',e = 1,channelBox = 1)
+        control.addFloatAttr(self.config_node.control,
+                             ['side_up_rev','side_mid_rev','side_lo_rev'],-3600,3600)               
+        
+        #twist
+        pm.addAttr(self.config_node.control,ln = '________',at = 'enum',en = '0')
+        pm.setAttr(self.config_node.control + '.________',e = 1,channelBox = 1)
+        control.addFloatAttr(self.config_node.control,
+                             ['twist_up','twist_mid','twist_lo'],-3600,3600)
+
+        pm.addAttr(self.config_node.control,ln = '_________',at = 'enum',en = '0')
+        pm.setAttr(self.config_node.control + '._________',e = 1,channelBox = 1)
+        control.addFloatAttr(self.config_node.control,
+                             ['twist_up_rev','twist_mid_rev','twist_lo_rev'],-3600,3600)                 
         
     def __fkJj(self):
         
@@ -163,7 +184,7 @@ class SpineModule(object):
             fkJj.rz.connect(fkMultipleNode.input1Z)
             
             fkMultipleNode.input2X.set(1)
-            fkMultipleNode.input2Y.set(1)
+            fkMultipleNode.input2Y.set(-1)
             fkMultipleNode.input2Z.set(1)
             
             fkMultipleNode.outputX.connect(fkPlusMinusAverageNode.input3D[0].input3Dx)
@@ -202,12 +223,21 @@ class SpineModule(object):
         #nodename
         multiplefkBendNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkBend','MDN')
         multiplefkRevBendNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkRevBend','MDN')
+        multiplefkTwistNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkTwist','MDN')
+        multiplefkRevTwistNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkRevTwist','MDN')
+        multiplefkSideNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkSide','MDN')
+        multiplefkRevSideNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'FkRevSide','MDN')                
          
         #nodecreate
         multiplefkBendNode = pm.createNode('multiplyDivide',n = multiplefkBendNodeName)
         multiplefkRevBendNode = pm.createNode('multiplyDivide',n = multiplefkRevBendNodeName)
+        multiplefkTwistNode = pm.createNode('multiplyDivide',n = multiplefkTwistNodeName)
+        multiplefkRevTwistNode = pm.createNode('multiplyDivide',n = multiplefkRevTwistNodeName)
+        multiplefkSideNode = pm.createNode('multiplyDivide',n = multiplefkSideNodeName)
+        multiplefkRevSideNode = pm.createNode('multiplyDivide',n = multiplefkRevSideNodeName)        
         
         #connect
+        #bend
         self.config_node.control.bend_lo.connect(multiplefkBendNode.input1X)
         self.config_node.control.bend_mid.connect(multiplefkBendNode.input1Y)
         self.config_node.control.bend_up.connect(multiplefkBendNode.input1Z)
@@ -225,17 +255,59 @@ class SpineModule(object):
         multiplefkRevBendNode.input2Z.set(-1)
         multiplefkRevBendNode.operation.set(1)        
         
+        #twist
+        self.config_node.control.twist_lo.connect(multiplefkTwistNode.input1X)
+        self.config_node.control.twist_mid.connect(multiplefkTwistNode.input1Y)
+        self.config_node.control.twist_up.connect(multiplefkTwistNode.input1Z)
+        self.config_node.control.twist_lo_rev.connect(multiplefkRevTwistNode.input1X)
+        self.config_node.control.twist_mid_rev.connect(multiplefkRevTwistNode.input1Y)
+        self.config_node.control.twist_up_rev.connect(multiplefkRevTwistNode.input1Z)
+        
+        multiplefkTwistNode.input2X.set(-1)
+        multiplefkTwistNode.input2Y.set(-1)
+        multiplefkTwistNode.input2Z.set(-1)
+        multiplefkTwistNode.operation.set(1)
+        
+        multiplefkRevTwistNode.input2X.set(-1)
+        multiplefkRevTwistNode.input2Y.set(-1)
+        multiplefkRevTwistNode.input2Z.set(-1)
+        multiplefkRevTwistNode.operation.set(1)        
+        
+        #side
+        self.config_node.control.side_lo.connect(multiplefkSideNode.input1X)
+        self.config_node.control.side_mid.connect(multiplefkSideNode.input1Y)
+        self.config_node.control.side_up.connect(multiplefkSideNode.input1Z)
+        self.config_node.control.side_lo_rev.connect(multiplefkRevSideNode.input1X)
+        self.config_node.control.side_mid_rev.connect(multiplefkRevSideNode.input1Y)
+        self.config_node.control.side_up_rev.connect(multiplefkRevSideNode.input1Z)
+        
+        multiplefkSideNode.input2X.set(-1)
+        multiplefkSideNode.input2Y.set(-1)
+        multiplefkSideNode.input2Z.set(-1)
+        multiplefkSideNode.operation.set(1)
+        
+        multiplefkRevSideNode.input2X.set(-1)
+        multiplefkRevSideNode.input2Y.set(-1)
+        multiplefkRevSideNode.input2Z.set(-1)
+        multiplefkRevSideNode.operation.set(1)                     
+        
         #fk
         for num,chain in enumerate(self.spineFkBlendChain.chain):
             #lo
             if 1 <= num <= (self.segment / 3):
                 multiplefkBendNode.outputX.connect(chain.rz)
+                multiplefkSideNode.outputX.connect(chain.ry)
+                multiplefkTwistNode.outputX.connect(chain.rx)
             #mid    
             elif (self.segment / 3) < num < ((self.segment / 3) * 2):
                 multiplefkBendNode.outputY.connect(chain.rz)
+                multiplefkSideNode.outputY.connect(chain.ry)
+                multiplefkTwistNode.outputY.connect(chain.rx)
             #up    
             elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
                 multiplefkBendNode.outputZ.connect(chain.rz)
+                multiplefkSideNode.outputZ.connect(chain.ry)
+                multiplefkTwistNode.outputZ.connect(chain.rx)
            
         #revFk        
         self.spineRevFkBlendChain.chain.reverse()
@@ -243,16 +315,32 @@ class SpineModule(object):
             #lo
             if 1 <= num <= (self.segment / 3 - 1):
                 multiplefkRevBendNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
+                multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
+                multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
+                
                 fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)
+                fkPlusMinusAverageList[num].output3D.output3Dy.connect(chain.ry)
+                fkPlusMinusAverageList[num].output3D.output3Dx.connect(chain.rx)
+                
             #mid              
             if (self.segment / 3 - 1) < num < ((self.segment / 3) * 2):
                 multiplefkRevBendNode.outputY.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
+                multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
+                multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
+                
                 fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)
+                fkPlusMinusAverageList[num].output3D.output3Dy.connect(chain.ry)
+                fkPlusMinusAverageList[num].output3D.output3Dx.connect(chain.rx)
+                
             #up    
             elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
                 multiplefkRevBendNode.outputZ.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
+                multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
+                multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
+                
                 fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)     
-
+                fkPlusMinusAverageList[num].output3D.output3Dy.connect(chain.ry)
+                fkPlusMinusAverageList[num].output3D.output3Dx.connect(chain.rx)
                  
     def __ikJj(self):    
         
@@ -496,3 +584,32 @@ class SpineModule(object):
         conditionNode.outColor.outColorR.connect(materials.incandescence.incandescenceR)
         conditionNode.outColor.outColorG.connect(materials.incandescence.incandescenceG)
         conditionNode.outColor.outColorB.connect(materials.incandescence.incandescenceB)
+
+        
+# import maya.cmds as mc
+# from see import see
+# pathOfFiles = 'C:\Users\UV\Desktop\Rigging workshop/'
+# fileType = 'obj'
+# files = mc.getFileList(folder = pathOfFiles,fs = '*.%s' % fileType)
+# mc.file(new = 1,f = 1)
+#  
+# if len(files) == 0:
+#     mc.warning('no files found')
+# else:
+#     for fi in files:
+#         print pathOfFiles + fi
+#         mc.file(pathOfFiles + fi,i = True)
+#          
+# import sys
+# myPath = 'C:/eclipse/test/OOP/AutoRig'
+#  
+# if not myPath in sys.path:
+#     sys.path.append(myPath)    
+#      
+# import reloadMain
+# reload(reloadMain)   
+#  
+# from Modules import spineModule
+# rp = spineModule.SpineModule()
+# rp.buildGuides()
+# rp.build()              
