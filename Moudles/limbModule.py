@@ -125,7 +125,8 @@ class LimbModule(object):
         self.fkChain.fromList(self.limbGuidePos,self.limbGuideRot,skipLast = 0)
         for chain in self.fkChain.chain:
             pm.setAttr(chain + ".visibility",k = False,cb=False)
-            pm.setAttr(chain + ".radi",k = False,cb=False)
+            pm.setAttr(chain + ".radi",k = False,cb=False,l=True)
+            pm.setAttr(chain + '.rotateOrder',cb = True)
         
         #then ik
         self.ikChain = ikChain.IkChain(self.baseName,self.side,self.size,self.solver,type = 'ikRP')
