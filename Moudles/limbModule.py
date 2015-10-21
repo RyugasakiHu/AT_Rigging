@@ -26,15 +26,17 @@ class LimbModule(object):
         self.ikChain = None
         self.limbBlendChain = None
         self.shoulderChain = None
-        self.shoulderIkChain = None
+        self.shoulderAtChain = None
         self.blendData = None
-        self.sklGrp = None
+        self.limbGrp = None
+        self.chestGrp = None
             
         #cc
         self.shoulderCtrl = None
         self.handSetting = None
         self.ccDefGrp = None
         self.cntsGrp = None
+        self.shoulderBriGrp = None
         
         #guides 
         self.limbGuides = None
@@ -48,6 +50,10 @@ class LimbModule(object):
         self.subMidCtrlElbowWrist = None
         self.subMidCtrlElbow = None
         self.ribbonData = ['ShoulderElbow','EblowWrist','Elbow']
+        
+        #AT
+        self.ikAtHandle = None
+        self.ikAtEffector  = None
         
         self.hi = None
          
@@ -100,8 +106,10 @@ class LimbModule(object):
         self.shoulderGuideRot = [x.getRotation(space = 'world') for x in self.shoulderGuides]
         
         #shoulder jj set
-        self.shoulderChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.shoulderChain = boneChain.BoneChain(self.baseName + 'Shoulder',self.side,type = 'jj')
         self.shoulderChain.fromList(self.shoulderGuidePos,self.shoulderGuideRot)  
+        
+        ###########################
         
         #limb set
         #limb pos get
@@ -115,6 +123,9 @@ class LimbModule(object):
         #fk first 
         self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
         self.fkChain.fromList(self.limbGuidePos,self.limbGuideRot,skipLast = 0)
+        for chain in self.fkChain.chain:
+            pm.setAttr(chain + ".visibility",k = False,cb=False)
+            pm.setAttr(chain + ".radi",k = False,cb=False)
         
         #then ik
         self.ikChain = ikChain.IkChain(self.baseName,self.side,self.size,self.solver,type = 'ikRP')
@@ -340,13 +351,89 @@ class LimbModule(object):
         
         #add Ctrl 
         self.shoulderCtrl = control.Control(self.side,self.baseName + 'Shoulder',self.size) 
-        self.shoulderCtrl.shoulderCtrl() 
+        self.shoulderCtrl.shoulderCtrl(axis = 'y') 
         
         #align
         posArray = self.shoulderChain.chain[0]
         pm.xform(self.shoulderCtrl.controlGrp,ws = 1,matrix = posArray.worldMatrix.get())
-#         pm.move(pos[0],pos[1],pos[2] - posArray.ty.get(),self.shoulderCtrl.controlGrp)
-            
+        pm.setAttr(self.shoulderCtrl.controlGrp + '.tz',-self.shoulderChain.chain[1].tx.get())
+        control.lockAndHideAttr(self.shoulderCtrl.control,['sx','sy','sz','rx','v'])
+        
+        #clean
+        self.shoulderChain.chain[0].setParent(self.shoulderCtrl.control)
+        
+        #AT shoulder
+        #add attr
+        control.addFloatAttr(self.shoulderCtrl.control,['follow_ik'],0,1)
+        
+        #create AT joint 
+        self.shoulderAtChain = boneChain.BoneChain(self.baseName + 'AtSd',self.side,type = 'jc')
+        self.shoulderAtChain.fromList(self.limbGuidePos,self.limbGuideRot)
+        
+        #create ikHandle:
+        atIkName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','iks')
+        self.ikAtHandle,self.ikAtEffector = pm.ikHandle(sj = self.shoulderAtChain.chain[0],
+                                                    ee = self.shoulderAtChain.chain[2],solver = self.solver,n = atIkName)
+        self.ikAtHandle.setParent(self.ikChain.ikCtrl.control)
+        pm.poleVectorConstraint(self.ikChain.poleVectorCtrl.control,atIkName,w = 1)
+        self.ikAtHandle.v.set(0)
+        
+        #connect to the shoulder
+        #node name
+        remapColorNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','RC')
+        multipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','MDN')
+        
+        #create node
+        remapColorNode = pm.createNode('remapColor',n = remapColorNodeName)
+        multipleNode = pm.createNode('multiplyDivide',n = multipleNodeName)
+        
+        #parpare to connect
+        self.shoulderBriGrp = pm.group(self.shoulderCtrl.control,
+                                       n = nameUtils.getUniqueName(self.side,self.baseName + 'BriAtSd','grp'))
+        briPos = self.shoulderChain.chain[0].getTranslation(space = 'world')
+        pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBriGrp + '.rotatePivot')
+        pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBriGrp + '.scalePivot')
+        self.shoulderBriGrp.setParent(self.shoulderCtrl.controlGrp)        
+        
+        #connect
+        self.shoulderCtrl.control.follow_ik.connect(multipleNode.input2X)
+        self.shoulderCtrl.control.follow_ik.connect(multipleNode.input2Y)
+        self.shoulderCtrl.control.follow_ik.connect(multipleNode.input2Z)
+        
+        self.shoulderAtChain.chain[0].rx.connect(multipleNode.input1X)
+        multipleNode.outputX.connect(remapColorNode.colorR)
+        self.shoulderAtChain.chain[0].ry.connect(multipleNode.input1Y)
+        multipleNode.outputY.connect(remapColorNode.colorG)
+        self.shoulderAtChain.chain[0].rz.connect(multipleNode.input1Z)
+        multipleNode.outputZ.connect(remapColorNode.colorB)
+        
+        remapColorNode.outColor.outColorG.connect(self.shoulderBriGrp.ry)
+        remapColorNode.outColor.outColorB.connect(self.shoulderBriGrp.rz)
+        
+        remapColorNode.inputMin.set(-90)
+        remapColorNode.inputMax.set(90)
+        remapColorNode.outputMin.set(-45)
+        remapColorNode.outputMax.set(45)
+        
+        remapColorNode.green[0].green_FloatValue.set(0.25)
+        remapColorNode.green[0].green_Position.set(0)
+        remapColorNode.green[1].green_FloatValue.set(0.6)
+        remapColorNode.green[1].green_Position.set(1)        
+        remapColorNode.green[2].green_FloatValue.set(0.5)
+        remapColorNode.green[2].green_Position.set(0.5)
+        remapColorNode.green[2].green_Interp.set(1)
+        
+        remapColorNode.blue[0].blue_FloatValue.set(0.15)
+        remapColorNode.blue[0].blue_Position.set(0)
+        remapColorNode.blue[1].blue_FloatValue.set(0.6)
+        remapColorNode.blue[1].blue_Position.set(1)        
+        remapColorNode.blue[2].blue_FloatValue.set(0.5)
+        remapColorNode.blue[2].blue_Position.set(0.5)
+        remapColorNode.blue[2].blue_Interp.set(1)  
+        remapColorNode.blue[3].blue_FloatValue.set(0.3)
+        remapColorNode.blue[3].blue_Position.set(0.25)      
+        remapColorNode.blue[3].blue_Interp.set(1)   
+      
     def __cleanUp(self):
         
         #add cc ctrl
@@ -390,18 +477,23 @@ class LimbModule(object):
         self.hi.GUD.v.set(0)
 
         #jj grp
-        self.sklGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.stretchStartLoc,
+        self.limbGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.stretchStartLoc,
                                n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
         
         armInitial =  self.limbBlendChain.chain[0].getTranslation(space = 'world')
-        pm.move(armInitial[0],armInitial[1],armInitial[2],self.sklGrp + '.rotatePivot')
-        pm.move(armInitial[0],armInitial[1],armInitial[2],self.sklGrp + '.scalePivot')
+        pm.move(armInitial[0],armInitial[1],armInitial[2],self.limbGrp + '.rotatePivot')
+        pm.move(armInitial[0],armInitial[1],armInitial[2],self.limbGrp + '.scalePivot')
         
         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
-            b.chain[0].setParent(self.sklGrp)
+            b.chain[0].setParent(self.limbGrp)
             
-        self.sklGrp.setParent(self.hi.SKL)
-                    
+        self.limbGrp.setParent(self.shoulderCtrl.control)
+        
+        #chest clean 
+        self.chestGrp = pm.group(self.shoulderCtrl.controlGrp,n = nameUtils.getUniqueName('m','chest','grp'))
+        self.chestGrp.setParent(self.hi.SKL)
+        self.shoulderAtChain.chain[0].setParent(self.chestGrp)
+        
 #         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
 #             b.chain[0].setParent(self.bonesGrp)
 #          
