@@ -11,7 +11,8 @@ def zero(obj):
     temp = name.split('_')
     #name = 'character_name' + side + '_' + basename + str(0) +  '_' + suffix
     #charactername_r_wrist_0_loc
-    groupName = nameUtils.getUniqueName(temp[1], temp[2], 'grp')
+#     groupName = nameUtils.getUniqueName(temp[1], temp[2], 'grp')
+    groupName = nameUtils.getUniqueName(temp[0], temp[1], 'grp')
     if not groupName:
         OpenMaya.MGlobal.displayError('Error generating name')
         return
