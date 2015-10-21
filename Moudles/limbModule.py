@@ -5,93 +5,120 @@ from Modules import control,hierarchy
 
 class LimbModule(object):
     
-#     posArray = [[2,14,-0.2],[4,14,-0.3],[6.15,14,-0.2],[6.4,14,-0.2]]
+#     posLimbArray = [[2,14,-0.2],[4,14,-0.3],[6.15,14,-0.2],[6.4,14,-0.2]]
     
-    posArray = [[2,14,-0.2],[4,14,-0.3],[6.15,14,-0.2]]
-    rotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+    posLimbArray = [[2,14,-0.2],[4,14,-0.3],[6.15,14,-0.2]]
+    rotLimbArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+    posShoulderArray = [[0.2,13.95,-0.25],[1.45,14.25,-0.17]]
+    rotShoulderArray = [[0,0,0],[0,0,0]]
     
     def __init__(self,baseName = 'arm',side = 'l',size = 1.5,
                  solver = 'ikRPsolver',controlOrient = [0,0,0]):
-        
+        #init
         self.baseName = baseName
         self.side = side
-#         self.cntColor = cntColor
         self.size = size
         self.solver = solver
         self.controlOrient = controlOrient
         
-        '''
-        self para
-        '''
-        
         #jj
         self.fkChain = None
         self.ikChain = None
-        self.blendChain = None
+        self.limbBlendChain = None
+        self.shoulderChain = None
+        self.shoulderIkChain = None
         self.blendData = None
         self.sklGrp = None
             
-        #cc    
-        self.config_node = None
+        #cc
+        self.shoulderCtrl = None
+        self.handSetting = None
         self.ccDefGrp = None
         self.cntsGrp = None
         
         #guides 
-        self.guides = None
+        self.limbGuides = None
+        self.shoulderGuides = None
         self.guideGrp = None
         
+        #ribbon
         self.ribon = None
         self.ribon45hp = None
-        
         self.subMidCtrlShoulderElbow = None
         self.subMidCtrlElbowWrist = None
         self.subMidCtrlElbow = None
-         
         self.ribbonData = ['ShoulderElbow','EblowWrist','Elbow']
         
         self.hi = None
-        
          
     def buildGuides(self):
         
         self.hi = hierarchy.Hierarchy(characterName = 'test')
         self.hi.build()
         
-        self.guides = []
-            
-        for i,p in enumerate(self.posArray):
+        self.limbGuides = []
+        self.shoulderGuides = []
+        
+        #limb Guides
+        for num,pos in enumerate(self.posLimbArray):
             name = nameUtils.getUniqueName(self.side,self.baseName,'gud')
             loc = pm.spaceLocator(n = name)
-            loc.t.set(p)
-            loc.r.set(self.rotArray[i])
-            self.guides.append(loc)
+            loc.t.set(pos)
+            loc.r.set(self.rotLimbArray[num])
+            self.limbGuides.append(loc)
             
-        tempGuides = list(self.guides)
-        tempGuides.reverse()
-        for i in range(len(tempGuides)):
-            if i != (len(tempGuides) - 1):
-                pm.parent(tempGuides[i],tempGuides[i + 1])
+        tempLimbGuides = list(self.limbGuides)
+        tempLimbGuides.reverse()
+        for i in range(len(tempLimbGuides)):
+            if i != (len(tempLimbGuides) - 1):
+                pm.parent(tempLimbGuides[i],tempLimbGuides[i + 1])
+                
+        #shoulder Guides:        
+        for num,pos in enumerate(self.posShoulderArray):
+            name = nameUtils.getUniqueName(self.side,self.baseName + 'Shoulder','gud')
+            loc = pm.spaceLocator(n = name)
+            loc.t.set(pos)
+            loc.r.set(self.rotShoulderArray[num])
+            self.shoulderGuides.append(loc)
+            
+        tempShoulderGuides = list(self.shoulderGuides)
+        tempShoulderGuides.reverse()
+        for i in range(len(tempShoulderGuides)):
+            if i != (len(tempShoulderGuides) - 1):
+                pm.parent(tempShoulderGuides[i],tempShoulderGuides[i + 1])  
         
+        #clean up
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(self.guides[0],n = name)
+        self.guideGrp = pm.group(self.limbGuides[0],self.shoulderGuides[0],n = name)
                      
                
     def build(self):
         
-        self.guidePos = [x.getTranslation(space = 'world') for x in self.guides]
-        self.guideRot = [x.getRotation(space = 'world') for x in self.guides]
+        #shoulder set
+        #shoulder pos get
+        self.shoulderGuidePos = [x.getTranslation(space = 'world') for x in self.shoulderGuides]
+        self.shoulderGuideRot = [x.getRotation(space = 'world') for x in self.shoulderGuides]
+        
+        #shoulder jj set
+        self.shoulderChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.shoulderChain.fromList(self.shoulderGuidePos,self.shoulderGuideRot)  
+        
+        #limb set
+        #limb pos get
+        self.limbGuidePos = [x.getTranslation(space = 'world') for x in self.limbGuides]
+        self.limbGuideRot = [x.getRotation(space = 'world') for x in self.limbGuides]      
         
         #addBlendCtrl 
-        self.config_node = control.Control(self.side,self.baseName + 'Settings',self.size) 
-        self.config_node.ikfkBlender()        
+        self.handSetting = control.Control(self.side,self.baseName + 'Settings',self.size) 
+        self.handSetting.ikfkBlender()        
         
         #fk first 
         self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
-        self.fkChain.fromList(self.guidePos,self.guideRot,skipLast = 0)
+        self.fkChain.fromList(self.limbGuidePos,self.limbGuideRot,skipLast = 0)
         
         #then ik
         self.ikChain = ikChain.IkChain(self.baseName,self.side,self.size,self.solver,type = 'ikRP')
-        self.ikChain.fromList(self.guidePos,self.guideRot)
+        self.ikChain.fromList(self.limbGuidePos,self.limbGuideRot)
         
         #ik cc connect ori
         self.ikChain.ikCtrl.control.rx.connect(self.ikChain.chain[-1].rx)
@@ -99,21 +126,21 @@ class LimbModule(object):
         self.ikChain.ikCtrl.control.rz.connect(self.ikChain.chain[-1].rz)
         
         #set cc
-        pm.addAttr(self.config_node.control,ln = '__',at = 'enum',en = 'ArmCtrl:')
-        pm.setAttr(self.config_node.control + '.__',k = 1,l = 1)
+        pm.addAttr(self.handSetting.control,ln = '__',at = 'enum',en = 'ArmCtrl:')
+        pm.setAttr(self.handSetting.control + '.__',k = 1,l = 1)
         
         #ori                
-        self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.blendChain.fromList(self.guidePos,self.guideRot)
+        self.limbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.limbBlendChain.fromList(self.limbGuidePos,self.limbGuideRot)
         
-        self.blendData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikChain.chain,self.blendChain.chain,
-                                                            self.config_node.control,'IKFK',self.baseName,self.side)
+        self.blendData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikChain.chain,self.limbBlendChain.chain,
+                                                            self.handSetting.control,'IKFK',self.baseName,self.side)
         
         self.__ikfkBlender()
         self.__setRibbonUpper()
         self.__setRibbonLower()
         self.__setRibbonSubMidCc()
-         
+        self.__shoulderCtrl()
         self.__cleanUp()
         
     def __ikfkBlender(self):
@@ -123,30 +150,30 @@ class LimbModule(object):
         reverseNode = pm.createNode('reverse',n = reverseNodeName)
         
         #connect node
-        self.config_node.control.IKFK.connect(self.ikChain.ikCtrl.controlGrp.v)
-        self.config_node.control.IKFK.connect(self.ikChain.poleVectorCtrl.controlGrp.v)
-        self.config_node.control.IKFK.connect(self.config_node.textObj[2].v)
-        self.config_node.control.IKFK.connect(reverseNode.inputX)
+        self.handSetting.control.IKFK.connect(self.ikChain.ikCtrl.controlGrp.v)
+        self.handSetting.control.IKFK.connect(self.ikChain.poleVectorCtrl.controlGrp.v)
+        self.handSetting.control.IKFK.connect(self.handSetting.textObj[2].v)
+        self.handSetting.control.IKFK.connect(reverseNode.inputX)
         reverseNode.outputX.connect(self.fkChain.chain[0].v)
-        reverseNode.outputX.connect(self.config_node.textObj[0].v)             
+        reverseNode.outputX.connect(self.handSetting.textObj[0].v)             
         
         #set pos
         scaleValue = 1 * self.ikChain.length/16
         size = 1.5 * self.ikChain.length / 16
-        pm.xform(self.config_node.controlGrp,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
-        self.config_node.controlGrp.rx.set(0)
-        self.config_node.controlGrp.ry.set(0)
-        self.config_node.controlGrp.rz.set(0)
-        self.config_node.controlGrp.sx.set(scaleValue)
-        self.config_node.controlGrp.sy.set(scaleValue)
-        self.config_node.controlGrp.sz.set(scaleValue)
-        pm.move(self.guidePos[2][0],self.guidePos[2][1] + 2 * size,self.guidePos[2][2],self.config_node.controlGrp)
-        wrist_pos = pm.xform(self.blendChain.chain[2],query=1,ws=1,rp=1)
-        pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.config_node.controlGrp + '.rotatePivot')
-        pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.config_node.controlGrp + '.scalePivot')
-        pm.pointConstraint(self.blendChain.chain[2],self.config_node.controlGrp,mo = 1)
-#         pm.orientConstraint(self.blendChain.chain[2],self.config_node.controlGrp,mo = 1)   
-        control.lockAndHideAttr(self.config_node.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])     
+        pm.xform(self.handSetting.controlGrp,ws = 1,matrix = self.limbBlendChain.chain[2].worldMatrix.get())
+        self.handSetting.controlGrp.rx.set(0)
+        self.handSetting.controlGrp.ry.set(0)
+        self.handSetting.controlGrp.rz.set(0)
+        self.handSetting.controlGrp.sx.set(scaleValue)
+        self.handSetting.controlGrp.sy.set(scaleValue)
+        self.handSetting.controlGrp.sz.set(scaleValue)
+        pm.move(self.limbGuidePos[2][0],self.limbGuidePos[2][1] + 2 * size,self.limbGuidePos[2][2],self.handSetting.controlGrp)
+        wrist_pos = pm.xform(self.limbBlendChain.chain[2],query=1,ws=1,rp=1)
+        pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.handSetting.controlGrp + '.rotatePivot')
+        pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.handSetting.controlGrp + '.scalePivot')
+        pm.pointConstraint(self.limbBlendChain.chain[2],self.handSetting.controlGrp,mo = 1)
+#         pm.orientConstraint(self.limbBlendChain.chain[2],self.handSetting.controlGrp,mo = 1)   
+        control.lockAndHideAttr(self.handSetting.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])     
     
     def __setRibbonUpper(self):
         '''
@@ -155,11 +182,11 @@ class LimbModule(object):
         self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side,baseName=self.baseName + self.ribbonData[0])
         self.ribon.construction()
 
-        pm.xform(self.ribon.startLoc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
-        pm.xform(self.ribon.endLoc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon.startLoc,ws = 1,matrix = self.limbBlendChain.chain[0].worldMatrix.get())
+        pm.xform(self.ribon.endLoc,ws = 1,matrix = self.limbBlendChain.chain[1].worldMatrix.get())
         
-        pm.parentConstraint(self.blendChain.chain[0],self.ribon.startLoc,mo = 1)
-        pm.parentConstraint(self.blendChain.chain[0],self.blendChain.chain[1],self.ribon.epUploc,mo = 1)
+        pm.parentConstraint(self.limbBlendChain.chain[0],self.ribon.startLoc,mo = 1)
+        pm.parentConstraint(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.ribon.epUploc,mo = 1)
         
         self.__subCtrlUpper()
         
@@ -179,10 +206,10 @@ class LimbModule(object):
         self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side,baseName=self.baseName + self.ribbonData[1])
         self.ribon45hp.construction()
 
-        pm.xform(self.ribon45hp.startLoc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
-        pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
+        pm.xform(self.ribon45hp.startLoc,ws = 1,matrix = self.limbBlendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.limbBlendChain.chain[2].worldMatrix.get())
         
-        pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
+        pm.parentConstraint(self.limbBlendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
         
         self.__subCtrlLower()
           
@@ -198,12 +225,12 @@ class LimbModule(object):
         
         self.subMidCtrlElbow = control.Control(size = 1,baseName = self.ribbonData[2] + '_CC',side = self.side) 
         self.subMidCtrlElbow.circleCtrl()
-        elbolPos = pm.xform(self.blendChain.chain[1],query=1,ws=1,rp=1)
+        elbolPos = pm.xform(self.limbBlendChain.chain[1],query=1,ws=1,rp=1)
         pm.move(self.subMidCtrlElbow.controlGrp,elbolPos[0],elbolPos[1],elbolPos[2],a=True)
         
         pm.parentConstraint(self.subMidCtrlElbow.control,self.ribon45hp.startLoc,mo = 1)
         pm.parentConstraint(self.subMidCtrlElbow.control,self.ribon.endLoc,mo = 1)
-        pm.parentConstraint(self.blendChain.chain[1],self.subMidCtrlElbow.controlGrp,mo = 1)
+        pm.parentConstraint(self.limbBlendChain.chain[1],self.subMidCtrlElbow.controlGrp,mo = 1)
         
         #name setting for the scale node for shoulderElbow Jj1
         shoulderElbowScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'shoulderElbowScaleJj1','PMA')
@@ -235,11 +262,11 @@ class LimbModule(object):
         #connect shoulderElbow scale for  shoulderElbow Jj3
         
         self.subMidCtrlShoulderElbow.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
-        self.blendChain.chain[1].scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
+        self.limbBlendChain.chain[1].scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
         self.subMidCtrlShoulderElbow.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
-        self.blendChain.chain[1].scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
+        self.limbBlendChain.chain[1].scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
         self.subMidCtrlShoulderElbow.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
-        self.blendChain.chain[1].scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
+        self.limbBlendChain.chain[1].scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
         shoulderElbowScalePlusMinusAverageNodeJj3.operation.set(3)
         
         #output scale to shoulderElbow Jj3
@@ -253,9 +280,9 @@ class LimbModule(object):
         self.subMidCtrlElbow.control.scaleZ.connect(self.ribon.jj[0].scaleZ)
         
         #connect scale to shoulderElbow jj4
-        self.blendChain.chain[0].scaleX.connect(self.ribon.jj[4].scaleX)
-        self.blendChain.chain[0].scaleY.connect(self.ribon.jj[4].scaleY)
-        self.blendChain.chain[0].scaleZ.connect(self.ribon.jj[4].scaleZ)
+        self.limbBlendChain.chain[0].scaleX.connect(self.ribon.jj[4].scaleX)
+        self.limbBlendChain.chain[0].scaleY.connect(self.ribon.jj[4].scaleY)
+        self.limbBlendChain.chain[0].scaleZ.connect(self.ribon.jj[4].scaleZ)
         
         
         
@@ -305,22 +332,33 @@ class LimbModule(object):
         self.subMidCtrlElbow.control.scaleZ.connect(self.ribon45hp.jj[4].scaleZ)
         
         #connect scale to elbowWrist jj0
-        self.blendChain.chain[2].scaleX.connect(self.ribon45hp.jj[0].scaleX)
-        self.blendChain.chain[2].scaleY.connect(self.ribon45hp.jj[0].scaleY)
-        self.blendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
+        self.limbBlendChain.chain[2].scaleX.connect(self.ribon45hp.jj[0].scaleX)
+        self.limbBlendChain.chain[2].scaleY.connect(self.ribon45hp.jj[0].scaleY)
+        self.limbBlendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
+            
+    def __shoulderCtrl(self):
+        
+        #add Ctrl 
+        self.shoulderCtrl = control.Control(self.side,self.baseName + 'Shoulder',self.size) 
+        self.shoulderCtrl.shoulderCtrl() 
+        
+        #align
+        posArray = self.shoulderChain.chain[0]
+        pm.xform(self.shoulderCtrl.controlGrp,ws = 1,matrix = posArray.worldMatrix.get())
+#         pm.move(pos[0],pos[1],pos[2] - posArray.ty.get(),self.shoulderCtrl.controlGrp)
             
     def __cleanUp(self):
         
         #add cc ctrl
-        control.addFloatAttr(self.config_node.control,['CC'],0,1) 
+        control.addFloatAttr(self.handSetting.control,['CC'],0,1) 
         
         #ccDef grp and v
         self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp')) 
         self.subMidCtrlShoulderElbow.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlElbowWrist.controlGrp.setParent(self.ccDefGrp)
         self.subMidCtrlElbow.controlGrp.setParent(self.ccDefGrp)
-        self.config_node.control.CC.set(0)
-        self.config_node.control.CC.connect(self.ccDefGrp.v)
+        self.handSetting.control.CC.set(0)
+        self.handSetting.control.CC.connect(self.ccDefGrp.v)
         
         #cc hierarchy        
         self.cntsGrp = pm.group(self.ikChain.ikCtrl.controlGrp,
@@ -329,7 +367,7 @@ class LimbModule(object):
 
         self.ccDefGrp.setParent(self.cntsGrp)
         self.cntsGrp.setParent(self.hi.CC) 
-        self.config_node.controlGrp.setParent(self.cntsGrp)    
+        self.handSetting.controlGrp.setParent(self.cntsGrp)    
                 
         if self.solver == 'ikRPsolver':
             pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)        
@@ -355,23 +393,22 @@ class LimbModule(object):
         self.sklGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.stretchStartLoc,
                                n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
         
-        armInitial =  self.blendChain.chain[0].getTranslation(space = 'world')
+        armInitial =  self.limbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(armInitial[0],armInitial[1],armInitial[2],self.sklGrp + '.rotatePivot')
         pm.move(armInitial[0],armInitial[1],armInitial[2],self.sklGrp + '.scalePivot')
         
-        for b in (self.ikChain,self.fkChain,self.blendChain):
+        for b in (self.ikChain,self.fkChain,self.limbBlendChain):
             b.chain[0].setParent(self.sklGrp)
             
         self.sklGrp.setParent(self.hi.SKL)
                     
-            
-#         for b in (self.ikChain,self.fkChain,self.blendChain):
+#         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
 #             b.chain[0].setParent(self.bonesGrp)
 #          
 #         self.cntsGrp = pm.group(self.ikChain.ikCtrl.controlGrp,
 #                                 n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp'))
 #              
-#         self.mainGrp = pm.group(self.bonesGrp,self.cntsGrp,self.config_node,
+#         self.mainGrp = pm.group(self.bonesGrp,self.cntsGrp,self.handSetting,
 #                                 n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))   
          
 
