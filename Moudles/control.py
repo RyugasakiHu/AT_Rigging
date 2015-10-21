@@ -9,9 +9,7 @@ class Control(object):
     
         self.baseName = baseName
         self.side = side
-#         self.objColor = objColor
         self.size = size
-#         self.cntSize = cntSize
         self.aimAxis = aimAxis
      
         self.control = None
@@ -49,6 +47,29 @@ class Control(object):
         self.__finalizeCc()       
         self.__colorSet() 
         
+    def shoulderCtrl(self,axis):
+         
+        self.__buildName()
+        
+        if self.controlName :
+            
+            dic = [0,0,0]
+            
+            if axis == 'x':
+                dic = [1,0,0]
+                
+            elif axis == 'y':
+                dic = [0,1,0]
+                
+            elif axis == 'z':
+                dic = [0,0,1]
+                
+            self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = dic,r = self.size)[0]
+            #self.control = mc.circle(n = self.controlName,ch = 0,o = 1,nr = (1,0,0))
+
+        self.__finalizeCc()       
+        self.__colorSet()         
+        
     def bodyCtrl(self):
 
         self.__buildName()
@@ -56,14 +77,14 @@ class Control(object):
         if self.controlName :
             #que
             insideCircle = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size)
-            outsideCircleF = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size * 3 / 4)
-            outsideCircleB = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size * 3 / 4)
+            outsideCircleF = pm.circle(name = self.controlName + 'Front',ch = 0,o = 1 ,nr = [1,0,0],r = self.size * 3 / 4)
+            outsideCircleB = pm.circle(name = self.controlName + 'Back',ch = 0,o = 1 ,nr = [1,0,0],r = self.size * 3 / 4)
             
-            pm.move(0.5,0,0,outsideCircleF[0].getShape().cv,r = 1)
+            pm.move(float(self.size / 3),0,0,outsideCircleF[0].getShape().cv,r = 1)
             pm.parent(outsideCircleF[0].getShape(),insideCircle,shape = 1,add = 1)
             pm.delete(outsideCircleF)
 
-            pm.move(-0.5,0,0,outsideCircleB[0].getShape().cv,r = 1)
+            pm.move(float(-self.size / 3),0,0,outsideCircleB[0].getShape().cv,r = 1)
             pm.parent(outsideCircleB[0].getShape(),insideCircle,shape = 1,add = 1)   
             pm.delete(outsideCircleB)   
 
