@@ -5,18 +5,19 @@ utilsPath = rootPath + 'Utils/'
 customPath = utilsPath + 'blabla/'
 
 #basename = []
-sides = ['r','l','c']
+sides = ['r','l','m']
 suffix = ['jj',# joint joint
           'jc',# joint control          
           'je',# joint end
           'ik',# ik joint
-          'trv',#travel joint
+          'trv',# travel joint
           'ikRP',# ik Rotate Plane
           'ikSC',# ik Single Chain
           'ikNF',# ik no flip
           'fk',# fk joint
           'grp',# group
           'loc',# locator
+          'fol',# follicle
           'cc',# control curve
           'loc',# locator
           'dist',# distance
@@ -24,8 +25,10 @@ suffix = ['jj',# joint joint
           'iks',# ikHandle
           'gud',# guide
           'off',# offset
+          'cls',# cluster
           'cog',# cog
-          'surf',#surface
+          'surf',# surface
+          'cube',# tempCube
           'cvINFO',# curveinfo
           'MOP',# motion Path Node
           'RANG',# setrangeNode
@@ -36,6 +39,7 @@ suffix = ['jj',# joint joint
           'MDN',# multipleDivideNode
           'PMA',# plus minus averageNode
           'RV',#remap valueNode
+          'RC',#remap colorNode
           'CONFIG',# WTF
           'SDK',#SDK frp
           'ALL',#ALL grp
@@ -48,4 +52,7 @@ suffix = ['jj',# joint joint
           'GEO',#GEO grp
           'XTR',#XTR grp
           'CSG',#correct shape grp
+          'MAT',#materials
+          'SG',#shader group
+          'EXP',#expression
           ]
