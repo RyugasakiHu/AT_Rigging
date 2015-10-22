@@ -11,6 +11,8 @@ class LimbModule(object):
     rotLimbArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     posShoulderArray = [[0.2,13.95,-0.25],[1.45,14.25,-0.17]]
     rotShoulderArray = [[0,0,0],[0,0,0]]
+    posShoulderBladeArray = [[0.65,14,-0.6],[0.65,12.5,-0.6]]
+    rotShoulderBladeArray = [[0,0,0],[0,0,0]]    
     
     def __init__(self,baseName = 'arm',side = 'l',size = 1.5,
                  solver = 'ikRPsolver',controlOrient = [0,0,0]):
@@ -27,9 +29,11 @@ class LimbModule(object):
         self.limbBlendChain = None
         self.shoulderChain = None
         self.shoulderAtChain = None
+        self.shoulderBladeChain = None
         self.blendData = None
         self.limbGrp = None
         self.chestGrp = None
+        self.shoulderBladeGrp = None
             
         #cc
         self.shoulderCtrl = None
@@ -41,6 +45,7 @@ class LimbModule(object):
         #guides 
         self.limbGuides = None
         self.shoulderGuides = None
+        self.shoulderBladeGuides = None
         self.guideGrp = None
         
         #ribbon
@@ -64,6 +69,7 @@ class LimbModule(object):
         
         self.limbGuides = []
         self.shoulderGuides = []
+        self.shoulderBladeGuides = []
         
         #limb Guides
         for num,pos in enumerate(self.posLimbArray):
@@ -92,10 +98,24 @@ class LimbModule(object):
         for i in range(len(tempShoulderGuides)):
             if i != (len(tempShoulderGuides) - 1):
                 pm.parent(tempShoulderGuides[i],tempShoulderGuides[i + 1])  
+                
+        #shoulder Blade
+        for num,pos in enumerate(self.posShoulderBladeArray):
+            name = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','gud')
+            loc = pm.spaceLocator(n = name)
+            loc.t.set(pos)
+            loc.r.set(self.rotShoulderBladeArray[num])
+            self.shoulderBladeGuides.append(loc)
+             
+        tempShoulderBladeGuides = list(self.shoulderBladeGuides)
+        tempShoulderBladeGuides.reverse()
+        for i in range(len(tempShoulderBladeGuides)):
+            if i != (len(tempShoulderBladeGuides) - 1):
+                pm.parent(tempShoulderBladeGuides[i],tempShoulderBladeGuides[i + 1])          
         
         #clean up
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(self.limbGuides[0],self.shoulderGuides[0],n = name)
+        self.guideGrp = pm.group(self.limbGuides[0],self.shoulderGuides[0],self.shoulderBladeGuides[0],n = name)
                      
                
     def build(self):
@@ -108,6 +128,16 @@ class LimbModule(object):
         #shoulder jj set
         self.shoulderChain = boneChain.BoneChain(self.baseName + 'Shoulder',self.side,type = 'jj')
         self.shoulderChain.fromList(self.shoulderGuidePos,self.shoulderGuideRot)  
+        
+        ###########################
+        #shoulder Blade set
+        #shoulder Blade pos get
+        self.shoulderBladeGuidePos = [x.getTranslation(space = 'world') for x in self.shoulderBladeGuides]
+        self.shoulderBladeGuideRot = [x.getRotation(space = 'world') for x in self.shoulderBladeGuides]
+        
+        #shoulder jj set
+        self.shoulderBladeChain = boneChain.BoneChain(self.baseName + 'ShoulderBlade',self.side,type = 'jj')
+        self.shoulderBladeChain.fromList(self.shoulderBladeGuidePos,self.shoulderBladeGuideRot)         
         
         ###########################
         
@@ -434,7 +464,43 @@ class LimbModule(object):
         remapColorNode.blue[3].blue_FloatValue.set(0.3)
         remapColorNode.blue[3].blue_Position.set(0.25)      
         remapColorNode.blue[3].blue_Interp.set(1)   
-      
+        
+        #shoulderBlade
+        #initial
+        pm.select(cl = 1)
+        self.shoulderBladeGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','grp'))
+        pm.xform(self.shoulderBladeGrp,ws = 1,matrix = posArray.worldMatrix.get())
+        pm.select(cl = 1)
+        self.shoulderBladeBriGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade_Bri','grp'))
+        pm.xform(self.shoulderBladeBriGrp,ws = 1,matrix = posArray.worldMatrix.get())
+        self.shoulderBladeBriGrp.setParent(self.shoulderBladeGrp)
+        self.shoulderBladeChain.chain[0].setParent(self.shoulderBladeBriGrp)
+#         pm.select(self.shoulderBladeChain.chain[0])
+#         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBladeChain.chain[0] + '.rotatePivot')
+#         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBladeChain.chain[0] + '.scalePivot')
+        
+        #node name
+        remapValueShoulderFBNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderFB','RV')
+        
+        #create Node
+        remapValueShoulderFBNode = pm.createNode('remapValue',n = remapValueShoulderFBNodeName)
+        
+        #connect
+        self.shoulderCtrl.control.rz.connect(remapValueShoulderFBNode.inputValue)
+        remapValueShoulderFBNode.inputMin.set(-90)
+        remapValueShoulderFBNode.inputMax.set(90)
+        remapValueShoulderFBNode.outputMin.set(-90)
+        remapValueShoulderFBNode.outputMax.set(90)
+        remapValueShoulderFBNode.outValue.connect(self.shoulderBladeBriGrp.rz)
+
+#         remapNode.value[0].value_FloatValue.set(num * float(1 / float(self.segment - 1)))
+#         remapNode.value[0].value_Position.set(0)   
+        remapValueShoulderFBNode.value[1].value_FloatValue.set(0.75)
+        remapValueShoulderFBNode.value[1].value_Position.set(1)                                                        
+        remapValueShoulderFBNode.value[2].value_FloatValue.set(0.5)
+        remapValueShoulderFBNode.value[2].value_Position.set(0.5)
+        remapValueShoulderFBNode.value[2].value_Interp.set(1)        
+        
     def __cleanUp(self):
         
         #add cc ctrl
