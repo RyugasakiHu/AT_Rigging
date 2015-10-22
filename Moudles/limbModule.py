@@ -424,6 +424,9 @@ class LimbModule(object):
         briPos = self.shoulderChain.chain[0].getTranslation(space = 'world')
         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBriGrp + '.rotatePivot')
         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBriGrp + '.scalePivot')
+        pm.move(briPos[0],briPos[1],briPos[2],self.shoulderCtrl.control + '.rotatePivot')
+        pm.move(briPos[0],briPos[1],briPos[2],self.shoulderCtrl.control + '.scalePivot')        
+        
         self.shoulderBriGrp.setParent(self.shoulderCtrl.controlGrp)        
         
         #connect
@@ -480,26 +483,58 @@ class LimbModule(object):
 #         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBladeChain.chain[0] + '.scalePivot')
         
         #node name
-        remapValueShoulderFBNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderFB','RV')
+        remapValueShoulderFBNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderFwBk','RV')
+        remapValueShoulderUDNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderUpDn','RV')
         
         #create Node
         remapValueShoulderFBNode = pm.createNode('remapValue',n = remapValueShoulderFBNodeName)
+        remapValueShoulderUDNode = pm.createNode('remapValue',n = remapValueShoulderUDNodeName)
         
         #connect
-        self.shoulderCtrl.control.rz.connect(remapValueShoulderFBNode.inputValue)
+        #FB
+#         self.shoulderCtrl.control.rz.connect(remapValueShoulderFBNode.inputValue)
         remapValueShoulderFBNode.inputMin.set(-90)
         remapValueShoulderFBNode.inputMax.set(90)
         remapValueShoulderFBNode.outputMin.set(-90)
         remapValueShoulderFBNode.outputMax.set(90)
         remapValueShoulderFBNode.outValue.connect(self.shoulderBladeBriGrp.rz)
 
-#         remapNode.value[0].value_FloatValue.set(num * float(1 / float(self.segment - 1)))
-#         remapNode.value[0].value_Position.set(0)   
         remapValueShoulderFBNode.value[1].value_FloatValue.set(0.75)
         remapValueShoulderFBNode.value[1].value_Position.set(1)                                                        
         remapValueShoulderFBNode.value[2].value_FloatValue.set(0.5)
         remapValueShoulderFBNode.value[2].value_Position.set(0.5)
         remapValueShoulderFBNode.value[2].value_Interp.set(1)        
+        
+        #UD
+#         self.shoulderCtrl.control.ry.connect(remapValueShoulderUDNode.inputValue)
+        remapValueShoulderUDNode.inputMin.set(-90)
+        remapValueShoulderUDNode.inputMax.set(90)
+        remapValueShoulderUDNode.outputMin.set(float(self.shoulderChain.chain[-1].tx.get() / 4))
+        remapValueShoulderUDNode.outputMax.set(-float(self.shoulderChain.chain[-1].tx.get() / 4))
+        remapValueShoulderUDNode.outValue.connect(self.shoulderBladeBriGrp.tz)
+
+        remapValueShoulderUDNode.value[1].value_FloatValue.set(0.75)
+        remapValueShoulderUDNode.value[1].value_Position.set(1)                                                        
+        remapValueShoulderUDNode.value[2].value_FloatValue.set(0.5)
+        remapValueShoulderUDNode.value[2].value_Position.set(0.5)
+        remapValueShoulderUDNode.value[2].value_Interp.set(1)     
+        
+        #connect to the AT
+        #create PMA node
+        plusMinusAverageAtSdNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','PMA')
+        
+        #create Node 
+        plusMinusAverageAtSdNode = pm.createNode('plusMinusAverage',n = plusMinusAverageAtSdNodeName)
+        
+        #connect
+        self.shoulderCtrl.control.rx.connect(plusMinusAverageAtSdNode.input3D[0].input3Dx)
+        self.shoulderCtrl.control.ry.connect(plusMinusAverageAtSdNode.input3D[0].input3Dy)
+        self.shoulderCtrl.control.rz.connect(plusMinusAverageAtSdNode.input3D[0].input3Dz)
+        self.shoulderBriGrp.ry.connect(plusMinusAverageAtSdNode.input3D[1].input3Dy)
+        self.shoulderBriGrp.rz.connect(plusMinusAverageAtSdNode.input3D[1].input3Dz)
+        
+        plusMinusAverageAtSdNode.output3D.output3Dy.connect(remapValueShoulderUDNode.inputValue)
+        plusMinusAverageAtSdNode.output3D.output3Dz.connect(remapValueShoulderFBNode.inputValue)
         
     def __cleanUp(self):
         
