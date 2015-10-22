@@ -183,6 +183,7 @@ class LimbModule(object):
         self.__setRibbonLower()
         self.__setRibbonSubMidCc()
         self.__shoulderCtrl()
+        self.__poseReador()
         self.__cleanUp()
         
     def __ikfkBlender(self):
@@ -536,6 +537,75 @@ class LimbModule(object):
         plusMinusAverageAtSdNode.output3D.output3Dy.connect(remapValueShoulderUDNode.inputValue)
         plusMinusAverageAtSdNode.output3D.output3Dz.connect(remapValueShoulderFBNode.inputValue)
         
+        ##############
+        #chest clean 
+        self.chestGrp = pm.group(self.shoulderCtrl.controlGrp,n = nameUtils.getUniqueName('m','chest','grp'))
+        self.chestGrp.setParent(self.hi.SKL)
+        self.shoulderAtChain.chain[0].setParent(self.chestGrp)
+        
+    def __poseReador(self):
+        
+        #set main Loc
+        poseMain = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorMain','loc'))
+        poseMain.overrideEnabled.set(1)
+        poseMain.overrideColor.set(16)
+        
+        poseUp = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorUp','loc'))
+        poseUp.localScale.set(0.5,0.5,0.5)
+        poseUp.overrideEnabled.set(1)
+        poseUp.overrideColor.set(16)
+        
+        poseTar = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTar','loc'))
+        poseTar.localScale.set(0.25,0.25,0.25)
+        poseTar.overrideEnabled.set(1)
+        poseTar.overrideColor.set(16)
+        
+        #set twist loc
+        poseTwistMain = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistMain','loc'))
+        poseTwistMain.overrideEnabled.set(1)
+        poseTwistMain.overrideColor.set(4)
+        
+        poseTwistUp = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistUp','loc'))
+        poseTwistUp.localScale.set(0.5,0.5,0.5)
+        poseTwistUp.overrideEnabled.set(1)
+        poseTwistUp.overrideColor.set(4)
+        
+        poseTwistTar = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistTar','loc'))
+        poseTwistTar.localScale.set(0.25,0.25,0.25)
+        poseTwistTar.overrideEnabled.set(1)
+        poseTwistTar.overrideColor.set(4)        
+        
+        #create grp
+        #main
+        poseReadorGrp = pm.group(poseMain,poseUp,poseTar,poseTwistMain,poseTwistUp,poseTwistTar,
+                                 n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorMain','grp'))
+        poseReadorGrp.setParent(self.shoulderAtChain.chain[0])
+        poseReadorGrp.t.set(0,0,0)
+        poseReadorGrp.r.set(0,0,0)
+        
+        pm.setAttr(poseMain + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
+        pm.setAttr(poseTar + '.tx',float(self.shoulderAtChain.chain[1].tx.get() / 4))
+        pm.setAttr(poseUp + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
+        pm.setAttr(poseUp + '.ty',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
+        
+        pm.aimConstraint(poseTar,poseMain,offset = [0,0,0],w = 1,aimVector = [1,0,0],upVector = [0,-1,0],
+                         worldUpType = 'object',worldUpObject = str(poseUp))        
+        
+        #twist
+        pm.setAttr(poseTwistTar + '.ty',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
+        pm.setAttr(poseTwistUp + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 8))
+        
+#         pm.aimConstraint(poseTwistTar,poseTwistMain,offset = [0,0,0],w = 1,aimVector = [1,0,0],upVector = [0,-1,0],
+#                          worldUpType = 'object',worldUpObject = str(poseUp))
+        aimConstraint -offset 0 0 0 -weight 1 -aimVector 0 -1 0 -upVector -1 0 0 
+        -worldUpType "object" -worldUpObject l_armPoseReadorTwistUp_0_loc;
+
+        #clean 
+        poseReadorGrp.setParent(self.chestGrp)
+        postTarGrp = pm.group(poseTar,
+                              n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTar','grp'))
+        postTarGrp.setParent(self.shoulderAtChain.chain[0])
+        
     def __cleanUp(self):
         
         #add cc ctrl
@@ -590,11 +660,6 @@ class LimbModule(object):
             b.chain[0].setParent(self.limbGrp)
             
         self.limbGrp.setParent(self.shoulderCtrl.control)
-        
-        #chest clean 
-        self.chestGrp = pm.group(self.shoulderCtrl.controlGrp,n = nameUtils.getUniqueName('m','chest','grp'))
-        self.chestGrp.setParent(self.hi.SKL)
-        self.shoulderAtChain.chain[0].setParent(self.chestGrp)
         
 #         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
 #             b.chain[0].setParent(self.bonesGrp)
