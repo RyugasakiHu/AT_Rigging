@@ -10,14 +10,14 @@ class HeadModule(object):
     neckRotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     jawPosArray = [[0,15,1.25],[0,15.5,0.45]]
     jawRotArray = [[0,0,0],[0,0,0]]    
-    muzzlePosArray = [[0,16.174,1.091]]
-    muzzleRotArray = [[0,0,0]]
+    muzzlePosArray = [0,16.174,1.091]
+    muzzleRotArray = [0,0,0]
     nosePosArray = [[0,16.16,1.16],[0,15.794,1.529]]
     noseRotArray = [[0,0,0],[0,0,0]]
-    upTeethPosArray = [[0,15.56,1.215]]
-    upTeethRotArray = [[0,0,0]]
-    loTeethPosArray = [[0,15.28,1.157]]
-    loTeethRotArray = [[0,0,0]]
+    upTeethPosArray = [0,15.56,1.215]
+    upTeethRotArray = [0,0,0]
+    loTeethPosArray = [0,15.28,1.157]
+    loTeethRotArray = [0,0,0]
     tonguePosArray = [[0,15.219,0.251],[0,15.395,0.512,],[0,15.409,0.837],[0,15.391,1.18]]
     tongueRotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
@@ -26,8 +26,8 @@ class HeadModule(object):
     eyeRotArray = [[0,0,0],[0,0,0]]
     earPosArray = [[0.947,15.739,0.154],[1.187,16.263,-0.08]]
     earRotArray = [[0,0,0],[0,0,0]]
-    nosetrilPosArray = [[0,16.16,1.16],[0,15.794,1.529]]
-    nosetrilRotArray = [[0,0,0],[0,0,0]]
+    nostrilPosArray = [[0,16.16,1.16],[0,15.794,1.529]]
+    nostrilRotArray = [[0,0,0],[0,0,0]]
     
     def __init__(self, baseName = 'head',size = 1.5,
                  controlOrient = [0,0,0]):
@@ -47,19 +47,32 @@ class HeadModule(object):
         #single guides
         self.neckGuides = None
         self.jawGuides = None
+        self.muzzleGuides = None
+        self.noseGuides = None
+        self.upTeethGuides = None
+        self.loTeethGuides = None
+        self.tongueGuides = None
         
         #mirror guides
         self.eyeGuides = None
-        self.guideGrp = None
+        self.earGuides = None
+        self.nostrilGuides = None
+        self.guideGrp = None        
         
         #namelist
-        self.nameList = ['neck','head','jaw']
+        self.nameList = ['neck','head','jaw','eye','muzzle','nose','upTeeth',
+                         'loTeeth','tongue','ear','nostril']
         self.micoCtrlList = ['','']
         
     def buildGuides(self):
         
         self.neckGuides = []
         self.jawGuides = []
+        self.eyeGuides = []
+        self.muzzleGuides = []
+        self.noseGuides = []
+        self.upTeethGuides = []
+        
         
         #build neck guides
         #set loc pos
@@ -96,21 +109,34 @@ class HeadModule(object):
                 
         #build eye guides
         #set loc pos
-        for num,pos in enumerate(self.jawPosArray):
-            locName = nameUtils.getUniqueName(self.side[1],self.nameList[2],'gud')
+        for num,pos in enumerate(self.eyePosArray):
+            locName = nameUtils.getUniqueName(self.side[1],self.nameList[3],'gud')
             loc = pm.spaceLocator(n = locName)
             loc.t.set(pos)
-            self.jawGuides.append(loc)        
+            self.eyeGuides.append(loc)        
          
-        tempJawGuides = list(self.jawGuides)
-        tempJawGuides.reverse()
+        tempEyeGuides = list(self.eyeGuides)
+        tempEyeGuides.reverse()
          
-        for i in range(len(tempJawGuides)):
-            if i != (len(tempJawGuides) - 1):
-                pm.parent(tempJawGuides[i],tempJawGuides[i + 1])                
+        for i in range(len(tempEyeGuides)):
+            if i != (len(tempEyeGuides) - 1):
+                pm.parent(tempEyeGuides[i],tempEyeGuides[i + 1])                             
+    
+        #build muzzle guide
+        muzzleLocName = nameUtils.getUniqueName(self.side[1],self.nameList[4],'gud')
+        muzzleLoc = pm.spaceLocator(n = muzzleLocName)
+        muzzleLoc.t.set(self.muzzlePosArray)
+        self.muzzleGuides.append(muzzleLoc)
+        
+        #build upTeeth guide
+        upTeethLocName = nameUtils.getUniqueName(self.side[1],self.nameList[6],'gud')
+        upTeethLoc = pm.spaceLocator(n = upTeethLocName)
+        upTeethLoc.t.set(self.upTeethPosArray)
+        self.upTeethGuides.append(upTeethLoc)
+        self.upTeethGuides[0].setParent(self.muzzleGuides[0])
     
         #clean up
-        self.guideGrp = pm.group(self.neckGuides[0],self.jawGuides[0],
+        self.guideGrp = pm.group(self.neckGuides[0],self.jawGuides[0],self.eyeGuides[0],self.muzzleGuides[0],
                                  n = nameUtils.getUniqueName(self.side[1],self.baseName + 'Gud','grp'))
          
     def build(self):
