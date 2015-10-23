@@ -5,10 +5,31 @@ from Modules import control,hierarchy,legModule
 
 class HeadModule(object):
 
+    #single array
     neckPosArray = [[0,14.25,-0.1],[0,14.77,0],[0,15,0.07],[0,15.355,0.236]]
     neckRotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+    jawPosArray = [[0,15,1.25],[0,15.5,0.45]]
+    jawRotArray = [[0,0,0],[0,0,0]]    
+    muzzlePosArray = [[0,16.174,1.091]]
+    muzzleRotArray = [[0,0,0]]
+    nosePosArray = [[0,16.16,1.16],[0,15.794,1.529]]
+    noseRotArray = [[0,0,0],[0,0,0]]
+    upTeethPosArray = [[0,15.56,1.215]]
+    upTeethRotArray = [[0,0,0]]
+    loTeethPosArray = [[0,15.28,1.157]]
+    loTeethRotArray = [[0,0,0]]
+    tonguePosArray = [[0,15.219,0.251],[0,15.395,0.512,],[0,15.409,0.837],[0,15.391,1.18]]
+    tongueRotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
-    def __init__(self, baseName = 'foot',size = 1.5,
+    #mirror array
+    eyePosArray = [[0.368,16.184,0.882],[0.368,16.184,1.132]]
+    eyeRotArray = [[0,0,0],[0,0,0]]
+    earPosArray = [[0.947,15.739,0.154],[1.187,16.263,-0.08]]
+    earRotArray = [[0,0,0],[0,0,0]]
+    nosetrilPosArray = [[0,16.16,1.16],[0,15.794,1.529]]
+    nosetrilRotArray = [[0,0,0],[0,0,0]]
+    
+    def __init__(self, baseName = 'head',size = 1.5,
                  controlOrient = [0,0,0]):
         
         self.baseName = baseName
@@ -16,21 +37,29 @@ class HeadModule(object):
         self.size = size
         
         #jj
-        self.neckChain = None
+        self.neckFkChain = None
         self.sklGrp = None
         
         #cc 
 #         self.footCtrl = None
         
         #guides 
+        #single guides
         self.neckGuides = None
+        self.jawGuides = None
+        
+        #mirror guides
+        self.eyeGuides = None
+        self.guideGrp = None
         
         #namelist
-        self.nameList = ['neck','head']
+        self.nameList = ['neck','head','jaw']
+        self.micoCtrlList = ['','']
         
     def buildGuides(self):
         
         self.neckGuides = []
+        self.jawGuides = []
         
         #build neck guides
         #set loc pos
@@ -49,20 +78,67 @@ class HeadModule(object):
         for i in range(len(tempNeckGuides)):
             if i != (len(tempNeckGuides) - 1):
                 pm.parent(tempNeckGuides[i],tempNeckGuides[i + 1])
+        
+        #build jaw guides
+        #set loc pos
+        for num,pos in enumerate(self.jawPosArray):
+            locName = nameUtils.getUniqueName(self.side[1],self.nameList[2],'gud')
+            loc = pm.spaceLocator(n = locName)
+            loc.t.set(pos)
+            self.jawGuides.append(loc)        
+         
+        tempJawGuides = list(self.jawGuides)
+        tempJawGuides.reverse()
+         
+        for i in range(len(tempJawGuides)):
+            if i != (len(tempJawGuides) - 1):
+                pm.parent(tempJawGuides[i],tempJawGuides[i + 1])
+                
+        #build eye guides
+        #set loc pos
+        for num,pos in enumerate(self.jawPosArray):
+            locName = nameUtils.getUniqueName(self.side[1],self.nameList[2],'gud')
+            loc = pm.spaceLocator(n = locName)
+            loc.t.set(pos)
+            self.jawGuides.append(loc)        
+         
+        tempJawGuides = list(self.jawGuides)
+        tempJawGuides.reverse()
+         
+        for i in range(len(tempJawGuides)):
+            if i != (len(tempJawGuides) - 1):
+                pm.parent(tempJawGuides[i],tempJawGuides[i + 1])                
+    
+        #clean up
+        self.guideGrp = pm.group(self.neckGuides[0],self.jawGuides[0],
+                                 n = nameUtils.getUniqueName(self.side[1],self.baseName + 'Gud','grp'))
          
     def build(self):
         
+        #get pos info
+        #neck pos
         self.neckGuidePos = [x.getTranslation(space = 'world') for x in self.neckGuides]
         self.neckGuideRot = [x.getRotation(space = 'world') for x in self.neckGuides]
 
-        #foot jj
-#         self.footChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-#         self.footChain.fromList(self.guidePos,self.guideRot)
-# 
-#         for num,joint in enumerate(self.footChain.chain):
-#             name = nameUtils.getUniqueName(self.side,self.footNameList[num],'jj')
-#             pm.rename(joint,name)
-#         
+        #neck jj set
+        self.neckFkChain = fkChain.FkChain(self.nameList[0],self.side[1],self.size,fkCcType = 'cc',type = 'jj')
+        self.neckFkChain.fromList(self.neckGuidePos,self.neckGuideRot,skipLast = 1)
+ 
+        for num,joint in enumerate(self.neckFkChain.chain):
+            if num == (self.neckFkChain.chainLength() - 1):
+                jjName = nameUtils.getUniqueName(self.side[1],self.nameList[1],'jj')
+                ccName = nameUtils.getUniqueName(self.side[1],self.nameList[1],'cc')
+                ccGrpName = nameUtils.getUniqueName(self.side[1],self.nameList[1],'grp')
+                pm.rename(self.neckFkChain.chain[-1],jjName)
+                
+        headCtrl = control.Control(self.side[1],self.nameList[1],self.size) 
+        headCtrl.circleCtrl()
+        pm.xform(headCtrl.controlGrp,ws = 1,matrix = self.neckFkChain.chain[-1].worldMatrix.get())
+        headCtrl.controlGrp.setParent(self.neckFkChain.controlsArray[-1].control)
+        pm.orientConstraint(headCtrl.control,self.neckFkChain.chain[-1],mo = 0)
+        
+        #jaw jj set
+
 #         self.footChain.chain[-1].setParent(self.footChain.chain[0])
 #         self.__addCtrl()
 #         self.__connectAttr()
