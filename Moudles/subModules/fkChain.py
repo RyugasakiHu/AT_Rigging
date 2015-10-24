@@ -5,16 +5,17 @@ from Modules import control
 
 class FkChain(boneChain.BoneChain):
 
-    def __init__(self, baseName = 'fk',side = 'm',size = 1.5,fkCcType = 'shape',type = 'fk'):
+    def __init__(self, baseName = 'fk',side = 'm',size = 1.5,fkCcType = 'shape',type = 'fk',pointCnst = 0):
         '''
         Constructor
         '''
         self.baseName = baseName
         self.side = side
         self.size = size
+        self.fkType = type
         self.fkCcType = fkCcType
         self.controlsArray = []
-        self.fkType = type
+        self.pointCnst = pointCnst
         self.__acceptedCcTypes = ['shape','cc']
         self.__acceptedFkTypes = ['fk','jj']
                 
@@ -62,7 +63,6 @@ class FkChain(boneChain.BoneChain):
             #snap to the control
             #que xform
             pm.xform(cntClass.controlGrp,ws = 1,matrix = self.chain[i].worldMatrix.get())
-            
             self.controlsArray.append(cntClass)                                
             
     def __finalizeFkChainOriCnst(self):        
@@ -76,6 +76,8 @@ class FkChain(boneChain.BoneChain):
         #orient cnst        
         for i,c in enumerate(self.controlsArray):
             pm.orientConstraint(c.control,self.chain[i],mo = 1)
+            if self.pointCnst == 1:
+                pm.pointConstraint(c.control,self.chain[i],mo = 1)
 
     def __finalizeFkChainShape(self):
         
