@@ -47,6 +47,43 @@ class Control(object):
         self.__finalizeCc()       
         self.__colorSet() 
         
+    def cubeCtrl(self):
+        
+        self.__buildName()
+        
+        if self.controlName :
+            self.control = pm.curve(name = self.controlName,d = 1,
+                                    p = [(-0.5,0.5,0.5),(0.5,0.5,0.5),(0.5,0.5,-0.5),(-0.5,0.5,-0.5),(-0.5,0.5,0.5),
+                                         (-0.5,-0.5,0.5),(-0.5,-0.5,-0.5),(0.5,-0.5,-0.5),(0.5,-0.5,0.5),(-0.5,-0.5,0.5),
+                                         (0.5,-0.5,0.5),(0.5,0.5,0.5),(0.5,0.5,-0.5),(0.5,-0.5,-0.5),(-0.5,-0.5,-0.5),
+                                         (-0.5,0.5,-0.5)],k = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
+        self.__finalizeCc()       
+        self.__colorSet() 
+        
+    def sphereCtrl(self):
+        
+        self.__buildName()
+        
+        if self.controlName :
+            self.control = pm.curve(name = self.controlName,d = 1,
+                                    p = [(0,3,0),(0,2,-2),(0,0,-3),(0,-2,-2),(0,-3,0),
+                                         (0,-2,2),(0,0,3),(0,2,2),(0,3,0),(2,2,0),
+                                         (3,0,0),(2,-2,0),(0,-3,0),(-2,-2,0),(-3,0,0),
+                                         (-2,2,0),(0,3,0)],k = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+        self.__finalizeCc()       
+        self.__colorSet()         
+        
+    def plusCtrl(self):
+        
+        self.__buildName()
+        
+        if self.controlName :
+            self.control = pm.curve(name = self.controlName,d = 1,
+                                    p = [(0,1,0),(0,-1,0),(0,0,0),(-1,0,0),(1,0,0),
+                                         (0,0,0),(0,0,1),(0,0,-1)],k = [0,1,2,3,4,5,6,7])
+        self.__finalizeCc()       
+        self.__colorSet()      
+        
     def shoulderCtrl(self,axis):
          
         self.__buildName()
