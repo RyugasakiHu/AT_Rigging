@@ -18,8 +18,8 @@ class HeadModule(object):
     upTeethRotArray = [0,0,0]
     loTeethPosArray = [0,15.28,1.157]
     loTeethRotArray = [0,0,0]
-    tonguePosArray = [[0,15.219,0.251],[0,15.395,0.512,],[0,15.409,0.837],[0,15.391,1.18]]
-    tongueRotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+    tonguePosArray = [[0,15.356,0.462],[0,15.409,0.837],[0,15.391,1.18]]
+    tongueRotArray = [[0,0,0],[0,0,0],[0,0,0]]
     
     #mirror array
     eyePosArray = [[0.368,16.184,0.882],[0.368,16.184,1.132]]
@@ -40,12 +40,6 @@ class HeadModule(object):
         self.neckFkChain = None
         self.sklGrp = None
         
-        #cc 
-        self.tongueDis = None
-        self.neckDis = None
-        self.headCtrl = None
-#         self.footCtrl = None
-        
         #guides 
         #single guides
         self.neckGuides = None
@@ -63,7 +57,25 @@ class HeadModule(object):
         self.earRightGuides = None
         self.nostrilLeftGuides = None
         self.nostrilRightGuides = None
-        self.guideGrp = None        
+        self.guideGrp = None
+        
+        #cc 
+        self.tongueDis = None
+        self.neckDis = None
+        self.eyeRad = None
+        self.headCtrl = None
+        self.jawCtrl = None
+        self.eyeLeftCtrl = None
+        self.eyeRightCtrl = None
+        self.eyeAimCtrl = None
+        self.muzzleCtrl = None        
+        self.noseCtrl = None    
+        self.nostrilLeftCtrl = None              
+        self.nostrilRightCtrl = None
+        self.upTeethCtrl = None
+        self.loTeethCtrl = None        
+        self.earLeftCtrl = None       
+        self.earRightCtrl = None
         
         #namelist
         self.nameList = ['neck','head','jaw','eye','muzzle','nose','nostril','upTeeth',
@@ -328,8 +340,10 @@ class HeadModule(object):
         
         #muzzle jj set and clean
         pm.select(cl = 1)
-        self.muzzleChain = pm.joint(p = self.muzzleGuidePos[0],n = nameUtils.getUniqueName(self.side[1],self.nameList[4],'jj')) 
+        self.muzzleChain = pm.joint(p = self.muzzleGuidePos[0],n = nameUtils.getUniqueName(self.side[1],self.nameList[4],'jj'))
         self.muzzleChain.setParent(self.neckFkChain.chain[-1])
+#         pm.select(self.muzzleChain)
+#         pm.joint(e = 1,oj = 'xyz',secondaryAxisOrient = 'zdown',ch = 1)
         
         #nose pos get
         self.nostrilLeftGuidePos = [x.getTranslation(space = 'world') for x in self.nostrilLeftGuides]
@@ -410,7 +424,7 @@ class HeadModule(object):
         self.earRightGuideRot = [x.getRotation(space = 'world') for x in self.earRightGuides]        
         
         #set right eye jj
-        self.earRightChain = boneChain.BoneChain(self.nameList[3],self.side[-1],type = 'jj')
+        self.earRightChain = boneChain.BoneChain(self.nameList[10],self.side[-1],type = 'jj')
         self.earRightChain.fromList(self.earRightGuidePos,self.earRightGuideRot)
         self.earRightChain.chain[0].setParent(self.neckFkChain.chain[-1])    
         
@@ -423,29 +437,59 @@ class HeadModule(object):
         self.tongueFkChain = fkChain.FkChain(self.nameList[9],self.side[1],size = self.tongueDis * 0.75,
                                              fkCcType = 'cc',type = 'jj',pointCnst = 1)
         self.tongueFkChain.fromList(self.tongueGuidePos,self.tongueGuideRot,skipLast = 1)
-        
-        self.tongueFkChain.controlsArray[0].controlGrp.setParent(self.headCtrl.control)
-        self.tongueFkChain.chain[0].setParent(self.neckFkChain.chain[-1])
+        self.tongueFkChain.chain[0].setParent(self.jawChains.chain[0])
 #         self.tongueFkChain.controlsArray[0].setParent(jawCc)
 
         #correct jj orient
-        
-        
-#         self.nameList = ['neck','head','jaw','eye','muzzle','nose','nostril','upTeeth',
-#                          'loTeeth','tongue','ear']
+        pm.select(self.muzzleChain)
+        pm.joint(e = 1,oj = 'xyz',secondaryAxisOrient = 'zdown',ch = 1)
 
-
-
-
-
-
-
-#         self.__addCtrl()
+        self.__addCtrl()
 #         self.__connectAttr()
 #         self.__cleanUp()
 
     def __addCtrl(self):
-        pass
+#         self.nameList = ['neck','head','jaw','eye','muzzle','nose','nostril','upTeeth',
+#                          'loTeeth','tongue','ear']
+        #create jawCtrl
+        self.jawCtrl = control.Control(self.side[1],self.nameList[2],size = self.neckDis * 2) 
+        self.jawCtrl.cubeCtrl()
+        
+        #align
+        pm.xform(self.jawCtrl.controlGrp,ws = 1,matrix = self.jawChains.chain[0].worldMatrix.get())
+        pm.orientConstraint(self.jawCtrl.control,self.jawChains.chain[0],mo = 0)
+        pm.pointConstraint(self.jawCtrl.control,self.jawChains.chain[0],mo = 0)
+        self.tongueFkChain.controlsArray[0].controlGrp.setParent(self.jawCtrl.control)
+        self.jawCtrl.controlGrp.setParent(self.headCtrl.control)
+        
+        #create eyeCtrl
+        self.eyeRad = float(self.eyePosArray[1][-1] - self.eyePosArray[0][-1])
+        self.eyeLeftCtrl = control.Control(self.side[0],self.nameList[3],size = self.eyeRad * 1.2) 
+        self.eyeLeftCtrl.sphereCtrl()
+        
+        self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 1.2) 
+        self.eyeRightCtrl.sphereCtrl()
+        
+        self.eyeAimCtrl = None
+        
+        #
+        self.muzzleCtrl = None
+                
+        self.noseCtrl = None
+            
+        self.nostrilLeftCtrl = control.Control(self.side[0],self.nameList[6],size = self.tongueDis / 2) 
+        self.nostrilLeftCtrl.cubeCtrl()
+                      
+        self.nostrilRightCtrl = control.Control(self.side[2],self.nameList[6],size = self.tongueDis / 2) 
+        self.nostrilRightCtrl.cubeCtrl()
+        
+        self.upTeethCtrl = None
+        
+        self.loTeethCtrl = None
+                
+        self.earLeftCtrl = None
+               
+        self.earRightCtrl = None
     
     def __connectAttr(self):
         
