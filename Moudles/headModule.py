@@ -41,6 +41,9 @@ class HeadModule(object):
         self.sklGrp = None
         
         #cc 
+        self.tongueDis = None
+        self.neckDis = None
+        self.headCtrl = None
 #         self.footCtrl = None
         
         #guides 
@@ -220,14 +223,39 @@ class HeadModule(object):
     def build(self):
         
         self.guideGrp.v.set(0)
+        '''
+        this part perpare for the neck tongue fk cc size 
+        '''
+        #create distance node:
+        neckDistanceBetweenNodeName = nameUtils.getUniqueName(self.side[1],self.baseName + 'neck','dist')
+        tongueDistanceBetweenNodeName = nameUtils.getUniqueName(self.side[1],self.baseName + 'tongue','dist')
         
+        #create Node
+        neckDistBetweenNode = pm.createNode('distanceBetween',n = neckDistanceBetweenNodeName)
+        tongueDistBetweenNode = pm.createNode('distanceBetween',n = tongueDistanceBetweenNodeName)
+        
+        #dis get
+        #neck
+        self.neckGuides[0].worldPosition[0].connect(neckDistBetweenNode.point1) 
+        self.neckGuides[1].worldPosition[0].connect(neckDistBetweenNode.point2) 
+        self.neckDis = neckDistBetweenNode.distance.get()
+        
+        #tongue
+        self.tongueGuides[0].worldPosition[0].connect(tongueDistBetweenNode.point1) 
+        self.tongueGuides[1].worldPosition[0].connect(tongueDistBetweenNode.point2) 
+        self.tongueDis = tongueDistBetweenNode.distance.get()
+        
+        '''
+        this part create the basic joint 
+        '''
         #get pos info
         #neck pos
         self.neckGuidePos = [x.getTranslation(space = 'world') for x in self.neckGuides]
         self.neckGuideRot = [x.getRotation(space = 'world') for x in self.neckGuides]
-
+        
         #neck jj set
-        self.neckFkChain = fkChain.FkChain(self.nameList[0],self.side[1],self.size,fkCcType = 'cc',type = 'jj')
+        self.neckFkChain = fkChain.FkChain(self.nameList[0],self.side[1],size = self.neckDis,
+                                           fkCcType = 'cc',type = 'jj',pointCnst = 1)
         self.neckFkChain.fromList(self.neckGuidePos,self.neckGuideRot,skipLast = 1)
  
         for num,joint in enumerate(self.neckFkChain.chain):
@@ -237,11 +265,11 @@ class HeadModule(object):
                 ccGrpName = nameUtils.getUniqueName(self.side[1],self.nameList[1],'grp')
                 pm.rename(self.neckFkChain.chain[-1],jjName)
                 
-        headCtrl = control.Control(self.side[1],self.nameList[1],self.size) 
-        headCtrl.circleCtrl()
-        pm.xform(headCtrl.controlGrp,ws = 1,matrix = self.neckFkChain.chain[-1].worldMatrix.get())
-        headCtrl.controlGrp.setParent(self.neckFkChain.controlsArray[-1].control)
-        pm.orientConstraint(headCtrl.control,self.neckFkChain.chain[-1],mo = 0)
+        self.headCtrl = control.Control(self.side[1],self.nameList[1],size = self.neckDis * 1.75) 
+        self.headCtrl.circleCtrl()
+        pm.xform(self.headCtrl.controlGrp,ws = 1,matrix = self.neckFkChain.chain[-1].worldMatrix.get())
+        self.headCtrl.controlGrp.setParent(self.neckFkChain.controlsArray[-1].control)
+        pm.orientConstraint(self.headCtrl.control,self.neckFkChain.chain[-1],mo = 0)
         
         #jaw pos get
         self.jawGuidePos = [x.getTranslation(space = 'world') for x in self.jawGuides]
@@ -349,7 +377,7 @@ class HeadModule(object):
         self.earLeftGuideRot = [x.getRotation(space = 'world') for x in self.earLeftGuides]
 
         #left ear jj set and clean
-        self.earLeftChain = boneChain.BoneChain(self.nameList[-1],self.side[0],type = 'jj')
+        self.earLeftChain = boneChain.BoneChain(self.nameList[10],self.side[0],type = 'jj')
         self.earLeftChain.fromList(self.earLeftGuidePos,self.earLeftGuideRot)
         self.earLeftChain.chain[0].setParent(self.neckFkChain.chain[-1])
         
@@ -384,15 +412,22 @@ class HeadModule(object):
         #set right eye jj
         self.earRightChain = boneChain.BoneChain(self.nameList[3],self.side[-1],type = 'jj')
         self.earRightChain.fromList(self.earRightGuidePos,self.earRightGuideRot)
-        self.earRightChain.chain[0].setParent(self.neckFkChain.chain[-1])            
+        self.earRightChain.chain[0].setParent(self.neckFkChain.chain[-1])    
         
+        #set tongue         
+        #get pos info
+        self.tongueGuidePos = [x.getTranslation(space = 'world') for x in self.tongueGuides]
+        self.tongueGuideRot = [x.getRotation(space = 'world') for x in self.tongueGuides]
+
+        #tongue jj set
+        self.tongueFkChain = fkChain.FkChain(self.nameList[9],self.side[1],size = self.tongueDis * 0.75,
+                                             fkCcType = 'cc',type = 'jj',pointCnst = 1)
+        self.tongueFkChain.fromList(self.tongueGuidePos,self.tongueGuideRot,skipLast = 1)
         
-        
-        
-        
-        
-        
-        
+        self.tongueFkChain.controlsArray[0].controlGrp.setParent(self.headCtrl.control)
+        self.tongueFkChain.chain[0].setParent(self.neckFkChain.chain[-1])
+#         self.tongueFkChain.controlsArray[0].setParent(jawCc)
+
         #correct jj orient
         
         
