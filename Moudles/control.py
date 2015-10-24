@@ -57,6 +57,10 @@ class Control(object):
                                          (-0.5,-0.5,0.5),(-0.5,-0.5,-0.5),(0.5,-0.5,-0.5),(0.5,-0.5,0.5),(-0.5,-0.5,0.5),
                                          (0.5,-0.5,0.5),(0.5,0.5,0.5),(0.5,0.5,-0.5),(0.5,-0.5,-0.5),(-0.5,-0.5,-0.5),
                                          (-0.5,0.5,-0.5)],k = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
+            
+            self.control.s.set(self.size,self.size,self.size)
+            pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
+            
         self.__finalizeCc()       
         self.__colorSet() 
         
@@ -70,6 +74,10 @@ class Control(object):
                                          (0,-2,2),(0,0,3),(0,2,2),(0,3,0),(2,2,0),
                                          (3,0,0),(2,-2,0),(0,-3,0),(-2,-2,0),(-3,0,0),
                                          (-2,2,0),(0,3,0)],k = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+            
+            self.control.s.set(self.size,self.size,self.size)
+            pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
+            
         self.__finalizeCc()       
         self.__colorSet()         
         
@@ -81,6 +89,10 @@ class Control(object):
             self.control = pm.curve(name = self.controlName,d = 1,
                                     p = [(0,1,0),(0,-1,0),(0,0,0),(-1,0,0),(1,0,0),
                                          (0,0,0),(0,0,1),(0,0,-1)],k = [0,1,2,3,4,5,6,7])
+            
+            self.control.s.set(self.size,self.size,self.size)
+            pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
+            
         self.__finalizeCc()       
         self.__colorSet()      
         
