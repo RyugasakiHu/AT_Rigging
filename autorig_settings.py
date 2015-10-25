@@ -21,6 +21,7 @@ suffix = ['jj',# joint joint
           'cc',# control curve
           'loc',# locator
           'dist',# distance
+          'bdr',# micro boundary
           'pv',# pole vector
           'iks',# ikHandle
           'gud',# guide
