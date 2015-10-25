@@ -29,6 +29,25 @@ class HeadModule(object):
     nostrilPosArray = [0.166,15.749,1.354]
     nostrilRotArray = [0,0,0]
     
+    #array for the micro ctrl
+    browPosArray = [0,16.556,1.334]
+#     browRotArray = [0,0,0] 
+    inBrowPosArray = [0.298,16.556,1.334]
+#     inBrowRotArray = [0,0,0]
+    outBrowPosArray = [0.69,16.556,1.229]
+#     outBrowRotArray = [0,0,0]
+    upCheekPosArray = [0.614,15.913,1.214]
+#     upCheekRotArray = [0,0,0]
+    cheekPosArray = [0.79,15.482,0.869]
+#     cheekRotArray = [0,0,0]
+    mouthCornerPosArray = [0,0,0]
+#     mouthCornerRotArray = [0,0,0]
+    upLipPosArray = [0,0,0]
+#     upLipRotArray = [0,0,0]
+    loLipPosArray = [0,0,0]
+#     loLipRotArray = [0,0,0]
+    
+    
     def __init__(self, baseName = 'head',size = 1.5,
                  controlOrient = [0,0,0]):
         
@@ -59,7 +78,18 @@ class HeadModule(object):
         self.nostrilRightGuides = None
         self.guideGrp = None
         
-        #cc 
+        #Micro Guides
+        self.browCtrlGuides = None
+        self.inBrowCtrlGuides = None
+        self.outBrowCtrlGuides = None
+        self.upCheekCtrlGuides = None
+        self.cheekCtrlGuides = None
+        self.mouthCornerCtrlGuides = None
+        self.upLipCtrlGuides = None
+        self.loLipCtrlGuides = None
+        
+        #control
+        #main cc 
         self.tongueDis = None
         self.neckDis = None
         self.eyeRad = None
@@ -78,10 +108,20 @@ class HeadModule(object):
         self.earLeftCtrl = None       
         self.earRightCtrl = None
         
+        #micro cc
+        self.browCtrl = None
+        self.inBrowCtrl = None
+        self.outBrowCtrl = None
+        self.upCheekCtrl = None
+        self.cheekCtrl = None
+        self.mouthCornerCtrl = None
+        self.upLipCtrl = None
+        self.loLipCtrl = None
+        
         #namelist
         self.nameList = ['neck','head','jaw','eye','muzzle','nose','nostril','upTeeth',
                          'loTeeth','tongue','ear']
-        self.micoCtrlList = ['','']
+        self.micoCtrlList = ['brow','inBrow','outBrow','upCheek','cheek','mouthCorner','upLip','loLip']
         
     def buildGuides(self):
         
@@ -232,6 +272,78 @@ class HeadModule(object):
         #clean up
         self.guideGrp = pm.group(self.neckGuides[0],self.jawGuides[0],self.eyeLeftGuides[0],self.muzzleGuides[0],
                                  n = nameUtils.getUniqueName(self.side[1],self.baseName + 'Gud','grp'))
+        
+        self.__buildMicroCtrlGuides()
+        
+    def __buildMicroCtrlGuides(self):
+        
+        self.browCtrlGuides = []
+        self.inBrowCtrlGuides = []
+        self.outBrowCtrlGuides = []
+        self.upCheekCtrlGuides = []
+        self.cheekCtrlGuides = []
+        self.mouthCornerCtrlGuides = []
+        self.upLipCtrlGuides = []
+        self.loLipCtrlGuides = []
+        #     self.micoCtrlList = ['brow','inBrow','outBrow','upCheek','cheek','mouthCorner','upLip','loLip']
+        
+        #brow
+        browLocName = nameUtils.getUniqueName(self.side[1],self.micoCtrlList[0],'gud')
+        browLoc = pm.spaceLocator(n = browLocName)
+        browLoc.t.set(self.browPosArray)
+#         browLoc.r.set(self.browRotArray)
+        self.browCtrlGuides.append(browLoc)
+        
+        #inBrow
+        inBrowLocName = nameUtils.getUniqueName(self.side[0],self.micoCtrlList[1],'gud')
+        inBrowLoc = pm.spaceLocator(n = inBrowLocName)
+        inBrowLoc.t.set(self.inBrowPosArray)
+#         inBrowLoc.r.set(self.inBrowRotArray)
+        self.inBrowCtrlGuides.append(inBrowLoc)
+        
+        #outBrow
+        outBrowLocName = nameUtils.getUniqueName(self.side[0],self.micoCtrlList[2],'gud')
+        outBrowLoc = pm.spaceLocator(n = outBrowLocName)
+        outBrowLoc.t.set(self.outBrowPosArray)
+#         outBrowLoc.r.set(self.outBrowRotArray)
+        self.outBrowCtrlGuides.append(outBrowLoc)
+                
+        #upCheek
+        upCheekLocName = nameUtils.getUniqueName(self.side[0],self.micoCtrlList[3],'gud')
+        upCheekLoc = pm.spaceLocator(n = upCheekLocName)
+        upCheekLoc.t.set(self.upCheekPosArray)
+#         upCheekLoc.r.set(self.upCheekRotArray)
+        self.upCheekCtrlGuides.append(upCheekLoc)        
+        
+        #cheek
+        cheekLocName = nameUtils.getUniqueName(self.side[0],self.micoCtrlList[4],'gud')
+        cheekLoc = pm.spaceLocator(n = cheekLocName)
+        cheekLoc.t.set(self.cheekPosArray)
+#         cheekLoc.r.set(self.browRotArray)
+        self.cheekCtrlGuides.append(cheekLoc)        
+        
+        #mouthCorner
+        mouthCornerLocName = nameUtils.getUniqueName(self.side[0],self.micoCtrlList[5],'gud')
+        mouthCornerLoc = pm.spaceLocator(n = mouthCornerLocName)
+        mouthCornerLoc.t.set(self.mouthCornerPosArray)
+#         cheekLoc.r.set(self.browRotArray)
+        self.mouthCornerCtrlGuides.append(mouthCornerLoc)    
+        
+        #upLip
+        upLipLocName = nameUtils.getUniqueName(self.side[0],self.micoCtrlList[6],'gud')
+        upLipLoc = pm.spaceLocator(n = upLipLocName)
+        upLipLoc.t.set(self.upLipPosArray)
+#         cheekLoc.r.set(self.browRotArray)
+        self.upLipCtrlGuides.append(upLipLoc)    
+        
+        #loLip
+        loLipLocName = nameUtils.getUniqueName(self.side[0],self.micoCtrlList[7],'gud')
+        loLipLoc = pm.spaceLocator(n = loLipLocName)
+        loLipLoc.t.set(self.loLipPosArray)
+#         cheekLoc.r.set(self.browRotArray)
+        self.loLipCtrlGuides.append(loLipLoc)                    
+         
+        print self.browCtrlGuides,self.inBrowCtrlGuides,self.outBrowCtrlGuides,self.upCheekCtrlGuides,self.cheekCtrlGuides,self.mouthCornerCtrlGuides,self.upLipCtrlGuides,self.loLipCtrlGuides,
          
     def build(self):
         
@@ -594,8 +706,7 @@ class HeadModule(object):
         for num,ctrlGrp in enumerate(self.tongueCtrls):
             if num != len(self.tongueCtrls) - 1:
                 ctrlGrp.setParent(self.tongueCtrls[num + 1].getChildren())
-          
-        print self.tongueCtrls[-1]  
+        
         self.tongueCtrls[-1].setParent(self.loTeethCtrl.control)        
         #create earCrl
         self.earLeftCtrl = control.Control(self.side[0],self.nameList[10],size = float(self.tongueDis * 1.5)) 
