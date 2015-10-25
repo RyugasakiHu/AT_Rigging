@@ -342,8 +342,6 @@ class HeadModule(object):
         pm.select(cl = 1)
         self.muzzleChain = pm.joint(p = self.muzzleGuidePos[0],n = nameUtils.getUniqueName(self.side[1],self.nameList[4],'jj'))
         self.muzzleChain.setParent(self.neckFkChain.chain[-1])
-#         pm.select(self.muzzleChain)
-#         pm.joint(e = 1,oj = 'xyz',secondaryAxisOrient = 'zdown',ch = 1)
         
         #nose pos get
         self.nostrilLeftGuidePos = [x.getTranslation(space = 'world') for x in self.nostrilLeftGuides]
@@ -437,10 +435,16 @@ class HeadModule(object):
         self.upTeethChain = pm.joint(p = self.upTeethGuidePos[0],
                                      n = nameUtils.getUniqueName(self.side[1],self.nameList[7],'jj')) 
         self.upTeethChain.setParent(self.muzzleChain)      
-
         
+        #loTeeth pos get
+        self.loTeethGuidePos = [x.getTranslation(space = 'world') for x in self.loTeethGuides]
+        self.loTeethGuideRot = [x.getRotation(space = 'world') for x in self.loTeethGuides]             
         
         #set loTeeth jj
+        pm.select(cl = 1)
+        self.loTeethChain = pm.joint(p = self.loTeethGuidePos[0],
+                                     n = nameUtils.getUniqueName(self.side[1],self.nameList[8],'jj')) 
+        self.loTeethChain.setParent(self.jawChains.chain[0])             
         
         #set tongue         
         #get pos info
@@ -448,14 +452,15 @@ class HeadModule(object):
         self.tongueGuideRot = [x.getRotation(space = 'world') for x in self.tongueGuides]
 
         #tongue jj set
-        self.tongueChain = boneChain.BoneChain(self.nameList[9],self.side[1],type = 'jj')
-        self.tongueChain.fromList(self.tongueGuidePos,self.tongueGuideRot)
-        self.tongueChain.chain[0].setParent(self.jawChains.chain[0])        
-#         self.tongueFkChain = fkChain.FkChain(self.nameList[9],self.side[1],size = self.tongueDis * 0.75,
-#                                              fkCcType = 'cc',type = 'jj',pointCnst = 1)
-#         self.tongueFkChain.fromList(self.tongueGuidePos,self.tongueGuideRot,skipLast = 1)
-#         self.tongueFkChain.chain[0].setParent(self.jawChains.chain[0])
-#         self.tongueFkChain.controlsArray[0].setParent(jawCc)
+        pm.select(cl = 1)
+#         self.tongueChain = boneChain.BoneChain(self.nameList[9],self.side[1],type = 'jj')
+#         self.tongueChain.fromList(self.tongueGuidePos,self.tongueGuideRot)
+#         self.tongueChain.chain[0].setParent(self.jawChains.chain[0])        
+        self.tongueFkChain = fkChain.FkChain(self.nameList[9],self.side[1],size = self.tongueDis * 0.75,
+                                             fkCcType = 'cc',type = 'jj',pointCnst = 1)
+        self.tongueFkChain.fromList(self.tongueGuidePos,self.tongueGuideRot,skipLast = 1)
+        self.tongueFkChain.chain[0].setParent(self.jawChains.chain[0])
+#         self.tongueFkChain.controlsArray[0].control.setParent(self.jawCtrl.control)
 
         #correct jj orient
         pm.select(self.muzzleChain)
@@ -464,6 +469,10 @@ class HeadModule(object):
         self.upTeethChain.jointOrientX.set(0)
         self.upTeethChain.jointOrientY.set(0)
         self.upTeethChain.jointOrientZ.set(0)
+        
+        self.loTeethChain.jointOrientX.set(0)
+        self.loTeethChain.jointOrientY.set(0)
+        self.loTeethChain.jointOrientZ.set(0)
         
         self.nostrilLeftChain.jointOrientX.set(0)
         self.nostrilLeftChain.jointOrientY.set(0)
@@ -489,7 +498,7 @@ class HeadModule(object):
         pm.xform(self.jawCtrl.controlGrp,ws = 1,matrix = self.jawChains.chain[0].worldMatrix.get())
         pm.orientConstraint(self.jawCtrl.control,self.jawChains.chain[0],mo = 0)
         pm.pointConstraint(self.jawCtrl.control,self.jawChains.chain[0],mo = 0)
-#         self.tongueFkChain.controlsArray[0].controlGrp.setParent(self.jawCtrl.control)
+        self.tongueFkChain.controlsArray[0].controlGrp.setParent(self.jawCtrl.control)
         self.jawCtrl.controlGrp.setParent(self.headCtrl.control)
         
         #create eyeCtrl
@@ -546,20 +555,25 @@ class HeadModule(object):
         pm.pointConstraint(self.nostrilRightCtrl.control,self.nostrilRightChain,mo = 0)
         self.nostrilRightCtrl.controlGrp.setParent(self.noseCtrl.control)    
         
-        #create teethCtrl
-        self.upTeethCtrl = control.Control(self.side[1],self.nameList[7],size = float(self.tongueDis * 1.5)) 
+        #create upTeethCtrl
+        self.upTeethCtrl = control.Control(self.side[1],self.nameList[7],size = float(self.tongueDis * 1.5),aimAxis = 'y') 
         self.upTeethCtrl.circleCtrl()
         control.lockAndHideAttr(self.upTeethCtrl.control,['sx','sy','sz','v'])
-#         pm.xform(self.upTeethCtrl.controlGrp,ws = 1,matrix = self.up.worldMatrix.get())
-#         pm.orientConstraint(self.upTeethCtrl.control,self.nostrilLeftChain,mo = 0)
-#         pm.pointConstraint(self.upTeethCtrl.control,self.nostrilLeftChain,mo = 0) 
-#         self.upTeethCtrl.controlGrp.setParent(self.noseCtrl.control)          
+        pm.xform(self.upTeethCtrl.controlGrp,ws = 1,matrix = self.upTeethChain.worldMatrix.get())
+        pm.orientConstraint(self.upTeethCtrl.control,self.upTeethChain,mo = 0)
+        pm.pointConstraint(self.upTeethCtrl.control,self.upTeethChain,mo = 0)
+        self.upTeethCtrl.controlGrp.setParent(self.noseCtrl.control)            
         
-        
-        self.loTeethCtrl = None
+        #create loTeethCtrl
+        self.loTeethCtrl = control.Control(self.side[1],self.nameList[8],size = float(self.tongueDis * 1.5),aimAxis = 'y') 
+        self.loTeethCtrl.circleCtrl()
+        control.lockAndHideAttr(self.loTeethCtrl.control,['sx','sy','sz','v'])
+        pm.xform(self.loTeethCtrl.controlGrp,ws = 1,matrix = self.loTeethChain.worldMatrix.get())
+        pm.orientConstraint(self.loTeethCtrl.control,self.loTeethChain,mo = 0)
+        pm.pointConstraint(self.loTeethCtrl.control,self.loTeethChain,mo = 0)
+        self.loTeethCtrl.controlGrp.setParent(self.jawCtrl.control)               
                 
-        #create earCrl                
-        print self.tongueDis
+        #create earCrl
         self.earLeftCtrl = control.Control(self.side[0],self.nameList[10],size = float(self.tongueDis * 1.5)) 
         self.earLeftCtrl.circleCtrl()
         control.lockAndHideAttr(self.earLeftCtrl.control,['sx','sy','sz','v'])
