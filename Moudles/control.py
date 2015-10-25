@@ -5,7 +5,7 @@ from Utils import nameUtils,xformUtils
 
 class Control(object):
 
-    def __init__(self, side,baseName,size,aimAxis = 'X'):
+    def __init__(self, side,baseName,size,aimAxis = 'x'):
     
         self.baseName = baseName
         self.side = side
@@ -18,21 +18,25 @@ class Control(object):
     
     def microCtrl(self):
         
+        self.__buildName()
+        
         #set cc and cc limit
-        self.control = pm.circle(name = self.baseName + '_cc',ch = 0,o = 1 ,nr = [0,0,1],r = 0.2)[0]
+        self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [0,0,1],r = 0.2)[0]
         pm.transformLimits( tx=(-1, 1), ty=(-1, 1))
         pm.transformLimits( etx=(True, True), ety=(True, True))
-        lockAndHideAttr(self.control,['tz','rx','ry','rz','sx','sy','sz','v'])
         
         #set boundary
-        boundary = pm.curve(name = self.baseName + '_bdr',d = 1,
+        boundaryName = nameUtils.getUniqueName(self.side,self.baseName,'bdr')
+        boundary = pm.curve(name = boundaryName,d = 1,
                             p = [(-1,1,0),(-1,-1,0),(1,-1,0),(1,1,0),(-1,1,0)],k = (0,1,2,3,4))
         boundary.getShape().overrideEnabled.set(1)
         boundary.getShape().overrideDisplayType.set(1)
+        boundary.v.set(0)
         
         #group them all
-        pm.group(self.control,boundary,n = self.baseName + '_cc_grp')
-        
+        grpName = nameUtils.getUniqueName(self.side,self.baseName + '_cc','grp')
+        self.controlGrp = pm.group(self.control,boundary,n = grpName)
+        lockAndHideAttr(self.control,['tz','rx','ry','rz','sx','sy','sz','v'])
         self.__colorSet()   
         
     def circleCtrl(self):
@@ -40,10 +44,21 @@ class Control(object):
         self.__buildName()
         
         if self.controlName :
-            #que
+            
+            if self.aimAxis == 'x':
+                dic = [1,0,0]
+                
+            elif self.aimAxis == 'y':
+                dic = [0,1,0]
+                
+            elif self.aimAxis == 'z':
+                dic = [0,0,1]
+                
             self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size)[0]
             #self.control = mc.circle(n = self.controlName,ch = 0,o = 1,nr = (1,0,0))
-
+            self.control.s.set(self.size,self.size,self.size)
+            pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
+            
         self.__finalizeCc()       
         self.__colorSet() 
         
