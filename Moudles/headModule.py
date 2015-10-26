@@ -63,14 +63,21 @@ class HeadModule(object):
         self.tongueGuides = None
         
         #mirror guides
-        self.eyeRightGuides = None
-        self.eyeRightGuides = None
+        self.eyeLeftGuides = None
         self.earLeftGuides = None
-        self.earRightGuides = None
         self.nostrilLeftGuides = None
-        self.nostrilRightGuides = None
-        self.guideGrp = None
-        self.mirrorGuides = None
+
+        self.earRightGuides = None
+        self.eyeRightGuides = None        
+        self.nostrilRightGuides = None     
+
+        self.mirrorJointGuideGrp = None
+        self.tempMirrorJointGuideList = None
+        self.mirrorJointGuideList = None
+        
+        
+        self.jointGuideGrp = None
+
         
         #Micro Guides
         self.browCtrlGuides = None
@@ -79,12 +86,16 @@ class HeadModule(object):
         self.upCheekCtrlLeftGuides = None
         self.cheekCtrlLeftGuides = None
         self.mouthCornerLeftCtrlGuides = None
-        self.microCtrlLeftGuideGrp = None
         
+        self.microCtrlLeftGuideGrp = None
         self.microCtrlTotalGuideGrp = None
          
         self.upLipMidCtrlGuides = None
         self.loLipMidCtrlGuides = None        
+        
+        self.mirrorMicroGuides = None        
+        self.mirrorMicroCtrlList = None
+        self.tempMirrorMicroGuides = None              
         
         #control
         #main cc 
@@ -118,8 +129,7 @@ class HeadModule(object):
         
         self.upLipMidCtrl = None
         self.loLipMidCtrl = None     
-        self.microCtrlGrp = None
-        self.mirrorMicroCtrlList = None
+        self.microCtrlGrp = None  
         
         #namelist
         self.nameList = ['neck','head','jaw','eye','muzzle','nose','nostril','upTeeth','loTeeth','tongue','ear']
@@ -132,15 +142,19 @@ class HeadModule(object):
         self.muzzleGuides = []
         self.noseGuides = []
         self.nostrilLeftGuides = []
-        self.nostrilRightGuides = []
         self.upTeethGuides = []
         self.loTeethGuides = []
         self.tongueGuides = []
-        
         self.eyeLeftGuides = []
-        self.eyeRightGuides = []
         self.earLeftGuides = []
-        self.earRightGuides = []
+        
+        self.tempMirrorJointGuideList = []
+        self.mirrorJointGuideList = []
+        
+#         self.rightGuides = []
+#         self.nostrilRightGuides = []            
+#         self.eyeRightGuides = []        
+#         self.earRightGuides = []
         
         #build neck guides
         #set loc pos
@@ -183,13 +197,16 @@ class HeadModule(object):
             loc = pm.spaceLocator(n = locName)
             loc.t.set(pos)
             self.eyeLeftGuides.append(loc)        
+            self.tempMirrorJointGuideList.append(loc)      
          
-        tempEyeLeftGuides = list(self.eyeLeftGuides)
-        tempEyeLeftGuides.reverse()
-         
-        for i in range(len(tempEyeLeftGuides)):
-            if i != (len(tempEyeLeftGuides) - 1):
-                pm.parent(tempEyeLeftGuides[i],tempEyeLeftGuides[i + 1])
+#         tempEyeLeftGuides = list(self.eyeLeftGuides)
+#         tempEyeLeftGuides.reverse()
+#          
+#         for i in range(len(tempEyeLeftGuides)):
+#             if i != (len(tempEyeLeftGuides) - 1):
+#                 pm.parent(tempEyeLeftGuides[i],tempEyeLeftGuides[i + 1])
+                
+          
         
         #build muzzle structure
         #build muzzle guide
@@ -220,6 +237,7 @@ class HeadModule(object):
         nostrilLeftLoc.t.set(self.nostrilPosArray)
         self.nostrilLeftGuides.append(nostrilLeftLoc)
         self.nostrilLeftGuides[0].setParent(self.noseGuides[0])
+        self.tempMirrorJointGuideList.append(self.nostrilLeftGuides) 
          
         self.noseGuides[0].setParent(self.muzzleGuides[0])        
         
@@ -261,6 +279,7 @@ class HeadModule(object):
             loc = pm.spaceLocator(n = locName)
             loc.t.set(pos)
             self.earLeftGuides.append(loc)        
+            self.tempMirrorJointGuideList.append(loc)
          
         tempearLeftGuides = list(self.earLeftGuides)
         tempearLeftGuides.reverse()
@@ -272,10 +291,66 @@ class HeadModule(object):
 #         self.earLeftGuides[0].setParent(self.neckGuides[-1])        
         
         #clean up
-        self.guideGrp = pm.group(self.neckGuides[0],self.jawGuides[0],self.eyeLeftGuides[0],self.muzzleGuides[0],self.earLeftGuides[0],
-                                 n = nameUtils.getUniqueName(self.side[1],self.baseName + 'Gud','grp'))
+        self.jointGuideGrp = pm.group(self.neckGuides[0],self.jawGuides[0],
+                                      self.eyeLeftGuides[0],self.eyeLeftGuides[1],
+                                      self.muzzleGuides[0],self.earLeftGuides[0],
+                                      self.earLeftGuides[1],n = nameUtils.getUniqueName(self.side[1],self.baseName + 'Gud','grp'))
         
-        self.__buildMicroCtrlGuides()
+        self.__mirrorJointGuide()        
+#         self.__buildMicroCtrlGuides()
+
+        
+    def __mirrorJointGuide(self):  
+        
+        for leftJointGuide in self.tempMirrorJointGuideList:
+            #create and set pos
+            mirrorJointGuide = pm.duplicate(leftJointGuide)
+            mirrorJointGuideTx = mirrorJointGuide[0].tx.get()
+            mirrorJointGuide[0].tx.set(-mirrorJointGuideTx)
+            
+            mirrorJointGuideRx = mirrorJointGuide[0].rx.get()
+            mirrorJointGuide[0].rx.set(mirrorJointGuideRx)
+             
+            mirrorJointGuideRy = mirrorJointGuide[0].ry.get()
+            mirrorJointGuide[0].ry.set(-mirrorJointGuideRy)
+             
+            mirrorJointGuideRz = mirrorJointGuide[0].rz.get()
+            mirrorJointGuide[0].rz.set(-mirrorJointGuideRz)            
+            
+            #rename
+            oriName = mirrorJointGuide[0].name()
+            temp = oriName.split('_')
+            mirrorName = nameUtils.getUniqueName(self.side[-1], temp[1], 'gud')
+            pm.rename(oriName,mirrorName)
+ 
+            self.mirrorJointGuideList.append(mirrorJointGuide)
+            print self.mirrorJointGuideList
+
+        self.mirrorJointGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[-1],self.baseName + 'JointGud','grp')) 
+         
+#         print  self.tempMirrorJointGuideList
+        for loc in self.mirrorJointGuideList:
+            loc[0].setParent(self.mirrorJointGuideGrp)
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
         
     def __buildMicroCtrlGuides(self):
         
@@ -290,8 +365,8 @@ class HeadModule(object):
         self.loLipMidCtrlGuides = []
         self.loLipLeftCtrlGuides = []
         
-        self.tempMirrorGuides = []
-        self.mirrorGuides = []
+        self.tempMirrorMicroGuides = []
+        self.mirrorMicroGuides = []
         
         #brow
         browLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlList[0],'gud')
@@ -306,7 +381,7 @@ class HeadModule(object):
         inBrowLeftLoc.t.set(self.inBrowLeftPosArray)
 #         inBrowLoc.r.set(self.inBrowRotArray)
         self.inBrowLeftCtrlGuides.append(inBrowLeftLoc)
-        self.tempMirrorGuides.append(inBrowLeftLoc)
+        self.tempMirrorMicroGuides.append(inBrowLeftLoc)
         
         #outBrow left
         outBrowLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlList[2],'gud')
@@ -314,7 +389,7 @@ class HeadModule(object):
         outBrowLeftLoc.t.set(self.outBrowLeftPosArray)
 #         outBrowLoc.r.set(self.outBrowRotArray)
         self.outBrowLeftCtrlGuides.append(outBrowLeftLoc)
-        self.tempMirrorGuides.append(outBrowLeftLoc)          
+        self.tempMirrorMicroGuides.append(outBrowLeftLoc)          
             
         #upCheek left 
         upCheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlList[3],'gud')
@@ -322,7 +397,7 @@ class HeadModule(object):
         upCheekLeftLoc.t.set(self.upCheekLeftPosArray)
 #         upCheekLoc.r.set(self.upCheekRotArray)
         self.upCheekCtrlLeftGuides.append(upCheekLeftLoc)    
-        self.tempMirrorGuides.append(upCheekLeftLoc)
+        self.tempMirrorMicroGuides.append(upCheekLeftLoc)
         
         #cheek left
         cheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlList[4],'gud')
@@ -330,7 +405,7 @@ class HeadModule(object):
         cheekLeftLoc.t.set(self.cheekLeftPosArray)
 #         cheekLoc.r.set(self.browRotArray)
         self.cheekCtrlLeftGuides.append(cheekLeftLoc)
-        self.tempMirrorGuides.append(cheekLeftLoc)        
+        self.tempMirrorMicroGuides.append(cheekLeftLoc)        
         
         #mouthCorner left
         mouthCornerLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlList[5],'gud')
@@ -338,7 +413,7 @@ class HeadModule(object):
         mouthCornerLeftLoc.t.set(self.mouthCornerLeftPosArray)
 #         cheekLoc.r.set(self.browRotArray)
         self.mouthCornerLeftCtrlGuides.append(mouthCornerLeftLoc)    
-        self.tempMirrorGuides.append(mouthCornerLeftLoc)
+        self.tempMirrorMicroGuides.append(mouthCornerLeftLoc)
         
         #upLip
         #mid
@@ -354,7 +429,7 @@ class HeadModule(object):
         upLipLeftLoc.t.set(self.upLipLeftPosArray)
 #         cheekLoc.r.set(self.browRotArray)
         self.upLipLeftCtrlGuides.append(upLipLeftLoc)       
-        self.tempMirrorGuides.append(upLipLeftLoc)     
+        self.tempMirrorMicroGuides.append(upLipLeftLoc)     
         
         #loLip
         #mid
@@ -370,7 +445,7 @@ class HeadModule(object):
         loLipLeftLoc.t.set(self.loLipLeftPosArray)
 #         cheekLoc.r.set(self.browRotArray)
         self.loLipLeftCtrlGuides.append(loLipLeftLoc)
-        self.tempMirrorGuides.append(loLipLeftLoc)
+        self.tempMirrorMicroGuides.append(loLipLeftLoc)
                 
         self.microCtrlLeftGuideGrp = pm.group(self.inBrowLeftCtrlGuides[0],self.outBrowLeftCtrlGuides[0],
                                                  self.upCheekCtrlLeftGuides[0],self.cheekCtrlLeftGuides[0],
@@ -384,7 +459,7 @@ class HeadModule(object):
                         
     def build(self):
         
-        self.guideGrp.v.set(0)
+        self.jointGuideGrp.v.set(0)
         '''
         this part perpare for the neck tongue fk cc size 
         '''
@@ -472,7 +547,7 @@ class HeadModule(object):
             if i != (len(tempEyeRightGuides) - 1):
                 pm.parent(tempEyeRightGuides[i],tempEyeRightGuides[i + 1])
         
-        self.eyeRightGuides[0].setParent(self.guideGrp)
+        self.eyeRightGuides[0].setParent(self.jointGuideGrp)
         
         #right pos get
         #eye pos get
@@ -564,7 +639,7 @@ class HeadModule(object):
             if i != (len(tempEarRightGuides) - 1):
                 pm.parent(tempEarRightGuides[i],tempEarRightGuides[i + 1])
         
-        self.earRightGuides[0].setParent(self.guideGrp)
+        self.earRightGuides[0].setParent(self.jointGuideGrp)
         
         #right pos get
         #ear pos get
@@ -640,8 +715,9 @@ class HeadModule(object):
         self.__addMicroCtrl()
         
     def __mirrorMicroGuides(self):        
+        
         #mirror to right
-        for gud in self.tempMirrorGuides:
+        for gud in self.tempMirrorMicroGuides:
             #duplicate and set pos
             mirror = pm.duplicate(gud)
             mirrorValueTx = gud.tx.get()
@@ -661,11 +737,11 @@ class HeadModule(object):
             temp = oriName.split('_')
             mirrorName = nameUtils.getUniqueName(self.side[-1], temp[1], 'gud')
             pm.rename(oriName,mirrorName)
-            self.mirrorGuides.append(mirror)             
+            self.mirrorMicroGuides.append(mirror)             
         
-        self.microCtrlRightGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[2],self.baseName + 'McGud','grp')) 
+        self.microCtrlRightGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[-1],self.baseName + 'McGud','grp')) 
         
-        for loc in self.mirrorGuides:
+        for loc in self.mirrorMicroGuides:
             loc[0].setParent(self.microCtrlRightGuideGrp)
             
         #clean
@@ -873,11 +949,11 @@ class HeadModule(object):
         self.loLipMidCtrl.controlGrp.setParent(self.microCtrlGrp)
         
         #add mirror microList
-        for num,loc in enumerate(self.mirrorGuides):
+        for num,loc in enumerate(self.mirrorMicroGuides):
             self.mirrorMicroCtrl = control.Control(self.side[2],self.microCtrlList[num + 1],self.size) 
             self.mirrorMicroCtrl.microCtrl()
             
-            pm.xform(self.mirrorMicroCtrl.controlGrp,ws = 1,matrix = self.mirrorGuides[num][0].worldMatrix.get())
+            pm.xform(self.mirrorMicroCtrl.controlGrp,ws = 1,matrix = self.mirrorMicroGuides[num][0].worldMatrix.get())
             self.mirrorMicroCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
             self.mirrorMicroCtrl.controlGrp.setParent(self.microCtrlGrp)            
             
