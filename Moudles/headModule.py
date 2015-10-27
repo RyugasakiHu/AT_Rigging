@@ -71,14 +71,14 @@ class HeadModule(object):
         self.eyeRightGuides = None        
         self.nostrilRightGuides = None     
 
-        self.mirrorJointGuideGrp = None
-        self.tempMirrorJointGuideList = None
-        self.mirrorJointGuideList = None
+#         self.mirrorjointLeftGuideGrp = None
+#         self.tempMirrorJointGuideList = None
+#         self.mirrorJointGuideList = None
         
-        
+        self.jointRightGuideGrp = None
+        self.jointLeftGuideGrp = None
         self.jointGuideGrp = None
 
-        
         #Micro Guides
         self.browCtrlGuides = None
         self.inBrowLeftCtrlGuides = None
@@ -151,11 +151,14 @@ class HeadModule(object):
         self.tempMirrorJointGuideList = []
         self.mirrorJointGuideList = []
         
-#         self.rightGuides = []
-#         self.nostrilRightGuides = []            
-#         self.eyeRightGuides = []        
-#         self.earRightGuides = []
+        self.jointGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.baseName + 'TotalGud','grp'))
+        self.jointMidGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.baseName + 'Gud','grp'))
+        self.jointLeftGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[0],self.baseName + 'Gud','grp'))
+        self.jointRightGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[-1],self.baseName + 'Gud','grp'))
         
+        self.jointMidGuideGrp.setParent(self.jointGuideGrp)
+        self.jointLeftGuideGrp.setParent(self.jointGuideGrp)
+        self.jointRightGuideGrp.setParent(self.jointGuideGrp)
         #build neck guides
         #set loc pos
         for num,pos in enumerate(self.neckPosArray):
@@ -173,6 +176,8 @@ class HeadModule(object):
         for i in range(len(tempNeckGuides)):
             if i != (len(tempNeckGuides) - 1):
                 pm.parent(tempNeckGuides[i],tempNeckGuides[i + 1])
+                
+        self.neckGuides[0].setParent(self.jointMidGuideGrp)
         
         #build jaw guides
         #set loc pos
@@ -189,6 +194,8 @@ class HeadModule(object):
             if i != (len(tempJawGuides) - 1):
                 pm.parent(tempJawGuides[i],tempJawGuides[i + 1])
                 
+        self.jawGuides[0].setParent(self.jointMidGuideGrp)
+                
         #build eye guides
         #set loc pos
         #left
@@ -196,24 +203,19 @@ class HeadModule(object):
             locName = nameUtils.getUniqueName(self.side[0],self.nameList[3],'gud')
             loc = pm.spaceLocator(n = locName)
             loc.t.set(pos)
-            self.eyeLeftGuides.append(loc)        
-            self.tempMirrorJointGuideList.append(loc)      
-         
-#         tempEyeLeftGuides = list(self.eyeLeftGuides)
-#         tempEyeLeftGuides.reverse()
-#          
-#         for i in range(len(tempEyeLeftGuides)):
-#             if i != (len(tempEyeLeftGuides) - 1):
-#                 pm.parent(tempEyeLeftGuides[i],tempEyeLeftGuides[i + 1])
-                
+            self.eyeLeftGuides.append(loc)
+
+        for eyeLeftGuide in self.eyeLeftGuides:
+            eyeLeftGuide.setParent(self.jointLeftGuideGrp)
           
-        
         #build muzzle structure
         #build muzzle guide
         muzzleLocName = nameUtils.getUniqueName(self.side[1],self.nameList[4],'gud')
         muzzleLoc = pm.spaceLocator(n = muzzleLocName)
         muzzleLoc.t.set(self.muzzlePosArray)
         self.muzzleGuides.append(muzzleLoc)
+        
+        self.muzzleGuides[0].setParent(self.jointMidGuideGrp)
         
         #build nose guide
         #nose mid
@@ -228,7 +230,9 @@ class HeadModule(object):
          
         for i in range(len(tempNoseGuides)):
             if i != (len(tempNoseGuides) - 1):
-                pm.parent(tempNoseGuides[i],tempNoseGuides[i + 1])     
+                pm.parent(tempNoseGuides[i],tempNoseGuides[i + 1])
+                     
+        self.noseGuides[0].setParent(self.jointMidGuideGrp)
         
         #nostril
         #left loc
@@ -236,10 +240,7 @@ class HeadModule(object):
         nostrilLeftLoc = pm.spaceLocator(n = nostrilLeftLocName)
         nostrilLeftLoc.t.set(self.nostrilPosArray)
         self.nostrilLeftGuides.append(nostrilLeftLoc)
-        self.nostrilLeftGuides[0].setParent(self.noseGuides[0])
-        self.tempMirrorJointGuideList.append(self.nostrilLeftGuides) 
-         
-        self.noseGuides[0].setParent(self.muzzleGuides[0])        
+        self.nostrilLeftGuides[0].setParent(self.jointLeftGuideGrp)
         
         #build upTeeth guide
         upTeethLocName = nameUtils.getUniqueName(self.side[1],self.nameList[7],'gud')
@@ -279,79 +280,78 @@ class HeadModule(object):
             loc = pm.spaceLocator(n = locName)
             loc.t.set(pos)
             self.earLeftGuides.append(loc)        
-            self.tempMirrorJointGuideList.append(loc)
-         
-        tempearLeftGuides = list(self.earLeftGuides)
-        tempearLeftGuides.reverse()
-         
-        for i in range(len(tempearLeftGuides)):
-            if i != (len(tempearLeftGuides) - 1):
-                pm.parent(tempearLeftGuides[i],tempearLeftGuides[i + 1])
-                
-#         self.earLeftGuides[0].setParent(self.neckGuides[-1])        
-        
-        #clean up
-        self.jointGuideGrp = pm.group(self.neckGuides[0],self.jawGuides[0],
-                                      self.eyeLeftGuides[0],self.eyeLeftGuides[1],
-                                      self.muzzleGuides[0],self.earLeftGuides[0],
-                                      self.earLeftGuides[1],n = nameUtils.getUniqueName(self.side[1],self.baseName + 'Gud','grp'))
-        
-        self.__mirrorJointGuide()        
-#         self.__buildMicroCtrlGuides()
+     
+        for earLeftGuide in self.earLeftGuides:
+            earLeftGuide.setParent(self.jointLeftGuideGrp)
 
+        self.__mirrorJointGuide()        
+        self.__buildMicroCtrlGuides()
         
     def __mirrorJointGuide(self):  
         
-        for leftJointGuide in self.tempMirrorJointGuideList:
-            #create and set pos
-            mirrorJointGuide = pm.duplicate(leftJointGuide)
-            mirrorJointGuideTx = mirrorJointGuide[0].tx.get()
-            mirrorJointGuide[0].tx.set(-mirrorJointGuideTx)
-            
-            mirrorJointGuideRx = mirrorJointGuide[0].rx.get()
-            mirrorJointGuide[0].rx.set(mirrorJointGuideRx)
+        self.eyeRightGuides = [] 
+        self.nostrilRightGuides = []            
+        self.earRightGuides = []
+        
+#         print self.nostrilLeftGuides,self.eyeLeftGuides,self.earLeftGuides
+
+        #right eyes
+        for leftGuide in self.eyeLeftGuides:
+            mirrorJointGuide = pm.duplicate(leftGuide)
+            mirrorJointGuideTranslation = mirrorJointGuide[0].getTranslation(space = 'world')
+            mirrorJointGuide[0].tx.set(-mirrorJointGuideTranslation[0])
              
-            mirrorJointGuideRy = mirrorJointGuide[0].ry.get()
-            mirrorJointGuide[0].ry.set(-mirrorJointGuideRy)
+            mirrorJointGuideRotate = mirrorJointGuide[0].getRotation()
+            mirrorJointGuide[0].rx.set(mirrorJointGuideRotate[0])
+            mirrorJointGuide[0].ry.set(-mirrorJointGuideRotate[1])
+            mirrorJointGuide[0].rz.set(-mirrorJointGuideRotate[2])            
              
-            mirrorJointGuideRz = mirrorJointGuide[0].rz.get()
-            mirrorJointGuide[0].rz.set(-mirrorJointGuideRz)            
-            
             #rename
             oriName = mirrorJointGuide[0].name()
             temp = oriName.split('_')
             mirrorName = nameUtils.getUniqueName(self.side[-1], temp[1], 'gud')
             pm.rename(oriName,mirrorName)
- 
-            self.mirrorJointGuideList.append(mirrorJointGuide)
-            print self.mirrorJointGuideList
+            self.eyeRightGuides.append(mirrorJointGuide)            
+            mirrorJointGuide[0].setParent(self.jointRightGuideGrp)
+            
+        #nostril
+        for leftGuide in self.nostrilLeftGuides:
+            mirrorJointGuide = pm.duplicate(leftGuide)
+            mirrorJointGuideTranslation = mirrorJointGuide[0].getTranslation(space = 'world')
+            mirrorJointGuide[0].tx.set(-mirrorJointGuideTranslation[0])
+             
+            mirrorJointGuideRotate = mirrorJointGuide[0].getRotation()
+            mirrorJointGuide[0].rx.set(mirrorJointGuideRotate[0])
+            mirrorJointGuide[0].ry.set(-mirrorJointGuideRotate[1])
+            mirrorJointGuide[0].rz.set(-mirrorJointGuideRotate[2])            
+             
+            #rename
+            oriName = mirrorJointGuide[0].name()
+            temp = oriName.split('_')
+            mirrorName = nameUtils.getUniqueName(self.side[-1], temp[1], 'gud')
+            pm.rename(oriName,mirrorName)
+            self.nostrilRightGuides.append(mirrorJointGuide)
+            mirrorJointGuide[0].setParent(self.jointRightGuideGrp)
 
-        self.mirrorJointGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[-1],self.baseName + 'JointGud','grp')) 
-         
-#         print  self.tempMirrorJointGuideList
-        for loc in self.mirrorJointGuideList:
-            loc[0].setParent(self.mirrorJointGuideGrp)
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-        
+        #ear
+        for leftGuide in self.earLeftGuides:
+            mirrorJointGuide = pm.duplicate(leftGuide)
+            mirrorJointGuideTranslation = mirrorJointGuide[0].getTranslation(space = 'world')
+            mirrorJointGuide[0].tx.set(-mirrorJointGuideTranslation[0])
+             
+            mirrorJointGuideRotate = mirrorJointGuide[0].getRotation()
+            mirrorJointGuide[0].rx.set(mirrorJointGuideRotate[0])
+            mirrorJointGuide[0].ry.set(-mirrorJointGuideRotate[1])
+            mirrorJointGuide[0].rz.set(-mirrorJointGuideRotate[2])            
+             
+            #rename
+            oriName = mirrorJointGuide[0].name()
+            temp = oriName.split('_')
+            mirrorName = nameUtils.getUniqueName(self.side[-1], temp[1], 'gud')
+            pm.rename(oriName,mirrorName)
+            self.earRightGuides.append(mirrorJointGuide)
+            mirrorJointGuide[0].setParent(self.jointRightGuideGrp)
+
     def __buildMicroCtrlGuides(self):
         
         self.browCtrlGuides = []
@@ -452,17 +452,18 @@ class HeadModule(object):
                                                  self.loLipLeftCtrlGuides[0],self.upLipLeftCtrlGuides[0],
                                                  self.mouthCornerLeftCtrlGuides[0],n = nameUtils.getUniqueName(self.side[0],self.baseName + 'McGud','grp'))
         
-        
         self.microCtrlTotalGuideGrp = pm.group(self.browCtrlGuides[0],self.loLipMidCtrlGuides[0],
                                                self.upLipMidCtrlGuides[0],self.microCtrlLeftGuideGrp,
                                                n = nameUtils.getUniqueName(self.side[1],self.baseName + 'McGud','grp'))        
-                        
+                         
     def build(self):
         
         self.jointGuideGrp.v.set(0)
+        
         '''
         this part perpare for the neck tongue fk cc size 
         '''
+        
         #create distance node:
         neckDistanceBetweenNodeName = nameUtils.getUniqueName(self.side[1],self.baseName + 'neck','dist')
         tongueDistanceBetweenNodeName = nameUtils.getUniqueName(self.side[1],self.baseName + 'tongue','dist')
@@ -525,35 +526,12 @@ class HeadModule(object):
         self.eyeLeftChain = boneChain.BoneChain(self.nameList[3],self.side[0],type = 'jj')
         self.eyeLeftChain.fromList(self.eyeLeftGuidePos,self.eyeLeftGuideRot)
         self.eyeLeftChain.chain[0].setParent(self.neckFkChain.chain[-1])
-        
+
         #eye right side:
         #get pos info
-        self.eyeRightPosArray = self.eyePosArray
-        for num,pos in enumerate(self.eyeRightPosArray):
-            rightValue = -(self.eyeRightPosArray[num][0])
-            self.eyeRightPosArray[num][0] = rightValue
-            
-        #set right guide
-        for num,pos in enumerate(self.eyeRightPosArray):
-            locName = nameUtils.getUniqueName(self.side[-1],self.nameList[3],'gud')
-            loc = pm.spaceLocator(n = locName)
-            loc.t.set(pos)
-            self.eyeRightGuides.append(loc)        
-          
-        tempEyeRightGuides = list(self.eyeRightGuides)
-        tempEyeRightGuides.reverse()
-        
-        for i in range(len(tempEyeRightGuides)):
-            if i != (len(tempEyeRightGuides) - 1):
-                pm.parent(tempEyeRightGuides[i],tempEyeRightGuides[i + 1])
-        
-        self.eyeRightGuides[0].setParent(self.jointGuideGrp)
-        
-        #right pos get
-        #eye pos get
-        self.eyeRightGuidePos = [x.getTranslation(space = 'world') for x in self.eyeRightGuides]
-        self.eyeRightGuideRot = [x.getRotation(space = 'world') for x in self.eyeRightGuides]        
-        
+        self.eyeRightGuidePos = [x[0].getTranslation(space = 'world') for x in self.eyeRightGuides]
+        self.eyeRightGuideRot = [x[0].getRotation(space = 'world') for x in self.eyeRightGuides]        
+
         #set right eye jj
         self.eyeRightChain = boneChain.BoneChain(self.nameList[3],self.side[-1],type = 'jj')
         self.eyeRightChain.fromList(self.eyeRightGuidePos,self.eyeRightGuideRot)
@@ -587,27 +565,27 @@ class HeadModule(object):
                                      n = nameUtils.getUniqueName(self.side[0],self.nameList[6],'jj'))
         self.nostrilLeftChain.setParent(self.noseChain.chain[0])
         
-        #right nosetril loc
-        self.nostrilRightPosArray = self.nostrilPosArray
-        for pos in self.nostrilRightPosArray:
-            rightValue = -self.nostrilRightPosArray[0]
-            self.nostrilRightPosArray[0] = rightValue
-            
-        nostrilRightLocName = nameUtils.getUniqueName(self.side[-1],self.nameList[6],'gud')
-        nostrilRightLoc = pm.spaceLocator(n = nostrilRightLocName)
-        nostrilRightLoc.t.set(self.nostrilRightPosArray)
-        self.nostrilRightGuides.append(nostrilRightLoc)
-        self.nostrilRightGuides[0].setParent(self.noseGuides[0])
-        
-        #right nostril pos get
-        self.nostrilRightGuidePos = [x.getTranslation(space = 'world') for x in self.nostrilRightGuides]
-        self.nostrilRightGuideRot = [x.getRotation(space = 'world') for x in self.nostrilRightGuides]
-        
-        #right nostril jj
-        pm.select(cl = 1)
-        self.nostrilRightChain = pm.joint(p = self.nostrilRightGuidePos[0],
-                                     n = nameUtils.getUniqueName(self.side[-1],self.nameList[6],'jj'))
-        self.nostrilRightChain.setParent(self.noseChain.chain[0])   
+#         #right nosetril loc
+#         self.nostrilRightPosArray = self.nostrilPosArray
+#         for pos in self.nostrilRightPosArray:
+#             rightValue = -self.nostrilRightPosArray[0]
+#             self.nostrilRightPosArray[0] = rightValue
+#             
+#         nostrilRightLocName = nameUtils.getUniqueName(self.side[-1],self.nameList[6],'gud')
+#         nostrilRightLoc = pm.spaceLocator(n = nostrilRightLocName)
+#         nostrilRightLoc.t.set(self.nostrilRightPosArray)
+#         self.nostrilRightGuides.append(nostrilRightLoc)
+#         self.nostrilRightGuides[0].setParent(self.noseGuides[0])
+#         
+#         #right nostril pos get
+#         self.nostrilRightGuidePos = [x.getTranslation(space = 'world') for x in self.nostrilRightGuides]
+#         self.nostrilRightGuideRot = [x.getRotation(space = 'world') for x in self.nostrilRightGuides]
+#         
+#         #right nostril jj
+#         pm.select(cl = 1)
+#         self.nostrilRightChain = pm.joint(p = self.nostrilRightGuidePos[0],
+#                                      n = nameUtils.getUniqueName(self.side[-1],self.nameList[6],'jj'))
+#         self.nostrilRightChain.setParent(self.noseChain.chain[0])   
         
         #left ear pos get
         self.earLeftGuidePos = [x.getTranslation(space = 'world') for x in self.earLeftGuides]
@@ -618,38 +596,38 @@ class HeadModule(object):
         self.earLeftChain.fromList(self.earLeftGuidePos,self.earLeftGuideRot)
         self.earLeftChain.chain[0].setParent(self.neckFkChain.chain[-1])
         
-        #ear right side:
-        #get pos info
-        self.earRightPosArray = self.earPosArray
-        for num,pos in enumerate(self.earRightPosArray):
-            rightValue = -(self.earRightPosArray[num][0])
-            self.earRightPosArray[num][0] = rightValue
-            
-        #set right guide
-        for num,pos in enumerate(self.earRightPosArray):
-            locName = nameUtils.getUniqueName(self.side[-1],self.nameList[10],'gud')
-            loc = pm.spaceLocator(n = locName)
-            loc.t.set(pos)
-            self.earRightGuides.append(loc)        
-          
-        tempEarRightGuides = list(self.earRightGuides)
-        tempEarRightGuides.reverse()
-        
-        for i in range(len(tempEarRightGuides)):
-            if i != (len(tempEarRightGuides) - 1):
-                pm.parent(tempEarRightGuides[i],tempEarRightGuides[i + 1])
-        
-        self.earRightGuides[0].setParent(self.jointGuideGrp)
-        
-        #right pos get
-        #ear pos get
-        self.earRightGuidePos = [x.getTranslation(space = 'world') for x in self.earRightGuides]
-        self.earRightGuideRot = [x.getRotation(space = 'world') for x in self.earRightGuides]        
-        
-        #set right ear jj
-        self.earRightChain = boneChain.BoneChain(self.nameList[10],self.side[-1],type = 'jj')
-        self.earRightChain.fromList(self.earRightGuidePos,self.earRightGuideRot)
-        self.earRightChain.chain[0].setParent(self.neckFkChain.chain[-1])    
+#         #ear right side:
+#         #get pos info
+#         self.earRightPosArray = self.earPosArray
+#         for num,pos in enumerate(self.earRightPosArray):
+#             rightValue = -(self.earRightPosArray[num][0])
+#             self.earRightPosArray[num][0] = rightValue
+#             
+#         #set right guide
+#         for num,pos in enumerate(self.earRightPosArray):
+#             locName = nameUtils.getUniqueName(self.side[-1],self.nameList[10],'gud')
+#             loc = pm.spaceLocator(n = locName)
+#             loc.t.set(pos)
+#             self.earRightGuides.append(loc)        
+#           
+#         tempEarRightGuides = list(self.earRightGuides)
+#         tempEarRightGuides.reverse()
+#         
+#         for i in range(len(tempEarRightGuides)):
+#             if i != (len(tempEarRightGuides) - 1):
+#                 pm.parent(tempEarRightGuides[i],tempEarRightGuides[i + 1])
+#         
+#         self.earRightGuides[0].setParent(self.jointLeftGuideGrp)
+#         
+#         #right pos get
+#         #ear pos get
+#         self.earRightGuidePos = [x.getTranslation(space = 'world') for x in self.earRightGuides]
+#         self.earRightGuideRot = [x.getRotation(space = 'world') for x in self.earRightGuides]        
+#         
+#         #set right ear jj
+#         self.earRightChain = boneChain.BoneChain(self.nameList[10],self.side[-1],type = 'jj')
+#         self.earRightChain.fromList(self.earRightGuidePos,self.earRightGuideRot)
+#         self.earRightChain.chain[0].setParent(self.neckFkChain.chain[-1])    
         
         #upTeeth pos get
         self.upTeethGuidePos = [x.getTranslation(space = 'world') for x in self.upTeethGuides]
@@ -706,9 +684,9 @@ class HeadModule(object):
         self.nostrilLeftChain.jointOrientY.set(0)
         self.nostrilLeftChain.jointOrientZ.set(0)
         
-        self.nostrilRightChain.jointOrientX.set(0)
-        self.nostrilRightChain.jointOrientY.set(0)
-        self.nostrilRightChain.jointOrientZ.set(0)
+        self.nostrilLeftChain.jointOrientX.set(0)
+        self.nostrilLeftChain.jointOrientY.set(0)
+        self.nostrilLeftChain.jointOrientZ.set(0)
 
         self.__mirrorMicroGuides()
         self.__addMainCtrl()
@@ -773,13 +751,13 @@ class HeadModule(object):
         pm.pointConstraint(self.eyeLeftCtrl.control,self.eyeLeftChain.chain[0],mo = 0)
         self.eyeLeftCtrl.controlGrp.setParent(self.headCtrl.control)
         
-        self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 0.65) 
-        self.eyeRightCtrl.sphereCtrl()
-        control.lockAndHideAttr(self.eyeRightCtrl.control,['sx','sy','sz','v'])     
-        pm.xform(self.eyeRightCtrl.controlGrp,ws = 1,matrix = self.eyeRightChain.chain[0].worldMatrix.get())
-        pm.orientConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
-        pm.pointConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
-        self.eyeRightCtrl.controlGrp.setParent(self.headCtrl.control)        
+#         self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 0.65) 
+#         self.eyeRightCtrl.sphereCtrl()
+#         control.lockAndHideAttr(self.eyeRightCtrl.control,['sx','sy','sz','v'])     
+#         pm.xform(self.eyeRightCtrl.controlGrp,ws = 1,matrix = self.eyeRightChain.chain[0].worldMatrix.get())
+#         pm.orientConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
+#         pm.pointConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
+#         self.eyeRightCtrl.controlGrp.setParent(self.headCtrl.control)        
         
         #create eye aim create
         self.eyeAimCtrl = control.Control(self.side[1],self.nameList[3] + 'Aim',size = self.eyeRad * 5) 
@@ -809,13 +787,13 @@ class HeadModule(object):
         pm.pointConstraint(self.nostrilLeftCtrl.control,self.nostrilLeftChain,mo = 0) 
         self.nostrilLeftCtrl.controlGrp.setParent(self.noseCtrl.control)       
                       
-        self.nostrilRightCtrl = control.Control(self.side[2],self.nameList[6],size = self.tongueDis / 2) 
-        self.nostrilRightCtrl.cubeCtrl()
-        control.lockAndHideAttr(self.nostrilRightCtrl.control,['sx','sy','sz','v'])
-        pm.xform(self.nostrilRightCtrl.controlGrp,ws = 1,matrix = self.nostrilRightChain.worldMatrix.get())
-        pm.orientConstraint(self.nostrilRightCtrl.control,self.nostrilRightChain,mo = 0)
-        pm.pointConstraint(self.nostrilRightCtrl.control,self.nostrilRightChain,mo = 0)
-        self.nostrilRightCtrl.controlGrp.setParent(self.noseCtrl.control)    
+#         self.nostrilRightCtrl = control.Control(self.side[2],self.nameList[6],size = self.tongueDis / 2) 
+#         self.nostrilRightCtrl.cubeCtrl()
+#         control.lockAndHideAttr(self.nostrilRightCtrl.control,['sx','sy','sz','v'])
+#         pm.xform(self.nostrilRightCtrl.controlGrp,ws = 1,matrix = self.nostrilRightChain.worldMatrix.get())
+#         pm.orientConstraint(self.nostrilRightCtrl.control,self.nostrilRightChain,mo = 0)
+#         pm.pointConstraint(self.nostrilRightCtrl.control,self.nostrilRightChain,mo = 0)
+#         self.nostrilRightCtrl.controlGrp.setParent(self.noseCtrl.control)    
         
         #create upTeethCtrl
         self.upTeethCtrl = control.Control(self.side[1],self.nameList[7],size = float(self.tongueDis * 1.5),aimAxis = 'y') 
@@ -863,13 +841,13 @@ class HeadModule(object):
         pm.pointConstraint(self.earLeftCtrl.control,self.earLeftChain.chain[0],mo = 0)
         self.earLeftCtrl.controlGrp.setParent(self.headCtrl.control)
                
-        self.earRightCtrl = control.Control(self.side[2],self.nameList[10],size = float(self.tongueDis * 1.5)) 
-        self.earRightCtrl.circleCtrl()
-        control.lockAndHideAttr(self.earRightCtrl.control,['sx','sy','sz','v'])
-        pm.xform(self.earRightCtrl.controlGrp,ws = 1,matrix = self.earRightChain.chain[0].worldMatrix.get())
-        pm.orientConstraint(self.earRightCtrl.control,self.earRightChain.chain[0],mo = 0)
-        pm.pointConstraint(self.earRightCtrl.control,self.earRightChain.chain[0],mo = 0) 
-        self.earRightCtrl.controlGrp.setParent(self.headCtrl.control)
+#         self.earRightCtrl = control.Control(self.side[2],self.nameList[10],size = float(self.tongueDis * 1.5)) 
+#         self.earRightCtrl.circleCtrl()
+#         control.lockAndHideAttr(self.earRightCtrl.control,['sx','sy','sz','v'])
+#         pm.xform(self.earRightCtrl.controlGrp,ws = 1,matrix = self.earRightChain.chain[0].worldMatrix.get())
+#         pm.orientConstraint(self.earRightCtrl.control,self.earRightChain.chain[0],mo = 0)
+#         pm.pointConstraint(self.earRightCtrl.control,self.earRightChain.chain[0],mo = 0) 
+#         self.earRightCtrl.controlGrp.setParent(self.headCtrl.control)
         
         #create eyeCtrl
     
