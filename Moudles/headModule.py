@@ -112,6 +112,9 @@ class HeadModule(object):
         self.tongueCtrls = None
         self.earLeftCtrl = None       
         self.earRightCtrl = None
+        self.eyeWorldGrp = None
+        self.eyeHeadGrp = None
+        self.eyeCnstGrp = None        
         
         #micro cc
         self.browCtrl = None
@@ -901,8 +904,6 @@ class HeadModule(object):
         
         #aim grp under IK grp
         
-        
-    
     def __addMicroCtrl(self):
         
         self.microCtrlGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],'microCtrl','grp'))
@@ -982,7 +983,7 @@ class HeadModule(object):
         for num,loc in enumerate(self.mirrorMicroGuides):
             self.mirrorMicroCtrl = control.Control(self.side[2],self.microCtrlList[num + 1],self.size) 
             self.mirrorMicroCtrl.microCtrl()
-            
+             
             pm.xform(self.mirrorMicroCtrl.controlGrp,ws = 1,matrix = self.mirrorMicroGuides[num][0].worldMatrix.get())
             self.mirrorMicroCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
             self.mirrorMicroCtrl.controlGrp.setParent(self.microCtrlGrp)            
@@ -991,6 +992,38 @@ class HeadModule(object):
             self.mirrorMicroCtrl.controlGrp.setParent(self.microCtrlGrp)   
             
         self.microCtrlGrp.setParent(self.headCtrl.control)
+        
+        #aim follow world and head
+        self.eyeWorldGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'MoveParent2World','grp')) 
+        pm.xform(self.eyeWorldGrp,ws = 1,matrix = self.eyeAimCtrl.controlGrp.worldMatrix.get())
+
+        self.eyeHeadGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'MoveParent2Head','grp'))
+        pm.xform(self.eyeHeadGrp,ws = 1,matrix = self.eyeAimCtrl.controlGrp.worldMatrix.get())
+        
+        self.eyeCnstGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'Cnst','grp'))
+        pm.xform(self.eyeCnstGrp,ws = 1,matrix = self.eyeAimCtrl.controlGrp.worldMatrix.get())
+
+        #create cnst
+        oriCnst = pm.orientConstraint(self.eyeWorldGrp,self.eyeHeadGrp,self.eyeCnstGrp,mo = 0)
+        pntCnst = pm.pointConstraint(self.eyeWorldGrp,self.eyeHeadGrp,self.eyeCnstGrp,mo = 0)
+        
+        self.eyeCnstGrp.setParent(self.eyeAimCtrl.controlGrp)
+        self.eyeAimCtrl.control.setParent(self.eyeCnstGrp)
+        control.addFloatAttr(self.eyeAimCtrl.control,['cnst2Head'],0,1)
+        
+        #connect
+        pm.connectAttr(self.eyeAimCtrl.control + '.cnst2Head',pntCnst + '.' + self.eyeHeadGrp.name() + 'W1')
+        pm.connectAttr(self.eyeAimCtrl.control + '.cnst2Head',oriCnst + '.' + self.eyeHeadGrp.name() + 'W1')
+#         self.eyeWorldGrp.setParent(self.eyeCnstGrp) pallera
+        self.eyeHeadGrp.setParent(self.headCtrl.control)
+
+        #create node name
+        reverseNodeName = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'cnst2Head','REV')
+        reverseNode = pm.createNode('reverse',n = reverseNodeName)
+        
+        self.eyeAimCtrl.control.cnst2Head.connect(reverseNode.inputX)
+        pm.connectAttr(reverseNode.outputX,pntCnst + '.' + self.eyeWorldGrp.name() + 'W0')
+        pm.connectAttr(reverseNode.outputX,oriCnst + '.' + self.eyeWorldGrp.name() + 'W0')
         
     def __cleanUp(self):
         
