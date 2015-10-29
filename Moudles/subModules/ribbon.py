@@ -1,356 +1,286 @@
 import pymel.core as pm
-from subModules import fkChain,ikChain,boneChain,ribbon
-from Utils import nameUtils
-from Modules import control,hierarchy
+from Modules import control
+from maya import OpenMaya,cmds
 
-class LegModule(object):
-    
-#     posArray = [[6,14,0],[6,8,2],[6,2,0],[6,1,4],[6,1,2],[6,1,-1]]
-#     rotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+class Ribbon(object):
 
-    posArray = [[6,14,0],[6,8,2],[6,2,0]]
-    rotArray = [[0,0,0],[0,0,0],[0,0,0]]
-    
-    def __init__(self,baseName = 'leg',side = 'l',size = 1.5,
-                 controlOrient = [0,0,0], module = 'Leg'):
+#     def __init__(self, RibbonName = 'Ribbon',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5):
+    def __init__(self, RibbonName,Width,Length,UVal,VVal,segment = 5,subMid = 0,side = 'm',baseName = 'Mid_CC'):        
+        '''
+        initialize para
+        '''
         
-        self.baseName = baseName
+        self.RibbonName = RibbonName
+        self.Width = Width
+        self.Length = Length
+        self.UVal = UVal
+        self.VVal = VVal
+        self.subMid = subMid
         self.side = side
-#         self.cntColor = cntColor
-        self.size = size
-        self.controlOrient = controlOrient
+        self.baseName = baseName
+        self.segment = segment
         
-        '''
-        self para
-        '''
-
-        #jj 
-        self.ikRpPvChain = None
-        self.ikRpChain = None
-        self.ikBlendChain = None
-        self.fkChain = None
-        self.blendChain = None
-        self.blendData = None   
-        self.sklGrp = None
-        
-        #cc
-        configName = nameUtils.getUniqueName(self.side,self.baseName,'CONFIG')
-        self.config_node = pm.spaceLocator(n = configName)
-        self.ccDefGrp = None
-        self.ccGrp = None
-        
-        self.guides = None
-        self.guideGrp = None
-        
-        #ribon
-        self.ribon = None
-        self.ribon45hp = None
-         
-        self.subMidCtrlThighKnee = None
-        self.subMidCtrlKneeAnkle = None
-        self.subMidCtrlKnee = None
-         
-        self.ribbonData = ['ThighKnee','KneeAnkle','Knee']
-        self.legnamelist = ['Thigh','Knee','Ankle']
-        
-#         self.legnamelist = ['Thigh','Knee','Ankle','Ball','Toe','Heel']
-        
-        self.hi = None
-        
-    def buildGuides(self):
-        
-        self.hi = hierarchy.Hierarchy(characterName = 'test')
-        self.hi.build()
-        
-        self.guides = []
-        
-        #set pos loc    
-        for i,p in enumerate(self.posArray):
-            name = nameUtils.getUniqueName(self.side,self.baseName + self.legnamelist[i],'gud')
-            loc = pm.spaceLocator(n = name)
-            loc.t.set(p)
-            loc.r.set(self.rotArray[i])
-            self.guides.append(loc)
-            
-        tempGuides = list(self.guides)
-        tempGuides.reverse()
-        
-        #set loc grp
-        for i in range(len(tempGuides)):
-            if i != (len(tempGuides) - 1):
-                pm.parent(tempGuides[i],tempGuides[i + 1])
-#         pm.parent(self.guides[-1],self.guides[-4]) 
-        name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(self.guides[0],n = name)
-        self.guideGrp.v.set(0)
-        self.guideGrp.setParent(self.hi.GUD)
-            
-    def build(self):
-        
-        guidePos = [x.getTranslation(space = 'world') for x in self.guides]
-        guideRot = [x.getRotation(space = 'world') for x in self.guides]
-        
-        #ikRpPvChain
-        self.ikRpPvChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikRPsolver',type = 'ikRP')
-        self.ikRpPvChain.fromList(guidePos,guideRot)
-
-        #ikRpChain
-        self.ikRpChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikRPsolver',type = 'ikNF')
-        self.ikRpChain.fromList(guidePos,guideRot)
-        
-        #ik blend 
-        self.ikBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'ik')
-        self.ikBlendChain.fromList(guidePos,guideRot)
-        self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.ikRpChain.chain,self.ikRpPvChain.chain,self.ikBlendChain.chain,
-                                                                   self.ikRpPvChain.ikCtrl.control,'enable_PV',self.baseName,self.side)
-        
-        #ikset
-        self.__ikSet()
-        
-         
-        #fk 
-        self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
-        self.fkChain.fromList(guidePos,guideRot)
-        
-        #ori chain
-        self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.blendChain.fromList(guidePos,guideRot)
-        self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikBlendChain.chain,self.blendChain.chain,
-                                                                   self.config_node,'IKFK',self.baseName,self.side)
-        
-        self.__setRibbonUpper()
-        self.__setRibbonLower()
-        self.__setRibbonSubMidCc()        
-        
-        self.__cleanUp()
-    
-    def __ikSet(self):
-        
-        #stretch loc reset
-        self.ikRpChain.stretchEndLoc.setParent(self.ikRpPvChain.ikCtrl.control)
-        
-        #reset ik cc
-        pm.delete(self.ikRpChain.ikCtrl.controlGrp)
-        
-        #connect joint stretch
-        self.ikRpPvChain.ikCtrl.control.stretch.connect(self.ikRpChain.stretchBlendcolorNode.blender)
-        
-        #connect ik handle point cnst
-        pm.pointConstraint(self.ikRpPvChain.ikCtrl.control,self.ikRpChain.ikHandle,w = 1)
-        
-        #rename ikRPcc
-        pm.rename(self.ikRpPvChain.ikCtrl.control,nameUtils.getUniqueName(self.side,self.baseName + 'ik','cc'))
-        pm.rename(self.ikRpPvChain.ikCtrl.controlGrp,nameUtils.getUniqueName(self.side,self.baseName + 'ik','grp'))        
-        
-        #set ik flip
-        self.ikRpChain.ikHandle.poleVectorX.set(-0.1)
-        self.ikRpChain.ikHandle.poleVectorY.set(0)
-        self.ikRpChain.ikHandle.poleVectorZ.set(0)
-        PMAName = nameUtils.getUniqueName(self.side,self.baseName + '_noFlip','PMA')
-        pm.addAttr(self.ikRpPvChain.ikCtrl.control, ln = 'knee_twist', at ="float",dv = 0,h = False,k = True )
-        pm.addAttr(self.ikRpPvChain.ikCtrl.control, ln = 'knee_offset', at ="float",dv = 0,h = False,k = True )
-        plusMinusAverageNode = pm.createNode('plusMinusAverage',n = PMAName)
-        self.ikRpPvChain.ikCtrl.control.knee_offset.connect(plusMinusAverageNode.input1D[0])
-        self.ikRpPvChain.ikCtrl.control.knee_twist.connect(plusMinusAverageNode.input1D[1])                
-        plusMinusAverageNode.output1D.connect(self.ikRpChain.ikHandle.twist)
-        self.ikRpPvChain.ikCtrl.control.knee_offset.set(-90)
-        self.ikRpPvChain.ikCtrl.control.knee_offset.lock(1)
-        
-        #add ik pv vis
-        self.ikRpPvChain.ikCtrl.control.enable_PV.connect(self.ikRpPvChain.poleVectorCtrl.controlGrp.v)
-        self.ikRpChain.ikHandle.v.set(0)
-        self.ikRpChain.stretchStartLoc.v.set(0)
-        self.ikRpPvChain.stretchStartLoc.v.set(0)
-    
-    #set ribbon    
-    def __setRibbonUpper(self):
-        '''
-        this function set ribbon for the Upper 
-        '''
-        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side)
-        self.ribon.construction()
-        
-        pm.xform(self.ribon.startloc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
-        pm.xform(self.ribon.endloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
-        
-        pm.parentConstraint(self.blendChain.chain[0],self.ribon.startloc,mo = 1)
-        
-        self.__subCtrlUpper()
-        
-    #set ribbon ctrl
-    def __subCtrlUpper(self):
-        
-        #connect scale for ShoulderElbow jj2
-        self.subMidCtrlThighKnee = self.ribon.subMidCtrl
-        self.subMidCtrlThighKnee.control.scaleX.connect(self.ribon.jj[2].scaleX)
-        self.subMidCtrlThighKnee.control.scaleY.connect(self.ribon.jj[2].scaleY)
-        self.subMidCtrlThighKnee.control.scaleZ.connect(self.ribon.jj[2].scaleZ)
-            
-    def __setRibbonLower(self):
-
-        '''
-        this function set ribbon for the ShoulderElbow 
-        '''
-        
-        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side)
-        self.ribon45hp.construction()
-        
-        pm.xform(self.ribon45hp.startloc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
-        pm.xform(self.ribon45hp.endloc,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
-        
-        pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endloc,mo = 1)
+        self.folList = None
+        self.folGrp = None
                 
-        self.__subCtrlLower()
-    
-    def __subCtrlLower(self):
+        self.startLoc = None
+        self.midLoc = None
+        self.endLoc = None
+        self.epUploc = None
+#         self.spLocAim = None
+        self.mpLocAim = None
+#         self.epLocAim = None
         
-        #connect scale for mid jj
-        self.subMidCtrlKneeAnkle = self.ribon45hp.subMidCtrl
-        self.subMidCtrlKneeAnkle.control.scaleX.connect(self.ribon45hp.jj[2].scaleX)
-        self.subMidCtrlKneeAnkle.control.scaleY.connect(self.ribon45hp.jj[2].scaleY)
-        self.subMidCtrlKneeAnkle.control.scaleZ.connect(self.ribon45hp.jj[2].scaleZ)
+        self.startJc = None
+        self.midJc = None
+        self.endJc = None
+        self.main = None
+        
+        self.subMidCtrl = None 
+        
+        self.jj = []
 
-    def __setRibbonSubMidCc(self):
-                
-                
-        self.subMidCtrlKnee = control.Control(size = 1,baseName = self.ribbonData[2] + '_CC',side = self.side) 
-        self.subMidCtrlKnee.circleCtrl()
-        print type(self.subMidCtrlKnee.control)
-        elbolPos = pm.xform(self.blendChain.chain[1],query=1,ws=1,rp=1)
-        pm.move(self.subMidCtrlKnee.controlGrp,elbolPos[0],elbolPos[1],elbolPos[2],a=True)
-        
-        pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon45hp.startloc,mo = 1)
-        pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon.endloc,mo = 1)
-        pm.parentConstraint(self.blendChain.chain[1],self.subMidCtrlKnee.controlGrp,mo = 1)
-        
-        #name setting for the scale node for shoulderElbow Jj1
-        shoulderElbowScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'shoulderElbowScaleJj1','PMA')
-        
-        #create Node for  shoulderElbow Jj1
-        #ribbon name for robin
-        shoulderElbowScalePlusMinusAverageNodeJj1 = pm.createNode('plusMinusAverage',n = shoulderElbowScaleNodeNameJj1)
-        
-        #connect shoulderElbow scale for  shoulderElbow Jj1
-        self.subMidCtrlThighKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dx)
-        self.subMidCtrlKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dx)
-        self.subMidCtrlThighKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dy)
-        self.subMidCtrlKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dy)  
-        self.subMidCtrlThighKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dz)
-        self.subMidCtrlKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dz)     
-        shoulderElbowScalePlusMinusAverageNodeJj1.operation.set(3)
-        
-        #output scale to shoulderElbow Jj1
-        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dx.connect(self.ribon.jj[1].scaleX)
-        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dy.connect(self.ribon.jj[1].scaleY)
-        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dz.connect(self.ribon.jj[1].scaleZ)
-        
-        #name setting for the scale node for shoulderElbow Jj3
-        shoulderElbowScaleNodeNameJj3 = nameUtils.getUniqueName(self.side,self.baseName + 'shoulderElbowScaleJj3','PMA')
-        
-        #create Node for  shoulderElbow Jj3
-        shoulderElbowScalePlusMinusAverageNodeJj3 = pm.createNode('plusMinusAverage',n = shoulderElbowScaleNodeNameJj3)
-           
-        #connect shoulderElbow scale for  shoulderElbow Jj3
-        
-        self.subMidCtrlThighKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
-        self.blendChain.chain[1].scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
-        self.subMidCtrlThighKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
-        self.blendChain.chain[1].scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
-        self.subMidCtrlThighKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
-        self.blendChain.chain[1].scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
-        shoulderElbowScalePlusMinusAverageNodeJj3.operation.set(3)
-        
-        #output scale to shoulderElbow Jj3
-        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dx.connect(self.ribon.jj[3].scaleX)
-        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dy.connect(self.ribon.jj[3].scaleY)
-        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dz.connect(self.ribon.jj[3].scaleZ)
-        
-        #connect scale to shoulderElbow jj0
-        self.subMidCtrlKnee.control.scaleX.connect(self.ribon.jj[0].scaleX)
-        self.subMidCtrlKnee.control.scaleY.connect(self.ribon.jj[0].scaleY)
-        self.subMidCtrlKnee.control.scaleZ.connect(self.ribon.jj[0].scaleZ)
-        
-        #connect scale to shoulderElbow jj4
-        self.blendChain.chain[0].scaleX.connect(self.ribon.jj[4].scaleX)
-        self.blendChain.chain[0].scaleY.connect(self.ribon.jj[4].scaleY)
-        self.blendChain.chain[0].scaleZ.connect(self.ribon.jj[4].scaleZ)
-        
-        
-        
-        #name setting for the scale node for elbowWrist Jj1
-        elbowWristScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'elbowWristScaleJj1','PMA')
-        
-        #create Node for  elbowWrist jj1
-        elbowWristScalePlusMinusAverageNodeJj1 = pm.createNode('plusMinusAverage',n = elbowWristScaleNodeNameJj1)
-               
-        #connect elbowWrist scale for elbowWrist jj1
-        self.subMidCtrlKneeAnkle.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dx)
-        self.subMidCtrlKnee.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dx)
-        self.subMidCtrlKneeAnkle.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dy)
-        self.subMidCtrlKnee.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dy)  
-        self.subMidCtrlKneeAnkle.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dz)
-        self.subMidCtrlKnee.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dz)     
-        elbowWristScalePlusMinusAverageNodeJj1.operation.set(3)
-        
-        #output scale to elbowWrist jj1
-        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dx.connect(self.ribon45hp.jj[1].scaleX)
-        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dy.connect(self.ribon45hp.jj[1].scaleY)
-        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dz.connect(self.ribon45hp.jj[1].scaleZ)
-        
-        #name setting for the scale node for elbowWrist Jj3
-        elbowWristScaleNodeNameJj3 = nameUtils.getUniqueName(self.side,self.baseName + 'elbowWristScaleJj3','PMA')
-        
-        #create Node for  elbowWrist jj3
-        elbowWristScalePlusMinusAverageNodeJj3 = pm.createNode('plusMinusAverage',n = elbowWristScaleNodeNameJj3)
-               
-        #connect elbowWrist scale for elbowWrist jj3
-        self.subMidCtrlKneeAnkle.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
-        self.subMidCtrlKnee.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
-        self.subMidCtrlKneeAnkle.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
-        self.subMidCtrlKnee.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
-        self.subMidCtrlKneeAnkle.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
-        self.subMidCtrlKnee.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
-        elbowWristScalePlusMinusAverageNodeJj3.operation.set(3)
-        
-        #output scale to elbowWrist jj3
-        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dx.connect(self.ribon45hp.jj[3].scaleX)
-        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dy.connect(self.ribon45hp.jj[3].scaleY)
-        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dz.connect(self.ribon45hp.jj[3].scaleZ)
-        
-        #connect scale to elbowWrist jj4
-        self.subMidCtrlKnee.control.scaleX.connect(self.ribon45hp.jj[4].scaleX)
-        self.subMidCtrlKnee.control.scaleY.connect(self.ribon45hp.jj[4].scaleY)
-        self.subMidCtrlKnee.control.scaleZ.connect(self.ribon45hp.jj[4].scaleZ)
-        
-        #connect scale to elbowWrist jj0
-        self.blendChain.chain[2].scaleX.connect(self.ribon45hp.jj[0].scaleX)
-        self.blendChain.chain[2].scaleY.connect(self.ribon45hp.jj[0].scaleY)
-        self.blendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
-            
-    
-    def __cleanUp(self):
-        
-        #jj grp
-        self.sklGrp = pm.group(self.ikRpChain.stretchStartLoc,self.ikRpPvChain.stretchStartLoc,self.ikRpPvChain.lockUpStartLoc,
-                               n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
 
-        for b in (self.ikRpChain,self.ikRpPvChain,self.ikBlendChain,self.fkChain,self.blendChain):
-            b.chain[0].setParent(self.sklGrp)
+    def construction(self):
         
-        self.sklGrp.setParent(self.hi.SKL)
+        self.folList = []
+        
+        #create burbs plane
+        ribbonGeo = pm.nurbsPlane(p = (0,0,0),ax = (0,1,0),w = self.Width,lr = self.Length,d = 3,u = self.UVal,v = self.VVal,ch = 1,n = (self.RibbonName + '_Rbbn01_geo_01_'))
+
+        #rebuild ribbon geo
+        if self.VVal > self.UVal:
+            pm.rebuildSurface(ribbonGeo[0],ch = 1,rpo = 1,rt = 0,end = 1,kr = 0,kcp = 0,kc = 0,su = self.UVal,du = 1,sv = self.VVal,dv = 3,tol = 0.000155,fr = 0,dir = 2)
             
-        #cc grp
-        self.ccGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp')) 
-        self.config_node.setParent(self.ccGrp)
-        self.ikRpPvChain.ikCtrl.controlGrp.setParent(self.ccGrp)
-        self.ikRpPvChain.poleVectorCtrl.controlGrp.setParent(self.ccGrp)
-        self.ccGrp.setParent(self.hi.CC)
+        if self.UVal > self.VVal:
+            pm.rebuildSurface(ribbonGeo[0],ch = 1,rpo = 1,rt = 0,end = 1,kr = 0,kcp = 0,kc = 0,su = self.UVal,du = 3,sv = self.VVal,dv = 1,tol = 0.000155,fr = 0,dir = 2)
         
-        #ik grp
-        self.ikRpChain.ikHandle.setParent(self.hi.IK)
-        self.ikRpPvChain.ikHandle.setParent(self.hi.IK)
+        #clear history of ribbonGeometry
+        pm.select(ribbonGeo[0],r = 1)
+        pm.delete(ch = 1)
         
+        #CREATE THE HAIR FOLLICLES
+        self.folGrp = pm.group(em = 1,n = getUniqueName(self.side,self.RibbonName + 'Fol','grp')) 
         
+        for fol in range(self.segment):
+            
+            #createNodeName
+            follicleTransName = getUniqueName(self.side,self.RibbonName,'fol')
+            follicleShapeName = getUniqueName(self.side,self.RibbonName,'folShape')
+            
+            #createNode
+            follicleShape = pm.createNode('follicle',n = follicleShapeName)
+            follicleTrans = pm.listRelatives(follicleShape, parent=True)[0]
+            follicleTrans = pm.rename(follicleTrans, follicleTransName)
+            
+            # connect the surface to the follicle
+            
+            if ribbonGeo[0].getShape().nodeType() == 'nurbsSurface':
+                pm.connectAttr((ribbonGeo[0] + '.local'), (follicleShape + '.inputSurface'))
+                
+            #Connect the worldMatrix of the surface into the follicleShape
+            pm.connectAttr((ribbonGeo[0] + '.worldMatrix[0]'), (follicleShape + '.inputWorldMatrix'))
+            
+            #Connect the follicleShape to it's transform
+            pm.connectAttr((follicleShape + '.outRotate'), (follicleTrans + '.rotate'))
+            pm.connectAttr((follicleShape + '.outTranslate'), (follicleTrans + '.translate'))
+            
+            #Set the uValue and vValue for the current follicle
+            pm.setAttr((follicleShape + '.parameterU'), 0.5)
+            pm.setAttr((follicleShape + '.parameterV'), float(1.0 / self.segment) * fol + (1.0 / (self.segment * 2)))
+            
+            #Lock the translate/rotate of the follicle
+            pm.setAttr((follicleTrans + '.translate'), lock=True)
+            pm.setAttr((follicleTrans + '.rotate'), lock=True)
+            
+            #parent
+            self.folList.append(follicleTrans)
+            follicleTrans.setParent(self.folGrp)
+
+        #CREATE JOINTS SNAPPED AND PARENTED TO THE FOLLICLE---
+
+        for num,fol in enumerate(self.folList):
+            jJoint = pm.joint(n = self.RibbonName + '_Rbbn0' + str(num) + '_jj',p = (0,0,0),rad = min(self.Width,self.Length) * .25)
+            pm.parent(jJoint,fol)
+            jJoint.translate.set(0,0,0)
+             
+        #CREATE SOME TEMPORARY CLUSTERS TO PLACE THE POS LOCATORS---
+        if self.UVal > self.VVal:
+            vNo = self.UVal + 2
+            pm.select(self.RibbonName + '_Rbbn01_geo_01_.cv[' + str(vNo) + '][0:1]',r = 1)
+            startCls =  pm.cluster(n = 'spCltr')
+            pm.select(self.RibbonName + '_Rbbn01_geo_01_.cv[0][0:1]',r = 1)
+            endCls = pm.cluster(n = 'epCltr')
+             
+        if self.VVal > self.UVal:
+            vNo = self.VVal + 2
+            pm.select(self.RibbonName + '_Rbbn01_geo_01_.cv[0:1][' + str(vNo) + ']',r = 1)
+            startCls = pm.cluster(n = 'spCltr')
+            pm.select(self.RibbonName + '_Rbbn01_geo_01_.cv[0:1][0]',r = 1)
+            endCls = pm.cluster(n = 'epCltr')                
+             
+        #CREATE SOME LOCATORS---
+        #CREATE START POINT LOCATORS AND PARENT THEM PROPERLY---
+        spLocPos = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnSp01_pos')
+        spLocAim = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnSp01_aim')
+        spLocUp = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnSp01_up')
+         
+        #hide shape
+#         spLocPos.getShape().v.set(0)
+#         spLocAim.getShape().v.set(0)
+#         spLocUp.getShape().v.set(0)
+         
+        self.startLoc = spLocPos
+         
+        pm.parent(spLocAim,spLocPos)
+        pm.parent(spLocUp,spLocPos)
+         
+        #CREATE MID POINT LOCATORS AND PARENT THEM PROPERLY---
+        mpLocPos = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnMp01_pos')
+        self.mpLocAim = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnMp01_aim')
+        mpLocUp = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnMp01_up')
+         
+        #hide shape
+        mpLocPos.getShape().v.set(0)
+        self.mpLocAim.getShape().v.set(0)
+        mpLocUp.getShape().v.set(0)
+         
+        self.midloc = mpLocPos
+         
+        pm.parent(self.mpLocAim,mpLocPos)
+        pm.parent(mpLocUp,mpLocPos)   
+         
+        #CREATE END POINT LOCATORS AND PARENT THEM PROPERLY---
+        epLocPos = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnEp01_pos')
+        epLocAim = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnEp01_aim')
+        self.epUploc = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnEp01_up')
+         
+        #hide shape
+        epLocPos.getShape().v.set(0)
+        epLocAim.getShape().v.set(0)
+        self.epUploc.getShape().v.set(0)
+         
+        self.endLoc = epLocPos
+         
+        pm.parent(epLocAim,epLocPos)
+        pm.parent(self.epUploc,epLocPos)     
+         
+        #CONSTRAINT EACH LOCATORS PROPERLY---                                                   
+        pm.pointConstraint('spCltrHandle',spLocPos,o = (0,0,0),w = 1)                                    
+        pm.delete(self.RibbonName + '_RbbnSp01_pos_pointConstraint1')
+         
+        pm.pointConstraint('epCltrHandle',epLocPos,o = (0,0,0),w = 1)                                    
+        pm.delete(self.RibbonName + '_RbbnEp01_pos_pointConstraint1')
+         
+        pm.pointConstraint(spLocPos,epLocPos,mpLocPos,o = (0,0,0),w = 1)    
+        pm.pointConstraint(spLocUp,self.epUploc,mpLocUp,o = (0,0,0),w = 1)
+     
+        #OFFSET THE POSITION OF THE UP LOCATOR---
+      
+        pm.setAttr(spLocUp.ty,min(self.Width,self.Length) * .5)
+        pm.setAttr(self.epUploc.ty,min(self.Width,self.Length) * .5)       
+         
+        #CREATE CTRL JOINTS
+        pm.select(cl = 1)
+        tx = tz = 0.0
+        if self.VVal > self.UVal:
+            tz = self.Length * .2
+             
+        if self.UVal > self.VVal:
+            tx = self.Width * .2    
+             
+        #############   
+         
+        #transmit Jc joint info---
+        #FOR START POINT JOINT---
+        self.startJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnSp01_jc')
+        pm.joint(p = (tx * .6,0,tz * .6),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnSp02_jc')
+        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.RibbonName + '_RbbnSp02_jc')
+         
+        #FOR MIDDLE POINT JOINT---
+        pm.select(cl = 1)
+        self.midJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnMp01_jc')
+        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.RibbonName + '_RbbnMp01_jc')
+         
+        #FOR END POINT JOINT---
+        pm.select(cl = 1)
+        self.endJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnEp01_jc')
+        pm.joint(p = (tx * -0.6,0,tz * -0.6),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnEp02_jc')
+        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.RibbonName + '_RbbnEp02_jc')  
+     
+        #PARENT THE CONTROL JOINTS APPROPRIATLY---     
+        pm.parent(self.RibbonName + "_RbbnSp01_jc",spLocAim,r = 1)
+        pm.parent(self.RibbonName + "_RbbnMp01_jc",self.mpLocAim,r = 1)
+        pm.parent(self.RibbonName + "_RbbnEp01_jc",epLocAim,r = 1)
+         
+        #APPLY THE AIM CONSTRINTS---
+        aTz = 0
+        if self.VVal > self.UVal:
+            aTz = 1
+             
+        aTx = 0
+        if self.UVal > self.VVal:
+            aTx = 1
+         
+        #FOR MIDDLE POINT---
+        pm.aimConstraint(self.RibbonName + "_RbbnSp01_pos",self.RibbonName + "_RbbnMp01_aim",o = (0,0,0),w = 1,aim = (aTx * -1,0,aTz *  -1),u = (0,1,0),wut = 'object',wuo = self.RibbonName + '_RbbnMp01_up')
+        #FOR START POINT---
+        pm.aimConstraint(self.RibbonName + "_RbbnMp01_jc",self.RibbonName + "_RbbnSp01_aim",o = (0,0,0),w = 1,aim = (aTx,0,aTz),u = (0,1,0),wut = 'object',wuo = self.RibbonName + '_RbbnSp01_up')
+        #FOR END POINT---
+        pm.aimConstraint(self.RibbonName + "_RbbnMp01_jc",self.RibbonName + "_RbbnEp01_aim",o = (0,0,0),w = 1,aim = (aTx * -1,0,aTz *  -1),u = (0,1,0),wut = 'object',wuo = self.RibbonName + '_RbbnEp01_up')
+             
+        #APPLY SKINCLUSTER---
+        pm.select(cl = 1)
+        pm.skinCluster(self.RibbonName + "_RbbnSp01_jc",self.RibbonName + "_RbbnMp01_jc",self.RibbonName + "_RbbnEp01_jc",self.RibbonName + "_Rbbn01_geo_01_",tsb = 1,ih = 1,mi = 3,dr = 4,rui = 1)
+         
+        #CLEAN UP
+        pm.delete(startCls)
+        pm.delete(endCls)
+        pm.rename(self.RibbonName + '_Rbbn01_geo_01_',self.RibbonName + '_Rbbn01_geo_01')  
+         
+        #GROUP THEM ALL
+        self.main = pm.group(self.folGrp,self.RibbonName + '_Rbbn01_geo_01',self.RibbonName + '_RbbnSp01_pos',self.RibbonName + '_RbbnMp01_pos',self.RibbonName + '_RbbnEp01_pos',n = self.RibbonName + "_Rbbn01_grp")
+        pm.xform(os = 1,piv = (0,0,0))
+         
+        if self.subMid == 1:
+            self.__midCC()
+    
+# from Modules.subModules import ribbon
+# ribon45hp = ribbon.Ribbon(RibbonName = 'Ribbon',Width = 1.0,Length = 5.0,UVal = 0.5,VVal = 5)
+# ribon45hp.construction()
+
+    def __midCC(self):
         
+        self.subMidCtrl = control.Control(size = 1,baseName = self.baseName,side = self.side) 
+        self.subMidCtrl.circleCtrl()
+        pm.setAttr(self.subMidCtrl.controlGrp +'.ry',90)
+        #add parent cnst for the mid jc
+        pm.parentConstraint(self.subMidCtrl.control,self.midJc,mo = 1)
+        #add parent cnst for sub grp 
+        pm.parentConstraint(self.mpLocAim,self.subMidCtrl.controlGrp,mo = 1)
         
-                        
+def getUniqueName(side,basename,suf):
+    
+    security = 1000
+    
+    sides = ['l','m','r']
+    suffix = ['grp','fol','folShape']
+    
+    if not side in sides:
+        OpenMaya.MGlobal.displayError('Side is not valid')
+        return
+    
+    if not suf in suffix:
+        OpenMaya.MGlobal.displayError('Suffix is not valid')
+        return
+    
+    name = side + '_' + basename + '_' + str(0) +  '_' + suf
+       
+    i = 0
+    while (cmds.objExists(name) == 1):
+        if(i < security):
+            i += 1
+            name = side + '_' + basename + '_' + str(i) +  '_' + suf
+            
+    return name    
+        
