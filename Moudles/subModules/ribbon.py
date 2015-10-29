@@ -46,7 +46,8 @@ class Ribbon(object):
         self.folList = []
         
         #create burbs plane
-        ribbonGeo = pm.nurbsPlane(p = (0,0,0),ax = (0,1,0),w = self.Width,lr = self.Length,d = 3,u = self.UVal,v = self.VVal,ch = 1,n = (self.RibbonName + '_Rbbn01_geo_01_'))
+        ribbonGeo = pm.nurbsPlane(p = (0,0,0),ax = (0,1,0),w = self.Width,lr = self.Length,
+                                  d = 3,u = self.UVal,v = self.VVal,ch = 1,n = (self.side + '_' + self.RibbonName + '_Rbbn01_geo_01_'))
 
         #rebuild ribbon geo
         if self.VVal > self.UVal:
@@ -100,7 +101,7 @@ class Ribbon(object):
         #CREATE JOINTS SNAPPED AND PARENTED TO THE FOLLICLE---
 
         for num,fol in enumerate(self.folList):
-            jJoint = pm.joint(n = self.RibbonName + '_Rbbn0' + str(num) + '_jj',p = (0,0,0),rad = min(self.Width,self.Length) * .25)
+            jJoint = pm.joint(n = self.side + '_' + self.RibbonName + '_Rbbn0' + str(num) + '_jj',p = (0,0,0),rad = min(self.Width,self.Length) * .25)
             pm.parent(jJoint,fol)
             jJoint.translate.set(0,0,0)
             self.jj.append(jJoint)
@@ -108,23 +109,23 @@ class Ribbon(object):
         #CREATE SOME TEMPORARY CLUSTERS TO PLACE THE POS LOCATORS---
         if self.UVal > self.VVal:
             vNo = self.UVal + 2
-            pm.select(self.RibbonName + '_Rbbn01_geo_01_.cv[' + str(vNo) + '][0:1]',r = 1)
+            pm.select(self.side + '_' + self.RibbonName + '_Rbbn01_geo_01_.cv[' + str(vNo) + '][0:1]',r = 1)
             startCls =  pm.cluster(n = 'spCltr')
-            pm.select(self.RibbonName + '_Rbbn01_geo_01_.cv[0][0:1]',r = 1)
+            pm.select(self.side + '_' + self.RibbonName + '_Rbbn01_geo_01_.cv[0][0:1]',r = 1)
             endCls = pm.cluster(n = 'epCltr')
              
         if self.VVal > self.UVal:
             vNo = self.VVal + 2
-            pm.select(self.RibbonName + '_Rbbn01_geo_01_.cv[0:1][' + str(vNo) + ']',r = 1)
+            pm.select(self.side + '_' + self.RibbonName + '_Rbbn01_geo_01_.cv[0:1][' + str(vNo) + ']',r = 1)
             startCls = pm.cluster(n = 'spCltr')
-            pm.select(self.RibbonName + '_Rbbn01_geo_01_.cv[0:1][0]',r = 1)
+            pm.select(self.side + '_' + self.RibbonName + '_Rbbn01_geo_01_.cv[0:1][0]',r = 1)
             endCls = pm.cluster(n = 'epCltr')                
              
         #CREATE SOME LOCATORS---
         #CREATE START POINT LOCATORS AND PARENT THEM PROPERLY---
-        spLocPos = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnSp01_pos')
-        spLocAim = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnSp01_aim')
-        spLocUp = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnSp01_up')
+        spLocPos = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnSp01_pos')
+        spLocAim = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnSp01_aim')
+        spLocUp = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnSp01_up')
          
         #hide shape
 #         spLocPos.getShape().v.set(0)
@@ -137,9 +138,9 @@ class Ribbon(object):
         pm.parent(spLocUp,spLocPos)
          
         #CREATE MID POINT LOCATORS AND PARENT THEM PROPERLY---
-        mpLocPos = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnMp01_pos')
-        self.mpLocAim = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnMp01_aim')
-        mpLocUp = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnMp01_up')
+        mpLocPos = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnMp01_pos')
+        self.mpLocAim = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnMp01_aim')
+        mpLocUp = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnMp01_up')
          
         #hide shape
         mpLocPos.getShape().v.set(0)
@@ -152,9 +153,9 @@ class Ribbon(object):
         pm.parent(mpLocUp,mpLocPos)   
          
         #CREATE END POINT LOCATORS AND PARENT THEM PROPERLY---
-        epLocPos = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnEp01_pos')
-        epLocAim = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnEp01_aim')
-        self.epUploc = pm.spaceLocator(p = (0,0,0), n = self.RibbonName + '_RbbnEp01_up')
+        epLocPos = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnEp01_pos')
+        epLocAim = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnEp01_aim')
+        self.epUploc = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnEp01_up')
          
         #hide shape
         epLocPos.getShape().v.set(0)
@@ -168,10 +169,10 @@ class Ribbon(object):
          
         #CONSTRAINT EACH LOCATORS PROPERLY---                                                   
         pm.pointConstraint('spCltrHandle',spLocPos,o = (0,0,0),w = 1)                                    
-        pm.delete(self.RibbonName + '_RbbnSp01_pos_pointConstraint1')
+        pm.delete(self.side + '_' + self.RibbonName + '_RbbnSp01_pos_pointConstraint1')
          
         pm.pointConstraint('epCltrHandle',epLocPos,o = (0,0,0),w = 1)                                    
-        pm.delete(self.RibbonName + '_RbbnEp01_pos_pointConstraint1')
+        pm.delete(self.side + '_' + self.RibbonName + '_RbbnEp01_pos_pointConstraint1')
          
         pm.pointConstraint(spLocPos,epLocPos,mpLocPos,o = (0,0,0),w = 1)    
         pm.pointConstraint(spLocUp,self.epUploc,mpLocUp,o = (0,0,0),w = 1)
@@ -194,25 +195,25 @@ class Ribbon(object):
          
         #transmit Jc joint info---
         #FOR START POINT JOINT---
-        self.startJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnSp01_jc')
-        pm.joint(p = (tx * .6,0,tz * .6),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnSp02_jc')
-        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.RibbonName + '_RbbnSp02_jc')
+        self.startJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.side + '_' + self.RibbonName + '_RbbnSp01_jc')
+        pm.joint(p = (tx * .6,0,tz * .6),rad = min(self.Width,self.Length) * .5,n = self.side + '_' + self.RibbonName + '_RbbnSp02_jc')
+        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.side + '_' + self.RibbonName + '_RbbnSp02_jc')
          
         #FOR MIDDLE POINT JOINT---
         pm.select(cl = 1)
-        self.midJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnMp01_jc')
-        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.RibbonName + '_RbbnMp01_jc')
+        self.midJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.side + '_' + self.RibbonName + '_RbbnMp01_jc')
+        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.side + '_' + self.RibbonName + '_RbbnMp01_jc')
          
         #FOR END POINT JOINT---
         pm.select(cl = 1)
-        self.endJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnEp01_jc')
-        pm.joint(p = (tx * -0.6,0,tz * -0.6),rad = min(self.Width,self.Length) * .5,n = self.RibbonName + '_RbbnEp02_jc')
-        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.RibbonName + '_RbbnEp02_jc')  
+        self.endJc = pm.joint(p = (0,0,0),rad = min(self.Width,self.Length) * .5,n = self.side + '_' + self.RibbonName + '_RbbnEp01_jc')
+        pm.joint(p = (tx * -0.6,0,tz * -0.6),rad = min(self.Width,self.Length) * .5,n = self.side + '_' + self.RibbonName + '_RbbnEp02_jc')
+        pm.joint(e = 1,zso = 1,oj = 'xyz',sao = 'yup',n = self.side + '_' + self.RibbonName + '_RbbnEp02_jc')  
      
         #PARENT THE CONTROL JOINTS APPROPRIATLY---     
-        pm.parent(self.RibbonName + "_RbbnSp01_jc",spLocAim,r = 1)
-        pm.parent(self.RibbonName + "_RbbnMp01_jc",self.mpLocAim,r = 1)
-        pm.parent(self.RibbonName + "_RbbnEp01_jc",epLocAim,r = 1)
+        pm.parent(self.side + '_' + self.RibbonName + "_RbbnSp01_jc",spLocAim,r = 1)
+        pm.parent(self.side + '_' + self.RibbonName + "_RbbnMp01_jc",self.mpLocAim,r = 1)
+        pm.parent(self.side + '_' + self.RibbonName + "_RbbnEp01_jc",epLocAim,r = 1)
          
         #APPLY THE AIM CONSTRINTS---
         aTz = 0
@@ -224,23 +225,23 @@ class Ribbon(object):
             aTx = 1
          
         #FOR MIDDLE POINT---
-        pm.aimConstraint(self.RibbonName + "_RbbnSp01_pos",self.RibbonName + "_RbbnMp01_aim",o = (0,0,0),w = 1,aim = (aTx * -1,0,aTz *  -1),u = (0,1,0),wut = 'object',wuo = self.RibbonName + '_RbbnMp01_up')
+        pm.aimConstraint(self.side + '_' + self.RibbonName + "_RbbnSp01_pos",self.side + '_' + self.RibbonName + "_RbbnMp01_aim",o = (0,0,0),w = 1,aim = (aTx * -1,0,aTz *  -1),u = (0,1,0),wut = 'object',wuo = self.side + '_' + self.RibbonName + '_RbbnMp01_up')
         #FOR START POINT---
-        pm.aimConstraint(self.RibbonName + "_RbbnMp01_jc",self.RibbonName + "_RbbnSp01_aim",o = (0,0,0),w = 1,aim = (aTx,0,aTz),u = (0,1,0),wut = 'object',wuo = self.RibbonName + '_RbbnSp01_up')
+        pm.aimConstraint(self.side + '_' + self.RibbonName + "_RbbnMp01_jc",self.side + '_' + self.RibbonName + "_RbbnSp01_aim",o = (0,0,0),w = 1,aim = (aTx,0,aTz),u = (0,1,0),wut = 'object',wuo = self.side + '_' + self.RibbonName + '_RbbnSp01_up')
         #FOR END POINT---
-        pm.aimConstraint(self.RibbonName + "_RbbnMp01_jc",self.RibbonName + "_RbbnEp01_aim",o = (0,0,0),w = 1,aim = (aTx * -1,0,aTz *  -1),u = (0,1,0),wut = 'object',wuo = self.RibbonName + '_RbbnEp01_up')
+        pm.aimConstraint(self.side + '_' + self.RibbonName + "_RbbnMp01_jc",self.side + '_' + self.RibbonName + "_RbbnEp01_aim",o = (0,0,0),w = 1,aim = (aTx * -1,0,aTz *  -1),u = (0,1,0),wut = 'object',wuo = self.side + '_' + self.RibbonName + '_RbbnEp01_up')
              
         #APPLY SKINCLUSTER---
         pm.select(cl = 1)
-        pm.skinCluster(self.RibbonName + "_RbbnSp01_jc",self.RibbonName + "_RbbnMp01_jc",self.RibbonName + "_RbbnEp01_jc",self.RibbonName + "_Rbbn01_geo_01_",tsb = 1,ih = 1,mi = 3,dr = 4,rui = 1)
+        pm.skinCluster(self.side + '_' + self.RibbonName + "_RbbnSp01_jc",self.side + '_' + self.RibbonName + "_RbbnMp01_jc",self.side + '_' + self.RibbonName + "_RbbnEp01_jc",self.side + '_' + self.RibbonName + "_Rbbn01_geo_01_",tsb = 1,ih = 1,mi = 3,dr = 4,rui = 1)
          
         #CLEAN UP
         pm.delete(startCls)
         pm.delete(endCls)
-        pm.rename(self.RibbonName + '_Rbbn01_geo_01_',self.RibbonName + '_Rbbn01_geo_01')  
+        pm.rename(self.side + '_' + self.RibbonName + '_Rbbn01_geo_01_',self.side + '_' + self.RibbonName + '_Rbbn01_geo_01')  
          
         #GROUP THEM ALL
-        self.main = pm.group(self.folGrp,self.RibbonName + '_Rbbn01_geo_01',self.RibbonName + '_RbbnSp01_pos',self.RibbonName + '_RbbnMp01_pos',self.RibbonName + '_RbbnEp01_pos',n = self.RibbonName + "_Rbbn01_grp")
+        self.main = pm.group(self.folGrp,self.side + '_' + self.RibbonName + '_Rbbn01_geo_01',self.side + '_' + self.RibbonName + '_RbbnSp01_pos',self.side + '_' + self.RibbonName + '_RbbnMp01_pos',self.side + '_' + self.RibbonName + '_RbbnEp01_pos',n = self.side + '_' + self.RibbonName + "_Rbbn01_grp")
         pm.xform(os = 1,piv = (0,0,0))
          
         if self.subMid == 1:
