@@ -33,6 +33,7 @@ class SpineModule(object):
         self.ribbonJc = None
         self.spineCc = None
         self.config_node = None
+        self.folGrp = None
         
         #stretch
         self.stretchLength = None
@@ -340,6 +341,7 @@ class SpineModule(object):
                      ((self.segment - 1) / 2 + (self.segment - 1)) / 2,
                      (self.segment - 1)]
         ribbonCurve = []
+        self.folList = []
         
         #create curve
         for jjInfo in curveInfo:
@@ -368,7 +370,7 @@ class SpineModule(object):
         ribbonCurveL.setParent(self.guideGrp)
         
         #create ribbon surf
-        ribbonSurf = pm.loft(ribbonCurveR,ribbonCurveL,ch = 0,u = 1,c = 0,ar = 1,d = 3,ss = 1, rn = 0,po = 0,rsn = 1,
+        ribbonGeo = pm.loft(ribbonCurveR,ribbonCurveL,ch = 0,u = 1,c = 0,ar = 1,d = 3,ss = 1, rn = 0,po = 0,rsn = 1,
                              n = nameUtils.getUniqueName(self.side,self.baseName + '_ribbon','surf'))
         
         ribbonClusList = []
@@ -377,7 +379,7 @@ class SpineModule(object):
         
         #get Jc pos
         for num in [0,2,4]:
-            pos = pm.select(ribbonSurf[0] + '.cv[' + str(num) + '][0:3]',r = 1)
+            pos = pm.select(ribbonGeo[0] + '.cv[' + str(num) + '][0:3]',r = 1)
             clus = pm.cluster()
             pm.rename(clus[1],nameUtils.getUniqueName(self.side,self.baseName + '_ribbon','cls'))
             ribbonClusList.append(clus)
@@ -402,36 +404,54 @@ class SpineModule(object):
         for num,jc in enumerate(self.ribbonJc):
             jc.setParent(self.spineCc[num])
 
-        pm.skinCluster(self.ribbonJc[0],self.ribbonJc[1],self.ribbonJc[2],ribbonSurf[0],
+        pm.skinCluster(self.ribbonJc[0],self.ribbonJc[1],self.ribbonJc[2],ribbonGeo[0],
                        tsb = 1,ih = 1,mi = 3,dr = 4,rui = 1)
         
         #set fol
         #create / rename fol
-        pm.select(ribbonSurf[0],r = 1)
-        pm.runtime.CreateHair(9,1,2,0,0,0,0,5,0,1,2,1)
-        pm.select('*surfFollicle*',r = 1)
-        folSel = pm.select('*surfFollicleShape*',tgl = 1)
-        fol = pm.ls(sl = 1)
-        folList = []
-               
-        for i in range(len(fol)):
-            j = i + 1
-            pm.rename(fol[i],nameUtils.getUniqueName(self.side,self.baseName,'fol'))
-            folList.append(fol[i])
-             
-        #clean scene    
-        pm.parent(w = 1)
-        pm.delete('hairSystem*')
-        pm.delete('curve*')
-        pm.delete('nucleus*')   
-        pm.delete('pfxHair1')        
-        folGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')  )
+#         pm.select(ribbonGeo[0],r = 1)
+        
+        self.folGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')) 
+        
+        for fol in range(self.segment):
+            
+            #createNodeName
+            follicleTransName = nameUtils.getUniqueName(self.side,self.baseName,'fol')
+            follicleShapeName = nameUtils.getUniqueName(self.side,self.baseName,'folShape')
+            
+            #createNode
+            follicleShape = pm.createNode('follicle',n = follicleShapeName)
+            follicleTrans = pm.listRelatives(follicleShape, parent=True)[0]
+            follicleTrans = pm.rename(follicleTrans, follicleTransName)
+            
+            # connect the surface to the follicle
+            
+            if ribbonGeo[0].getShape().nodeType() == 'nurbsSurface':
+                pm.connectAttr((ribbonGeo[0] + '.local'), (follicleShape + '.inputSurface'))
+                
+            #Connect the worldMatrix of the surface into the follicleShape
+            pm.connectAttr((ribbonGeo[0] + '.worldMatrix[0]'), (follicleShape + '.inputWorldMatrix'))
+            
+            #Connect the follicleShape to it's transform
+            pm.connectAttr((follicleShape + '.outRotate'), (follicleTrans + '.rotate'))
+            pm.connectAttr((follicleShape + '.outTranslate'), (follicleTrans + '.translate'))
+            
+            #Set the uValue and vValue for the current follicle
+            pm.setAttr((follicleShape + '.parameterV'), 0.5)
+            pm.setAttr((follicleShape + '.parameterU'), float(1.0 / self.segment) * fol + (1.0 / (self.segment * 2)))
+            
+            #Lock the translate/rotate of the follicle
+            pm.setAttr((follicleTrans + '.translate'), lock=True)
+            pm.setAttr((follicleTrans + '.rotate'), lock=True)
+            
+            #parent
+            self.folList.append(follicleTrans)
+            follicleTrans.setParent(self.folGrp)
         
         #rebuild fol pos
         self.spineIkBlendJoint = []
         self.stretchCube = []
-        for num,fol in enumerate(folList):
-            pm.setAttr(fol + '.parameterU',(num * (1 / float(self.segment - 1))))
+        for num,fol in enumerate(self.folList):
             jj = pm.joint(p = (0,0,0),n = nameUtils.getUniqueName(self.side,self.baseName,'jj'),
                           radius = self.length / 5)
             self.spineIkBlendJoint.append(jj)
@@ -446,10 +466,10 @@ class SpineModule(object):
             jj.translateZ.set(0)
             
         #create spine grp
-        self.spineIkGrp = pm.group(self.spineCc[0].getParent(),self.spineCc[1].getParent(),self.spineCc[2].getParent(),folGrp,ribbonSurf[0],
+        self.spineIkGrp = pm.group(self.spineCc[0].getParent(),self.spineCc[1].getParent(),self.spineCc[2].getParent(),self.folGrp,ribbonGeo[0],
                                    n = nameUtils.getUniqueName(self.side,self.baseName + 'Ik','grp'))
-        ribbonSurf[0].inheritsTransform.set(0)
-        folGrp.inheritsTransform.set(0)
+        ribbonGeo[0].inheritsTransform.set(0)
+        self.folGrp.inheritsTransform.set(0)
         
         #clean
         self.spineIkGrp.setParent(self.config_node.control)
@@ -556,6 +576,10 @@ class SpineModule(object):
         conditionNode.colorIfFalseB.set(0)
         
         #bug spotted!!!
+        '''
+        color cannot change interactively
+        '''
+        
         stretchSwitchNode.outputR.connect(remapNodeRed.inputValue)
         stretchSwitchNode.outputR.connect(remapNodeGreen.inputValue)
         remapNodeRed.inputMin.set(1)
