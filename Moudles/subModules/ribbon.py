@@ -103,6 +103,7 @@ class Ribbon(object):
             jJoint = pm.joint(n = self.RibbonName + '_Rbbn0' + str(num) + '_jj',p = (0,0,0),rad = min(self.Width,self.Length) * .25)
             pm.parent(jJoint,fol)
             jJoint.translate.set(0,0,0)
+            self.jj.append(jJoint)
              
         #CREATE SOME TEMPORARY CLUSTERS TO PLACE THE POS LOCATORS---
         if self.UVal > self.VVal:
