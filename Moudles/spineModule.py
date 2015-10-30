@@ -44,7 +44,6 @@ class SpineModule(object):
         #nameList
         self.nameList = ['Hip','Mid','Chest']
         
-        
     def buildGuides(self):
         
         #set hi
@@ -301,7 +300,7 @@ class SpineModule(object):
                 multiplefkTwistNode.outputZ.connect(chain.rx)
             
         #revFk        
-        self.spineFkRevBlendChain.chain.reverse()
+#         self.spineFkRevBlendChain.chain.reverse()
         for num,chain in enumerate(self.spineFkRevBlendChain.chain):
             #lo
             if 1 <= num <= (self.segment / 3 - 1):
@@ -316,8 +315,8 @@ class SpineModule(object):
             #mid              
             elif (self.segment / 3 - 1) < num < ((self.segment / 3) * 2):
                 multiplefkRevBendNode.outputY.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
-                multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
-                multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
+                multiplefkRevSideNode.outputY.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
+                multiplefkRevTwistNode.outputY.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
                  
                 fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)
                 fkPlusMinusAverageList[num].output3D.output3Dy.connect(chain.ry)
@@ -326,8 +325,8 @@ class SpineModule(object):
             #up    
             elif ((self.segment / 3) * 2) <= num < (self.segment - 1):
                 multiplefkRevBendNode.outputZ.connect(fkPlusMinusAverageList[num].input3D[1].input3Dz)
-                multiplefkRevSideNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
-                multiplefkRevTwistNode.outputX.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
+                multiplefkRevSideNode.outputZ.connect(fkPlusMinusAverageList[num].input3D[1].input3Dy)
+                multiplefkRevTwistNode.outputZ.connect(fkPlusMinusAverageList[num].input3D[1].input3Dx)
                  
                 fkPlusMinusAverageList[num].output3D.output3Dz.connect(chain.rz)     
                 fkPlusMinusAverageList[num].output3D.output3Dy.connect(chain.ry)
@@ -394,7 +393,8 @@ class SpineModule(object):
             pm.select(cl = 1)
             pm.delete(ribbonClusList[num])
             pm.select(cl = 1)
-            cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.length / 2) 
+            cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.length / 3)
+            print self.length / 2 
             cc.circleCtrl()
             self.spineCc.append(cc.control)
             pm.xform(cc.controlGrp,ws = 1,matrix = jc.worldMatrix.get())
@@ -409,7 +409,6 @@ class SpineModule(object):
         
         #set fol
         #create / rename fol
-#         pm.select(ribbonGeo[0],r = 1)
         
         self.folGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')) 
         
