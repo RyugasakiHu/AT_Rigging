@@ -1,6 +1,6 @@
 import pymel.core as pm
 from subModules import fkChain,ikChain,boneChain,ribbon
-from Utils import nameUtils
+from Utils import nameUtils,hookUtils
 from Modules import control,hierarchy
 
 class LimbModule(object):
@@ -60,6 +60,12 @@ class LimbModule(object):
         self.ikAtHandle = None
         self.ikAtEffector  = None
         
+        #Hook
+        self.inHooks = []
+        self.outHooks = []
+        self.__tempSpaceSwitch = None
+        self.switchGrp = None
+        
         self.hi = None
          
     def buildGuides(self):
@@ -117,7 +123,6 @@ class LimbModule(object):
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(self.limbGuides[0],self.shoulderGuides[0],self.shoulderBladeGuides[0],n = name)
                      
-               
     def build(self):
         
         #shoulder set
@@ -184,6 +189,7 @@ class LimbModule(object):
         self.__setRibbonSubMidCc()
         self.__shoulderCtrl()
         self.__cleanUp()
+        self.__buildHooks()
         
     def __ikfkBlender(self):
         
@@ -215,7 +221,8 @@ class LimbModule(object):
         pm.move(wrist_pos[0],wrist_pos[1],wrist_pos[2],self.handSetting.controlGrp + '.scalePivot')
         pm.pointConstraint(self.limbBlendChain.chain[2],self.handSetting.controlGrp,mo = 1)
 #         pm.orientConstraint(self.limbBlendChain.chain[2],self.handSetting.controlGrp,mo = 1)   
-        control.lockAndHideAttr(self.handSetting.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])     
+        control.lockAndHideAttr(self.handSetting.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])
+        self.handSetting.control.IKFK.set(1) 
     
     def __setRibbonUpper(self):
         '''
@@ -386,7 +393,6 @@ class LimbModule(object):
         
         #align
         posArray = self.shoulderChain.chain[0]
-        print self.shoulderCtrl.controlGrp
         pm.xform(self.shoulderCtrl.controlGrp,ws = 1,matrix = posArray.worldMatrix.get())
         pm.setAttr(self.shoulderCtrl.controlGrp + '.tz',-self.shoulderChain.chain[1].tx.get())
         control.lockAndHideAttr(self.shoulderCtrl.control,['sx','sy','sz','rx','v'])
@@ -563,89 +569,102 @@ class LimbModule(object):
         poseTar.localScale.set(0.25,0.25,0.25)
         poseTar.overrideEnabled.set(1)
         poseTar.overrideColor.set(16)
-         
+        
         #set twist loc
         poseTwistMain = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistMain','loc'))
         poseTwistMain.overrideEnabled.set(1)
         poseTwistMain.overrideColor.set(4)
-         
+        
         poseTwistUp = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistUp','loc'))
         poseTwistUp.localScale.set(0.5,0.5,0.5)
         poseTwistUp.overrideEnabled.set(1)
         poseTwistUp.overrideColor.set(4)
-         
+        
         poseTwistTar = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistTar','loc'))
         poseTwistTar.localScale.set(0.25,0.25,0.25)
         poseTwistTar.overrideEnabled.set(1)
-        poseTwistTar.overrideColor.set(4)        
-         
-        #create grp
-        #main
-        poseReadorGrp = pm.group(poseMain,poseUp,poseTar,poseTwistMain,poseTwistUp,poseTwistTar,
-                                 n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorMain','grp'))
-        poseReadorGrp.setParent(self.shoulderAtChain.chain[0])
-        poseReadorGrp.t.set(0,0,0)
-        poseReadorGrp.r.set(0,0,0)
-         
+        poseTwistTar.overrideColor.set(4) 
+        
         pm.setAttr(poseMain + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
         pm.setAttr(poseTar + '.tx',float(self.shoulderAtChain.chain[1].tx.get() / 4))
         pm.setAttr(poseUp + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
         pm.setAttr(poseUp + '.ty',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
-         
+        
+        #create grp
+        #main
+        poseReadorGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorMain','grp'))
+        
+        poseMain.setParent(poseReadorGrp)
+        poseTar.setParent(poseReadorGrp)
+        poseUp.setParent(poseReadorGrp)
+        
+        poseTwistUp.setParent(poseReadorGrp)
+        poseTwistMain.setParent(poseReadorGrp)        
+        poseTwistTar.setParent(poseReadorGrp)
+                  
+        pm.xform(poseReadorGrp,ws = 1,matrix = self.limbBlendChain.chain[0].worldMatrix.get())
+        poseReadorGrp.setParent(self.shoulderAtChain.chain[0])
+        poseReadorGrp.t.set(0,0,0)
+        poseReadorGrp.r.set(0,0,0)
+        
         pm.aimConstraint(poseTar,poseMain,offset = [0,0,0],w = 1,aimVector = [1,0,0],upVector = [0,-1,0],
-                         worldUpType = 'object',worldUpObject = str(poseUp))        
-         
+                         worldUpType = 'object',worldUpObject = poseUp)        
+
         #twist
         pm.setAttr(poseTwistTar + '.ty',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
         pm.setAttr(poseTwistUp + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 8))
-         
+          
         pm.aimConstraint(poseTwistTar,poseTwistMain,offset = [0,0,0],w = 1,aimVector = [0,-1,0],upVector = [-1,0,0],
-                         worldUpType = 'object',worldUpObject = str(poseTwistUp))
-         
+                        worldUpType = 'object',worldUpObject = poseTwistUp)
+          
         #connect 
         poseReadorGrp.setParent(self.chestGrp)
         postTarGrp = pm.group(poseTar,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTar','grp'))
-         
+          
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
                 self.limbBlendChain.chain[0].tz.get(),postTarGrp + '.rotatePivot')
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
                 self.limbBlendChain.chain[0].tz.get(),postTarGrp + '.scalePivot')
-         
+          
         postTarGrp.setParent(self.shoulderAtChain.chain[0])
         poseTwistTar.setParent(postTarGrp)
         poseTwistGrp = pm.group(poseTwistUp,poseTwistMain,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwist','grp'))
-         
+          
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
                 self.limbBlendChain.chain[0].tz.get(),poseTwistGrp + '.rotatePivot')
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
                 self.limbBlendChain.chain[0].tz.get(),poseTwistGrp + '.scalePivot')        
-         
+          
         #multiple node name
         prMultipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorBri','MDN')
-         
+          
         #create Node
         prMultipleNode = pm.createNode('multiplyDivide',n = prMultipleNodeName)
-         
+          
         poseMain.ry.connect(prMultipleNode.input1Y)
         poseMain.rz.connect(prMultipleNode.input1Z)
         prMultipleNode.input2Y.set(2)
         prMultipleNode.input2Z.set(2)
         prMultipleNode.outputY.connect(poseTwistGrp.ry)
         prMultipleNode.outputZ.connect(poseTwistGrp.rz)
-         
+          
         control.addFloatAttr(self.shoulderAtChain.chain[0],
                              ['pose_bend','pose_side','pose_twist'],-3600,3600) 
-         
+          
         #get correct value
         prMultipleNode.outputY.connect(self.shoulderAtChain.chain[0].pose_bend)
         prMultipleNode.outputZ.connect(self.shoulderAtChain.chain[0].pose_side)
         poseTwistMain.rx.connect(self.shoulderAtChain.chain[0].pose_twist)
-         
+          
         #reconnect
         self.shoulderAtChain.chain[0].pose_bend.connect(multipleNode.input1X)
         self.shoulderAtChain.chain[0].pose_side.connect(multipleNode.input1Y)
         self.shoulderAtChain.chain[0].pose_twist.connect(multipleNode.input1Z)
-         
+          
+        #clean
+        poseReadorGrp.v.set(0)
+        postTarGrp.v.set(0)  
+          
     def __cleanUp(self):
          
         #add cc ctrl
@@ -710,8 +729,61 @@ class LimbModule(object):
 #         self.mainGrp = pm.group(self.bonesGrp,self.cntsGrp,self.handSetting,
 #                                 n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))   
           
- 
- 
+    def __buildHooks(self):
+        
+        for bone in self.limbBlendChain.chain :
+            
+            hook = hookUtils.createHook(baseName = self.baseName + 'Out',side = self.side,
+                                        snapTo = bone,inOut = 'out')
+            
+            hook.setParent(bone)
+            self.outHooks.append(hook)
+            
+        hook = hookUtils.createHook(baseName = self.baseName + 'In',side = self.side,
+                                    snapTo = self.limbBlendChain.chain[0],inOut = 'in')
+        
+        self.inHooks.append(hook)
+        
+        #build space switch
+        #create and align
+        worldName = nameUtils.getUniqueName(self.side,self.baseName + 'World','loc')
+        locWorld = pm.spaceLocator(n = worldName)
+         
+        localName = nameUtils.getUniqueName(self.side,self.baseName + 'Local','loc')
+        locLocal = pm.spaceLocator(n = localName)
+         
+        pm.xform(locWorld,ws = 1,matrix = self.inHooks[0].wm.get())
+        pm.xform(locLocal,ws = 1,matrix = self.inHooks[0].wm.get())
+        
+        #cnst 
+        pm.parentConstraint(self.inHooks[0],locLocal,mo = 1)
+        pm.parentConstraint(self.inHooks[0],locWorld,mo = 1,skipRotate = ['x','y','z'])
+        pm.orientConstraint(self.limbGrp,locWorld,mo = 1) 
+        
+        #add switcher
+        targetName = nameUtils.getUniqueName(self.side,self.baseName + 'Tar','loc')
+        self.__tempSpaceSwitch = pm.spaceLocator(n = targetName)
+        
+        self.fkChain.chain[0].addAttr('space',at = 'enum',en = 'world:local:',k = 1)
+        
+        finalCnst = pm.parentConstraint(locWorld,locLocal,self.__tempSpaceSwitch)
+        
+        self.fkChain.chain[0].attr('space').connect(finalCnst.attr(locLocal.name() + 'W1'))
+        
+        reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Hook','REV')
+        reverseNode = pm.createNode('reverse',n = reverseNodeName)
+        
+        self.fkChain.chain[0].attr('space').connect(reverseNode.inputX)
+        reverseNode.outputX.connect(finalCnst.attr(locWorld.name() + 'W0'))
+        
+        switchName = nameUtils.getUniqueName(self.side,self.baseName + 'Switch','grp')
+        self.switchGrp = pm.group(em = 1,n = switchName)
+        
+        for hookElement in [locLocal,locWorld,self.__tempSpaceSwitch] + self.inHooks :
+            hookElement.setParent(self.switchGrp)
+            
+#         self.switchGrp.setParent(self.limbGrp)
+        
 # from Modules import limbModule
 # lm = limbModule.LimbModule()
 # lm.buildGuides()
