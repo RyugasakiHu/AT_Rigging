@@ -222,7 +222,7 @@ class LimbModule(object):
         pm.pointConstraint(self.limbBlendChain.chain[2],self.handSetting.controlGrp,mo = 1)
 #         pm.orientConstraint(self.limbBlendChain.chain[2],self.handSetting.controlGrp,mo = 1)   
         control.lockAndHideAttr(self.handSetting.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])
-        self.handSetting.control.IKFK.set(1) 
+        self.handSetting.control.IKFK.set(0) 
     
     def __setRibbonUpper(self):
         '''
@@ -717,8 +717,9 @@ class LimbModule(object):
          
         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
             b.chain[0].setParent(self.limbGrp)
-             
-        self.limbGrp.setParent(self.shoulderCtrl.control)
+        
+        self.limbGrp.setParent(self.chestGrp)
+#         self.limbGrp.setParent(self.shoulderCtrl.control)
          
 #         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
 #             b.chain[0].setParent(self.bonesGrp)
@@ -730,59 +731,41 @@ class LimbModule(object):
 #                                 n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))   
           
     def __buildHooks(self):
-        
-        for bone in self.limbBlendChain.chain :
-            
-            hook = hookUtils.createHook(baseName = self.baseName + 'Out',side = self.side,
-                                        snapTo = bone,inOut = 'out')
-            
-            hook.setParent(bone)
-            self.outHooks.append(hook)
-            
-        hook = hookUtils.createHook(baseName = self.baseName + 'In',side = self.side,
-                                    snapTo = self.limbBlendChain.chain[0],inOut = 'in')
-        
-        self.inHooks.append(hook)
-        
-        #build space switch
         #create and align
         worldName = nameUtils.getUniqueName(self.side,self.baseName + 'World','loc')
         locWorld = pm.spaceLocator(n = worldName)
+        locWorld.v.set(0)
          
         localName = nameUtils.getUniqueName(self.side,self.baseName + 'Local','loc')
         locLocal = pm.spaceLocator(n = localName)
+        locLocal.v.set(0)
          
-        pm.xform(locWorld,ws = 1,matrix = self.inHooks[0].wm.get())
-        pm.xform(locLocal,ws = 1,matrix = self.inHooks[0].wm.get())
+        pm.xform(locWorld,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
+        pm.xform(locLocal,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
         
-        #cnst 
-        pm.parentConstraint(self.inHooks[0],locLocal,mo = 1)
-        pm.parentConstraint(self.inHooks[0],locWorld,mo = 1,skipRotate = ['x','y','z'])
-        pm.orientConstraint(self.limbGrp,locWorld,mo = 1) 
-        
-        #add switcher
-        targetName = nameUtils.getUniqueName(self.side,self.baseName + 'Tar','loc')
-        self.__tempSpaceSwitch = pm.spaceLocator(n = targetName)
+        locLocal.setParent(self.shoulderChain.chain[-1])
+        locWorld.setParent(self.hi.IK)
+        pm.parentConstraint(self.shoulderCtrl.control,locWorld,skipRotate = ['x','y','z'],mo = 1)
         
         self.fkChain.chain[0].addAttr('space',at = 'enum',en = 'world:local:',k = 1)
         
-        finalCnst = pm.parentConstraint(locWorld,locLocal,self.__tempSpaceSwitch)
-        
-        self.fkChain.chain[0].attr('space').connect(finalCnst.attr(locLocal.name() + 'W1'))
-        
+        #add target tester
+        targetName = nameUtils.getUniqueName(self.side,self.baseName + 'Tar','loc')
+        self.__tempSpaceSwitch = pm.spaceLocator(n = targetName)
+        pm.xform(self.__tempSpaceSwitch,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
+        self.__tempSpaceSwitch.setParent(self.hi.XTR)
+        self.__tempSpaceSwitch.v.set(0)
+
+        #final cnst
+        finalCnst = pm.parentConstraint(locLocal,locWorld,self.__tempSpaceSwitch,mo = 1)
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Hook','REV')
         reverseNode = pm.createNode('reverse',n = reverseNodeName)
         
+        #fk cnst
+        pm.parentConstraint(self.__tempSpaceSwitch,self.limbGrp,mo = 1)
+        self.fkChain.chain[0].attr('space').connect(finalCnst.attr(locLocal.name() + 'W0'))
         self.fkChain.chain[0].attr('space').connect(reverseNode.inputX)
-        reverseNode.outputX.connect(finalCnst.attr(locWorld.name() + 'W0'))
-        
-        switchName = nameUtils.getUniqueName(self.side,self.baseName + 'Switch','grp')
-        self.switchGrp = pm.group(em = 1,n = switchName)
-        
-        for hookElement in [locLocal,locWorld,self.__tempSpaceSwitch] + self.inHooks :
-            hookElement.setParent(self.switchGrp)
-            
-#         self.switchGrp.setParent(self.limbGrp)
+        reverseNode.outputX.connect(finalCnst.attr(locWorld.name() + 'W1'))
         
 # from Modules import limbModule
 # lm = limbModule.LimbModule()
