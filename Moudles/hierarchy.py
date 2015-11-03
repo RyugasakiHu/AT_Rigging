@@ -1,5 +1,5 @@
 import pymel.core as pm
-from Utils import nameUtils
+from Utils import nameUtils,metaUtils
 from Modules import control
 
 class Hierarchy(object):
@@ -7,12 +7,16 @@ class Hierarchy(object):
     classdocs
     '''
 
-    def __init__(self, characterName):
+    def __init__(self, baseName = 'main',side = 'm',size = 1,characterName = None):
         '''
         Constructor
         '''
+        self.baseName = baseName
+        self.side = side
+        self.size = size
         self.characterName = characterName
         
+        #get papare for class
         self.ALL = None
         self.TRS_cc = None
         self.TRS = None
@@ -27,7 +31,16 @@ class Hierarchy(object):
         self.GEO = None
         self.GUD = None
 
+        #set ctrl
         self.cogCtrl = None
+        self.bodyCtrl = None
+        
+        #create Meta
+        self.meta = metaUtils.createMeta(self.side,self.baseName,1)
+        
+    def buildGuides(self):
+        
+        pass    
         
     def build(self):
         
@@ -44,10 +57,12 @@ class Hierarchy(object):
         self.CSG = pm.group(empty = 1,n = nameUtils.getHierachyName(self.characterName,'CSG'))
         self.GUD = pm.group(empty = 1,n = nameUtils.getHierachyName(self.characterName,'GUD'))
         
+        #set ctrl
         #set cog
-        self.cogCtrl = control.Control(side = 'c',baseName = self.characterName ,size = 1)
-        self.cogCtrl.cogCtrlTest()
-        self.cogCtrl.control.setParent(self.ALL)
+        self.cogCtrl = control.Control(side = 'm',baseName = self.characterName ,size = self.size,aimAxis = 'y')
+#         self.cogCtrl.cogCtrlTest()
+        self.cogCtrl.circleCtrl()
+        self.cogCtrl.controlGrp.setParent(self.ALL)        
         
         #set grp 
         self.TRS.setParent(self.cogCtrl.control)
@@ -60,3 +75,18 @@ class Hierarchy(object):
         self.GEO.setParent(self.ALL)
         self.XTR.setParent(self.ALL)
         self.GUD.setParent(self.ALL)
+        
+        #clean up
+        self.__cleanUp()
+        
+    def buildConnection(self):
+        pass    
+        
+    def __cleanUp(self):
+        
+#         metaUtils.addToMeta(self.meta,, objs)
+        metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL])  
+        metaUtils.addToMeta(self.meta,'controls', [self.cogCtrl.control])        
+        
+        
+        
