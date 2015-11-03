@@ -46,9 +46,9 @@ class SpineModule(object):
         
     def buildGuides(self):
         
-        #set hi
-        self.hi = hierarchy.Hierarchy(characterName = 'test')
-        self.hi.build()        
+#         #set hi
+#         self.hi = hierarchy.Hierarchy(characterName = 'test')
+#         self.hi.build()        
         
         #group
         self.fkGuides = []
@@ -116,7 +116,7 @@ class SpineModule(object):
         #move the target object
         pm.move(midPos[0],midPos[1],midPos[2] - self.length / 1.5,self.config_node.controlGrp,a=True)
         pm.setAttr(self.config_node.controlGrp + '.ry',90)
-        self.config_node.controlGrp.setParent(self.hi.CC)
+#         self.config_node.controlGrp.setParent(self.hi.CC)
         
         #lock and hide
         control.lockAndHideAttr(self.config_node.control,['sx','sy','sz','v'])
@@ -604,8 +604,8 @@ class SpineModule(object):
         mid = self.spineCc[1].getParent()
         chest = self.spineCc[2].getParent()
         
-        hip.setParent(self.spineFkRevBlendChain.chain[-1])
-        chest.setParent(self.spineFkRevBlendChain.chain[0])
+        chest.setParent(self.spineFkRevBlendChain.chain[-1])
+        hip.setParent(self.spineFkRevBlendChain.chain[0])
         mid.setParent(self.spineFkRevBlendChain.chain[(self.segment - 1) / 2])
         
 # import maya.cmds as mc
