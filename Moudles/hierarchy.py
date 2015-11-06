@@ -87,6 +87,53 @@ class Hierarchy(object):
 #         metaUtils.addToMeta(self.meta,, objs)
         metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL])  
         metaUtils.addToMeta(self.meta,'controls', [self.cogCtrl.control])        
+
+def getUi(parent,mainUi):
+    
+    return MainModuleUi(parent,mainUi)
+
+class MainModuleUi(object):
+    
+    def __init__(self,parent,mainUi):
         
+        self.mainUi = mainUi
+        pm.setParent(parent)
+        self.mainL = pm.columnLayout(adj = 1)
+        pm.separator(h = 10)
+        
+        self.name = pm.text(l = '**** Main Module ****')
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1)
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1)
+        self.clr = pm.optionMenu(l = 'color')
+        pm.menuItem(l = 'yellow')
+        self.cntSize = pm.floatFieldGrp(l = 'cnt Size : ',cl2 = ['left','left'],
+                                        ad2 = 1,numberOfFields = 1,value1 = 1)
+        
+        self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
+        pm.separator(h = 10)
+        
+        self.__pointerClass = None
+        
+    def __removeInstance(self,*arg):
+        
+        pm.deleteUi(self.mainL)
+        self.mainUi.modulesUi.remove(self)
+        
+    def getModuleInstance(self):
+        
+        baseName = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
+        side = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
+        
+        self.__pointerClass = Hierarchy(baseName,side,cntSize = cntSizeV)
+        return self.__pointerClass
+        
+        
+    
+    
+    
+    
+    
+    
         
         
