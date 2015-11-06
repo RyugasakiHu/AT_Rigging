@@ -1,0 +1,80 @@
+import imp
+from maya import cmds
+from Core import buildSession
+import autorig_settings
+from see import see
+
+class BuildSessionUi(object):
+    
+    def __init__(self):
+        
+        self.win = None
+        self.modulesUi = []
+        self.buildSession = buildSession.BuildSession()
+    
+    def openUi(self):
+        
+        #check exist
+        if cmds.window('buildSession',ex = 1):
+            cmds.deleteUI('buildSession')
+            
+        self.win = cmds.window('buildSession',title = 'AT_rig UI V1.0',w = 300,h = 500)    
+        
+        self.mainL = cmds.columnLayout(w = 300 , adj = 1)
+        
+        cmds.separator(h = 5,st = 'none')
+        self.modulesMenu = cmds.optionMenu(label = 'modules')
+        
+        for menu in self.buildSession.availableModules:
+            cmds.menuItem(l = menu)            
+#             cmds.menuItem(l = menu.replace('Module.py',''))
+            
+        cmds.separator(h = 5,st = 'none')
+        self.addButton = cmds.button(label = 'ADD',h = 30,c = self.addModule)
+        cmds.separator(h = 10)
+        
+        self.modulesScrollLayout = cmds.scrollLayout(hst = 0,vst = 16,h = 360,rc = self.__resizeScroll)
+        
+        self.modulesLayout = cmds.columnLayout(w = 299,adj = 1)
+        self.__resizeScroll()
+        
+        cmds.setParent(self.mainL)
+        self.buildGuidesB = cmds.button(l = 'Build Guides',c = self.buildGuides)
+        self.buildRig = cmds.button(l = 'Build Rig',c = self.buildRig)
+        cmds.showWindow(self.win)
+
+    def __resizeScroll(self,*args):
+        
+        h = cmds.window(self.win,q = 1,h = 1)
+        cmds.scrollLayout(self.modulesScrollLayout,e = 1,h = (h - 140))
+        wh = cmds.scrollLayout(self.modulesScrollLayout , q = 1,w = 1)
+        cmds.columnLayout(self.modulesLayout, e = 1,w = wh - 7)
+        
+    def addModule(self,*args):
+        
+        moduleName = cmds.optionMenu(self.modulesMenu,q = 1,v = 1)
+        modulePath = self.buildSession.modulesDict[moduleName]
+        module = imp.load_source('module.name',modulePath)
+        moduleUi = module.getUi(self.modulesLayout,self)
+        self.modulesUi.append(moduleUi)
+        
+    def buildGuides(self,*args):
+        
+        pass
+    
+    def buildRig(self,*args):
+        
+        pass    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
