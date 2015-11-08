@@ -5,7 +5,7 @@ from maya import OpenMaya,cmds
 class Ribbon(object):
 
 #     def __init__(self, RibbonName = 'Ribbon',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5):
-    def __init__(self, RibbonName,Width,Length,UVal,VVal,segment = 5,subMid = 0,side = 'm',baseName = 'Mid_CC'):        
+    def __init__(self, RibbonName,Width,Length,UVal,VVal,segment = 5,subMid = 0,side = 'm',size = 1,baseName = 'Mid_CC'):        
         '''
         initialize para
         '''
@@ -17,6 +17,7 @@ class Ribbon(object):
         self.VVal = VVal
         self.subMid = subMid
         self.side = side
+        self.size = size
         self.baseName = baseName
         self.segment = segment
         
@@ -40,14 +41,13 @@ class Ribbon(object):
         
         self.jj = []
 
-
     def construction(self):
         
         self.folList = []
         
         #create burbs plane
         ribbonGeo = pm.nurbsPlane(p = (0,0,0),ax = (0,1,0),w = self.Width,lr = self.Length,
-                                  d = 3,u = self.UVal,v = self.VVal,ch = 1,n = (self.side + '_' + self.RibbonName + '_Rbbn01_geo_01_'))
+                                  d = 3,u = self.UVal,v = self.segment,ch = 1,n = (self.side + '_' + self.RibbonName + '_Rbbn01_geo_01_'))
 
         #rebuild ribbon geo
         if self.VVal > self.UVal:
@@ -253,7 +253,7 @@ class Ribbon(object):
 
     def __midCC(self):
         
-        self.subMidCtrl = control.Control(size = 1,baseName = self.baseName,side = self.side) 
+        self.subMidCtrl = control.Control(size = self.size,baseName = self.baseName,side = self.side) 
         self.subMidCtrl.circleCtrl()
         pm.setAttr(self.subMidCtrl.controlGrp +'.ry',90)
         #add parent cnst for the mid jc
