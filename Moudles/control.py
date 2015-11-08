@@ -55,7 +55,6 @@ class Control(object):
                 dic = [0,0,1]
                 
             self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size)[0]
-            #self.control = mc.circle(n = self.controlName,ch = 0,o = 1,nr = (1,0,0))
             self.control.s.set(self.size,self.size,self.size)
             pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
             
@@ -239,8 +238,13 @@ class Control(object):
         
         if self.controlName :
             #que
-            self.control = pm.sphere(name = self.controlName,ch = 0,o = 1,po = 0 ,r = 1,ax = [0,1,0],nsp = 8)[0]
-            pm.disconnectAttr(self.control.getShape().instObjGroups[0],'initialShadingGroup.dagSetMembers[0]')
+            self.control = pm.sphere(name = self.controlName,ch = 0,o = 1,po = 0 ,r = self.size / 2,ax = [0,1,0],nsp = 8)[0]
+
+        for dag in self.control.getShape().instObjGroups:
+            if pm.connectionInfo(dag, isSource=True):
+                source = dag
+                destination = pm.connectionInfo(dag, destinationFromSource=True)[0]
+                pm.disconnectAttr(source,destination)
             
         self.__finalizeCc()   
         self.__colorSet()        
