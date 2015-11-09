@@ -1,6 +1,6 @@
 import pymel.core as pm
 from Utils import nameUtils,metaUtils
-from Modules import control
+from Modules import control,limbModule
 
 class Hierarchy(object):
     '''
@@ -28,7 +28,6 @@ class Hierarchy(object):
         self.GEO = None
         self.XTR = None
         self.CSG = None
-        self.GEO = None
         self.GUD = None
 
         #set ctrl
@@ -79,14 +78,24 @@ class Hierarchy(object):
         #clean up
         self.__cleanUp()
         
-    def buildConnection(self):
-        pass    
-        
+    def buildConnections(self):
+                
+        pass
+                         
     def __cleanUp(self):
         
 #         metaUtils.addToMeta(self.meta,, objs)
-        metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL])  
-        metaUtils.addToMeta(self.meta,'controls', [self.cogCtrl.control])        
+        print 'perpare meta is : ' + self.meta
+        metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL,self.TRS,self.PP,self.SKL,self.CC,self.IK,self.LOC,self.GEO,self.GUD])  
+        metaUtils.addToMeta(self.meta,'controls', [self.cogCtrl.control])    
+        
+#         metaUtils.addToMeta(self.meta,, objs)
+#         metaUtils.addToMeta(self.meta,, objs)
+#         metaUtils.addToMeta(self.meta,, objs)
+#         metaUtils.addToMeta(self.meta,, objs)
+#         metaUtils.addToMeta(self.meta,, objs)
+#         metaUtils.addToMeta(self.meta,, objs)
+#         metaUtils.addToMeta(self.meta,, objs)
 
 def getUi(parent,mainUi):
     
@@ -101,12 +110,13 @@ class MainModuleUi(object):
         self.mainL = pm.columnLayout(adj = 1)
         pm.separator(h = 10)
         
+        
+        #(self, baseName = 'main',side = 'm',size = 1,characterName = None):
         self.name = pm.text(l = '**** Main Module ****')
+        self.cNameT = pm.textFieldGrp(l = 'characterName : ',ad2 = 1)        
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1)
         self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1)
-        self.clr = pm.optionMenu(l = 'color')
-        pm.menuItem(l = 'yellow')
-        self.cntSize = pm.floatFieldGrp(l = 'cnt Size : ',cl2 = ['left','left'],
+        self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
                                         ad2 = 1,numberOfFields = 1,value1 = 1)
         
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
@@ -116,24 +126,19 @@ class MainModuleUi(object):
         
     def __removeInstance(self,*arg):
         
-        pm.deleteUi(self.mainL)
+        pm.deleteUI(self.mainL)
         self.mainUi.modulesUi.remove(self)
         
     def getModuleInstance(self):
         
         baseName = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
+        cName = pm.textFieldGrp(self.cNameT,q = 1,text = 1)
         side = pm.textFieldGrp(self.sideT,q = 1,text = 1)
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         
-        self.__pointerClass = Hierarchy(baseName,side,cntSize = cntSizeV)
+        self.__pointerClass = Hierarchy(baseName,side,size = cntSizeV,characterName = cName)
         return self.__pointerClass
-        
-        
+
     
     
-    
-    
-    
-    
-        
         
