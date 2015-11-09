@@ -785,19 +785,28 @@ class LimbModule(object):
         metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
         
         if pm.objExists(self.metaMain) == 1:
+            
             print 'target (' + self.metaMain + ') acquire'
             
-            self.metaMain 
-            self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
-            self.chestGrp.setParent(self.hi.SKL)
-            self.cntsGrp.setParent(self.hi.CC) 
-            self.ribon.main.setParent(self.hi.XTR)
-            self.ribon45hp.main.setParent(self.hi.XTR)
-            self.ikChain.lockUpStartLoc.setParent(self.hi.SKL)
-            self.ikChain.stretchStartLoc.setParent(self.hi.SKL)
-            self.ikChain.ikHandle.setParent(self.hi.IK)
-            self.guideGrp.setParent(self.hi.GUD)
+            pm.select(self.metaMain) 
+            headQuarter = pm.selected()[0]
+            destinations = []
+            moduleGrp = pm.connectionInfo(headQuarter.moduleGrp, destinationFromSource=True)
             
+            for tempDestination in moduleGrp:
+                destination = tempDestination.split('.')
+                destinations.append(destination)
+                
+            print destinations
+#             self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
+#             self.chestGrp.setParent(self.hi.SKL)
+#             self.cntsGrp.setParent(self.hi.CC) 
+#             self.ribon.main.setParent(self.hi.XTR)
+#             self.ribon45hp.main.setParent(self.hi.XTR)
+#             self.ikChain.lockUpStartLoc.setParent(self.hi.SKL)
+#             self.ikChain.stretchStartLoc.setParent(self.hi.SKL)
+#             self.ikChain.ikHandle.setParent(self.hi.IK)
+#             self.guideGrp.setParent(self.hi.GUD)
             
             print 'go head Tac Com'
         else:
