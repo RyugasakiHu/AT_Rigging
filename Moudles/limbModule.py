@@ -67,6 +67,8 @@ class LimbModule(object):
         
         #Hook
         self.__tempSpaceSwitch = None
+        self.locLocal = None
+        self.locWorld = None
         self.hookData = {}
 
         #metanode
@@ -126,6 +128,7 @@ class LimbModule(object):
         self.guideGrp = pm.group(self.limbGuides[0],self.shoulderGuides[0],self.shoulderBladeGuides[0],n = name)
                      
     def build(self):
+        
         self.guideGrp.v.set(0)
         #shoulder set
         #shoulder pos get
@@ -191,7 +194,7 @@ class LimbModule(object):
         self.__setRibbonSubMidCc()
         self.__shoulderCtrl()
         self.__cleanUp()
-#         self.__buildHooks()
+        self.__buildHooks()
         
     def __ikfkBlender(self):
         
@@ -699,21 +702,12 @@ class LimbModule(object):
             pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)        
          
         #ribbon hierarchy   
-#         self.ribon.main.setParent(self.hi.XTR)
-#         self.ribon45hp.main.setParent(self.hi.XTR)
         self.ribon.main.v.set(0)
         self.ribon45hp.main.v.set(0)
          
         #ik stretch loc vis
-#         self.ikChain.stretchStartLoc.setParent(self.hi.SKL)
         self.ikChain.stretchStartLoc.v.set(0)
-#         self.ikChain.lockUpStartLoc.setParent(self.hi.SKL)
         self.ikChain.lockUpStartLoc.v.set(0)
-#         self.ikChain.ikHandle.setParent(self.hi.IK)
-         
-        #guide grp
-#         self.guideGrp.setParent(self.hi.GUD)
-#         self.hi.GUD.v.set(0)
  
         #jj grp
         self.limbGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.stretchStartLoc,
@@ -738,55 +732,53 @@ class LimbModule(object):
 #              
 #         self.mainGrp = pm.group(self.bonesGrp,self.cntsGrp,self.handSettingCtrl,
 #                                 n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))   
-#           
-#     def __buildHooks(self):
-#
-#         #create and align
-#         worldName = nameUtils.getUniqueName(self.side,self.baseName + 'World','loc')
-#         locWorld = pm.spaceLocator(n = worldName)
-#         locWorld.v.set(0)
-#          
-#         localName = nameUtils.getUniqueName(self.side,self.baseName + 'Local','loc')
-#         locLocal = pm.spaceLocator(n = localName)
-#         locLocal.v.set(0)
-#          
-#         pm.xform(locWorld,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
-#         pm.xform(locLocal,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
-#         
-#         locLocal.setParent(self.shoulderChain.chain[-1])
-#         locWorld.setParent(self.hi.IK)
-#         pm.parentConstraint(self.shoulderCtrl.control,locWorld,skipRotate = ['x','y','z'],mo = 1)
-#         
-#         self.fkChain.chain[0].addAttr('space',at = 'enum',en = 'world:local:',k = 1)
-#         
-#         #add target tester
-#         targetName = nameUtils.getUniqueName(self.side,self.baseName + 'Tar','loc')
-#         self.__tempSpaceSwitch = pm.spaceLocator(n = targetName)
-#         pm.xform(self.__tempSpaceSwitch,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
-# #         self.__tempSpaceSwitch.setParent(self.hi.XTR)
-#         self.__tempSpaceSwitch.v.set(0)
-# 
-#         #final cnst
-#         finalCnst = pm.parentConstraint(locLocal,locWorld,self.__tempSpaceSwitch,mo = 1)
-#         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Hook','REV')
-#         reverseNode = pm.createNode('reverse',n = reverseNodeName)
-#         
-#         #fk cnst
-#         pm.parentConstraint(self.__tempSpaceSwitch,self.limbGrp,mo = 1)
-#         self.fkChain.chain[0].attr('space').connect(finalCnst.attr(locLocal.name() + 'W0'))
-#         self.fkChain.chain[0].attr('space').connect(reverseNode.inputX)
-#         reverseNode.outputX.connect(finalCnst.attr(locWorld.name() + 'W1'))
+
+    def __buildHooks(self):
+
+        #create and align
+        worldName = nameUtils.getUniqueName(self.side,self.baseName + 'World','loc')
+        self.locWorld = pm.spaceLocator(n = worldName)
+        self.locWorld.v.set(0)
+          
+        localName = nameUtils.getUniqueName(self.side,self.baseName + 'Local','loc')
+        self.locLocal = pm.spaceLocator(n = localName)
+        self.locLocal.v.set(0)
+          
+        pm.xform(self.locWorld,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
+        pm.xform(self.locLocal,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
+         
+        self.locLocal.setParent(self.shoulderChain.chain[-1])
+#         self.locWorld.setParent(self.hi.IK)
+        pm.parentConstraint(self.shoulderCtrl.control,self.locWorld,skipRotate = ['x','y','z'],mo = 1)
+         
+        self.fkChain.chain[0].addAttr('space',at = 'enum',en = 'world:local:',k = 1)
+         
+        #add target tester
+        targetName = nameUtils.getUniqueName(self.side,self.baseName + 'Tar','loc')
+        self.__tempSpaceSwitch = pm.spaceLocator(n = targetName)
+        pm.xform(self.__tempSpaceSwitch,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
+#         self.__tempSpaceSwitch.setParent(self.hi.XTR)
+        self.__tempSpaceSwitch.v.set(0)
+ 
+        #final cnst
+        finalCnst = pm.parentConstraint(self.locLocal,self.locWorld,self.__tempSpaceSwitch,mo = 1)
+        reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Hook','REV')
+        reverseNode = pm.createNode('reverse',n = reverseNodeName)
+         
+        #fk cnst
+        pm.parentConstraint(self.__tempSpaceSwitch,self.limbGrp,mo = 1)
+        self.fkChain.chain[0].attr('space').connect(finalCnst.attr(self.locLocal.name() + 'W0'))
+        self.fkChain.chain[0].attr('space').connect(reverseNode.inputX)
+        reverseNode.outputX.connect(finalCnst.attr(self.locWorld.name() + 'W1'))
 
     def buildConnections(self):
-        
-#         metaUtils.addToMeta(self.meta,, objs)
-        metaUtils.addToMeta(self.meta,'controls',[fk for fk in self.fkChain.chain] + [self.ikChain.ikCtrl.control,self.ikChain.poleVectorCtrl.control]
-                            + [self.handSettingCtrl.control])
-        metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
-        
+
+        #reveice info from incoming package
         if pm.objExists(self.metaMain) == 1:
             
-            print 'target (' + self.metaMain + ') acquire'
+            print ''
+            print 'Package from ' + self.metaMain + ' has been received'
+            print ''
             
             pm.select(self.metaMain) 
             headQuarter = pm.selected()[0]
@@ -795,22 +787,37 @@ class LimbModule(object):
             
             for tempDestination in moduleGrp:
                 destination = tempDestination.split('.')
-                destinations.append(destination)
+                destinations.append(destination[0])
                 
-            print destinations
+# [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
+
 #             self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
 #             self.chestGrp.setParent(self.hi.SKL)
-#             self.cntsGrp.setParent(self.hi.CC) 
-#             self.ribon.main.setParent(self.hi.XTR)
-#             self.ribon45hp.main.setParent(self.hi.XTR)
-#             self.ikChain.lockUpStartLoc.setParent(self.hi.SKL)
-#             self.ikChain.stretchStartLoc.setParent(self.hi.SKL)
-#             self.ikChain.ikHandle.setParent(self.hi.IK)
-#             self.guideGrp.setParent(self.hi.GUD)
+            self.cntsGrp.setParent(destinations[0]) 
+            self.ribon.main.setParent(destinations[4])
+            self.ribon45hp.main.setParent(destinations[4])
+            self.ikChain.lockUpStartLoc.setParent(destinations[1])
+            self.ikChain.stretchStartLoc.setParent(destinations[1])
+            self.ikChain.ikHandle.setParent(destinations[2])
+            self.guideGrp.setParent(destinations[5])
+            self.locWorld.setParent(destinations[2])
+            self.__tempSpaceSwitch.setParent(destinations[4])
             
-            print 'go head Tac Com'
+            print ''
+            print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
+            print ''
+            
         else:
-            OpenMaya.MGlobal.displayError(self.metaMain + ' Not exist')
+            OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
+            
+        
+        #create package send for next part
+        #template:
+        #metaUtils.addToMeta(self.meta,'attr', objs)
+        metaUtils.addToMeta(self.meta,'controls',[self.handSettingCtrl.control] + [self.ikChain.ikCtrl.control,self.ikChain.poleVectorCtrl.control]
+                             + [fk for fk in self.fkChain.chain])
+        metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
+        metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
         
 def getUi(parent,mainUi):
     
@@ -836,7 +843,7 @@ class LimbModuleUi(object):
         self.solverMenu = pm.optionMenu(l = 'color')
         pm.menuItem(l = 'ikRPsolver')
         pm.menuItem(l = 'ikSCsolver')
-        self.metaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
         
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         pm.separator(h = 10)
@@ -854,9 +861,9 @@ class LimbModuleUi(object):
         sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         solverV = pm.optionMenu(self.solverMenu, q = 1,v = 1)
-        metaNode = pm.textFieldGrp(self.metaNodeN,q = 1,text = 1)
+        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
         
-        self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,metaMain = metaNode)
+        self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,metaMain = mainMetaNode)
         return self.__pointerClass
     
 # from Modules import limbModule
