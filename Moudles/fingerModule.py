@@ -1,7 +1,8 @@
 import pymel.core as pm
-from subModules import fkChain,ikChain,boneChain,ribbon
+from Modules.subModules import fkChain,ikChain,boneChain,ribbon
 from Utils import nameUtils
 from Modules import control,hierarchy,limbModule
+from maya import OpenMaya
 
 class FingerModule(object):
     
@@ -17,7 +18,8 @@ class FingerModule(object):
     rotRingArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotPinkyArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
-    def __init__(self,baseName = 'finger',side = 'l',size = 0.5,controlOrient = [0,0,0]):
+    def __init__(self,baseName = 'finger',side = 'l',size = 0.5,
+                 metaArm = None,metaMain = None,controlOrient = [0,0,0]):
         
         self.baseName = baseName
         self.side = side
@@ -29,7 +31,6 @@ class FingerModule(object):
         self.guideGrp = None     
         
         #cc
-        self.config_node = None
         self.thumbSdks = []
         self.indexSdks = []
         self.midSdks = []
@@ -44,6 +45,14 @@ class FingerModule(object):
         self.pinkyGrp = None       
         self.handGrp = None
         
+        #meta
+        self.metaArm = metaArm
+        self.metaMain = metaMain
+        
+        #info from arm
+        self.armControls = None
+        self.armChains = None
+        
         #attrs
         self.attrs = ['fist_a','firs_b','relax_a','relax_b','relax_c',
                       'relax_d','relax_e','grab_a','grab_b','spread_a',
@@ -57,10 +66,6 @@ class FingerModule(object):
         self.thumbJoint = ['Base','Root','Tip','Mid','End','Partial']
         
     def buildGuides(self):
-        
-        #connect to the limb
-        self.lm = limbModule.LimbModule()
-        self.lm.buildGuides()
         
         #build guides        
         self.guides = []
@@ -161,19 +166,18 @@ class FingerModule(object):
         self.guideGrp.v.set(0)
         
     def build(self):
-        
-        self.lm.build()  
+
         #build index
         #thumb info
         self.guideThumbPos = [x.getTranslation(space = 'world') for x in self.thumbGuides]
         self.guideThumbRot = [x.getRotation(space = 'world') for x in self.thumbGuides]
                 
         #thumb jj
-        self.thumbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.thumbBlendChain.fromList(self.guideThumbPos,self.guideThumbRot,autoOrient = 0)
+        self.thumblimbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.thumblimbBlendChain.fromList(self.guideThumbPos,self.guideThumbRot,autoOrient = 0)
         
-        self.thumbGrp = pm.group(self.thumbBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[0],'grp'))
-        thumbInitial =  self.thumbBlendChain.chain[0].getTranslation(space = 'world')
+        self.thumbGrp = pm.group(self.thumblimbBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[0],'grp'))
+        thumbInitial =  self.thumblimbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(thumbInitial[0],thumbInitial[1],thumbInitial[2],self.thumbGrp + '.rotatePivot')
         pm.move(thumbInitial[0],thumbInitial[1],thumbInitial[2],self.thumbGrp + '.scalePivot')       
         
@@ -182,11 +186,11 @@ class FingerModule(object):
         self.guideIndexRot = [x.getRotation(space = 'world') for x in self.indexGuides]
 
         #index jj
-        self.indexBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.indexBlendChain.fromList(self.guideIndexPos,self.guideIndexRot)        
+        self.indexlimbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.indexlimbBlendChain.fromList(self.guideIndexPos,self.guideIndexRot)        
         
-        self.indexGrp = pm.group(self.indexBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[1],'grp'))
-        indexInitial =  self.indexBlendChain.chain[0].getTranslation(space = 'world')
+        self.indexGrp = pm.group(self.indexlimbBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[1],'grp'))
+        indexInitial =  self.indexlimbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(indexInitial[0],indexInitial[1],indexInitial[2],self.indexGrp + '.rotatePivot')
         pm.move(indexInitial[0],indexInitial[1],indexInitial[2],self.indexGrp + '.scalePivot') 
         
@@ -195,11 +199,11 @@ class FingerModule(object):
         self.guideMidRot = [x.getRotation(space = 'world') for x in self.middleGuides] 
         
         #mid jj
-        self.midBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.midBlendChain.fromList(self.guideMidPos,self.guideMidRot)
+        self.midlimbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.midlimbBlendChain.fromList(self.guideMidPos,self.guideMidRot)
         
-        self.midGrp = pm.group(self.midBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[2],'grp'))
-        midInitial =  self.midBlendChain.chain[0].getTranslation(space = 'world')
+        self.midGrp = pm.group(self.midlimbBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[2],'grp'))
+        midInitial =  self.midlimbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(midInitial[0],midInitial[1],midInitial[2],self.midGrp + '.rotatePivot')
         pm.move(midInitial[0],midInitial[1],midInitial[2],self.midGrp + '.scalePivot')  
                
@@ -208,11 +212,11 @@ class FingerModule(object):
         self.guideRingRot = [x.getRotation(space = 'world') for x in self.ringGuides] 
         
         #ring jj
-        self.ringBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.ringBlendChain.fromList(self.guideRingPos,self.guideRingRot)
+        self.ringlimbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.ringlimbBlendChain.fromList(self.guideRingPos,self.guideRingRot)
         
-        self.ringGrp = pm.group(self.ringBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[3],'grp'))
-        ringInitial =  self.ringBlendChain.chain[0].getTranslation(space = 'world')
+        self.ringGrp = pm.group(self.ringlimbBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[3],'grp'))
+        ringInitial =  self.ringlimbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(ringInitial[0],ringInitial[1],ringInitial[2],self.ringGrp + '.rotatePivot')
         pm.move(ringInitial[0],ringInitial[1],ringInitial[2],self.ringGrp + '.scalePivot')
           
@@ -221,34 +225,72 @@ class FingerModule(object):
         self.guidePinkyRot = [x.getRotation(space = 'world') for x in self.pinkyGuides] 
         
         #pinky jj
-        self.pinkyBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.pinkyBlendChain.fromList(self.guidePinkyPos,self.guidePinkyRot)
+        self.pinkylimbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.pinkylimbBlendChain.fromList(self.guidePinkyPos,self.guidePinkyRot)
         
-        self.pinkyGrp = pm.group(self.pinkyBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[4],'grp'))
-        pinkyInitial =  self.pinkyBlendChain.chain[0].getTranslation(space = 'world')
+        self.pinkyGrp = pm.group(self.pinkylimbBlendChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[4],'grp'))
+        pinkyInitial =  self.pinkylimbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.rotatePivot')
         pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.scalePivot')               
  
         self.__fingerCC()
         self.__setSDK()
-        self.__connectArm()
+        self.buildConnections()
     
     def __fingerCC(self):
         
+        #receive info from incoming package
+        #receive info from arm meta
+        if pm.objExists(self.metaArm) == 1:
+            
+            print ''
+            print 'package from ' + self.metaArm + ' has been received'
+            print ''
+            
+            #init
+            self.armControls = []
+            self.armChains = []
+            
+            pm.select(self.metaArm) 
+            armMeta = pm.selected()[0]
+
+            armControlsMeta = pm.connectionInfo(armMeta.controls, destinationFromSource=True)
+            armChainsMeta = pm.connectionInfo(armMeta.chain, destinationFromSource=True)
+            
+            #get element
+            #arm ctrl
+            for armControlMeta in armControlsMeta:
+                armControlUnicode = armControlMeta.split('.')
+                pm.select(armControlUnicode[0])
+                armControl = pm.selected()
+                self.armControls.append(armControl[0])
+                
+            #arm chain
+            for armChainMeta in armChainsMeta:
+                armChain = armChainMeta.split('.')
+                self.armChains.append(armChain[0])            
+            
+            #self.limbBlendChain.chain[-1],self.ikChain.ikCtrl.control,self.fkChain.chain[-1]]            
+            print 'package (' + self.metaArm + ') analyzed'
+                
+        else:
+            OpenMaya.MGlobal.displayError('Package :' + self.metaArm + ' is NOT exist')        
+        
         #set cc
-        pm.addAttr(self.lm.config_node.control,ln = '___',at = 'enum',en = 'HandDrives:')
-        pm.setAttr(self.lm.config_node.control + '.___',e = 1,channelBox = 1)
+        pm.addAttr(self.armControls[1],ln = '___',at = 'enum',en = 'HandDrives:')
+        pm.setAttr(self.armControls[1] + '.___',e = 1,channelBox = 1)
         
         #add attr
-        control.addFloatAttr(self.lm.config_node.control,self.attrs,-3,10)        
+        control.addFloatAttr(self.armControls[1],self.attrs,-3,10)        
         
         #create thumb cc ctrl     
-        for num,thumbJoint in enumerate(self.thumbBlendChain.chain):
+        for num,thumbJoint in enumerate(self.thumblimbBlendChain.chain):
             #correct jj name
             pm.rename(thumbJoint,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJoint[num],'jj'))
-            if num < self.thumbBlendChain.chainLength() - 1:
+            if num < self.thumblimbBlendChain.chainLength() - 1:
                 #create sdk and correct cc name
-                cc = control.Control(self.side,self.baseName,size = thumbJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = thumbJoint.getRadius() / 5) 
+                cc = control.Control(self.side,self.baseName,size = self.size) 
                 cc.circleCtrl()
                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJoint[num],'cc'))
                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJoint[num],'SDK'))
@@ -257,15 +299,16 @@ class FingerModule(object):
                 pm.xform(cc.controlGrp,ws = 1,matrix = thumbJoint.worldMatrix.get())
                 #parent jj
                 cc.controlGrp.setParent(thumbJoint)
-                self.thumbBlendChain.chain[num + 1].setParent(cc.control)           
+                self.thumblimbBlendChain.chain[num + 1].setParent(cc.control)           
         
         #create index cc ctrl
-        for num,indexJoint in enumerate(self.indexBlendChain.chain):
+        for num,indexJoint in enumerate(self.indexlimbBlendChain.chain):
             #correct jj name
             pm.rename(indexJoint,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'jj'))
-            if num < self.indexBlendChain.chainLength() - 1:
+            if num < self.indexlimbBlendChain.chainLength() - 1:
                 #create sdk and correct cc name
-                cc = control.Control(self.side,self.baseName,size = indexJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = indexJoint.getRadius() / 5) 
+                cc = control.Control(self.side,self.baseName,size = self.size)
                 cc.circleCtrl()
                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'cc'))
                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJoint[num],'SDK'))
@@ -274,15 +317,16 @@ class FingerModule(object):
                 pm.xform(cc.controlGrp,ws = 1,matrix = indexJoint.worldMatrix.get())
                 #parent jj
                 cc.controlGrp.setParent(indexJoint)
-                self.indexBlendChain.chain[num + 1].setParent(cc.control)   
+                self.indexlimbBlendChain.chain[num + 1].setParent(cc.control)   
            
         #create mid cc ctrl
-        for num,midJoint in enumerate(self.midBlendChain.chain):
+        for num,midJoint in enumerate(self.midlimbBlendChain.chain):
             #correct jj name
             pm.rename(midJoint,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJoint[num],'jj'))                        
-            if num < self.midBlendChain.chainLength() - 1:                
+            if num < self.midlimbBlendChain.chainLength() - 1:                
                 #create sdk and correct cc name
-                cc = control.Control(self.side,self.baseName,size = midJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = midJoint.getRadius() / 5) 
+                cc = control.Control(self.side,self.baseName,size = self.size) 
                 cc.circleCtrl()
                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJoint[num],'cc'))
                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJoint[num],'SDK'))
@@ -291,15 +335,16 @@ class FingerModule(object):
                 pm.xform(cc.controlGrp,ws = 1,matrix = midJoint.worldMatrix.get())                
                 #parent jj
                 cc.controlGrp.setParent(midJoint)
-                self.midBlendChain.chain[num + 1].setParent(cc.control)              
+                self.midlimbBlendChain.chain[num + 1].setParent(cc.control)              
 
         #create ring cc ctrl
-        for num,ringJoint in enumerate(self.ringBlendChain.chain):
+        for num,ringJoint in enumerate(self.ringlimbBlendChain.chain):
             #correct jj name
             pm.rename(ringJoint,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJoint[num],'jj'))                        
-            if num < self.ringBlendChain.chainLength() - 1:                
+            if num < self.ringlimbBlendChain.chainLength() - 1:                
                 #create sdk and correct cc name
-                cc = control.Control(self.side,self.baseName,size = ringJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = ringJoint.getRadius() / 5) 
+                cc = control.Control(self.side,self.baseName,size = self.size) 
                 cc.circleCtrl()
                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJoint[num],'cc'))
                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJoint[num],'SDK'))
@@ -308,15 +353,16 @@ class FingerModule(object):
                 pm.xform(cc.controlGrp,ws = 1,matrix = ringJoint.worldMatrix.get())                
                 #parent jj
                 cc.controlGrp.setParent(ringJoint)
-                self.ringBlendChain.chain[num + 1].setParent(cc.control)    
+                self.ringlimbBlendChain.chain[num + 1].setParent(cc.control)    
            
         #create pinky cc ctrl
-        for num,pinkyJoint in enumerate(self.pinkyBlendChain.chain):
+        for num,pinkyJoint in enumerate(self.pinkylimbBlendChain.chain):
             #correct jj name
             pm.rename(pinkyJoint,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJoint[num],'jj'))                        
-            if num < self.pinkyBlendChain.chainLength() - 1:                
+            if num < self.pinkylimbBlendChain.chainLength() - 1:                
                 #create sdk and correct cc name
-                cc = control.Control(self.side,self.baseName,size = pinkyJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = pinkyJoint.getRadius() / 5) 
+                cc = control.Control(self.side,self.baseName,size = self.size) 
                 cc.circleCtrl()
                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJoint[num],'cc'))
                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJoint[num],'SDK'))
@@ -325,7 +371,7 @@ class FingerModule(object):
                 pm.xform(cc.controlGrp,ws = 1,matrix = pinkyJoint.worldMatrix.get())                
                 #parent jj
                 cc.controlGrp.setParent(pinkyJoint)
-                self.pinkyBlendChain.chain[num + 1].setParent(cc.control)             
+                self.pinkylimbBlendChain.chain[num + 1].setParent(cc.control)             
            
     def __setSDK(self):
 
@@ -1027,31 +1073,31 @@ class FingerModule(object):
             for thumbSdk in self.thumbSdks:
                 for ch in chr:            
                     pm.setDrivenKeyframe(thumbSdk + '.r' + ch,v = 0, 
-                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)            
+                                         cd = self.armControls[1] + '.' + selfAttr,dv = 0)            
             
             #set index default:
             for indexSdk in self.indexSdks:
                 for ch in chr:            
                     pm.setDrivenKeyframe(indexSdk + '.r' + ch,v = 0, 
-                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)
+                                         cd = self.armControls[1] + '.' + selfAttr,dv = 0)
                     
             #set mid default:
             for midSdk in self.midSdks:
                 for ch in chr:            
                     pm.setDrivenKeyframe(midSdk + '.r' + ch,v = 0, 
-                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)   
+                                         cd = self.armControls[1] + '.' + selfAttr,dv = 0)   
                     
             #set ring default:
             for ringSdk in self.ringSdks:
                 for ch in chr:            
                     pm.setDrivenKeyframe(ringSdk + '.r' + ch,v = 0, 
-                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)   
+                                         cd = self.armControls[1] + '.' + selfAttr,dv = 0)   
                     
             #set index default:
             for pinkySdk in self.pinkySdks:
                 for ch in chr:            
                     pm.setDrivenKeyframe(pinkySdk + '.r' + ch,v = 0, 
-                                         cd = self.lm.config_node.control + '.' + selfAttr,dv = 0)                                                                           
+                                         cd = self.armControls[1] + '.' + selfAttr,dv = 0)                                                                           
                       
         #get/set rotate Max val to main rot list:
         #get index list
@@ -1093,30 +1139,30 @@ class FingerModule(object):
         #set thumb
         for number,attrList in enumerate(thumbRotAttrs):
             pm.setDrivenKeyframe(attrList,v = thumbMainMaxRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)        
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = 10)        
         
         #set index
         for number,attrList in enumerate(indexRotAttrs):
             pm.setDrivenKeyframe(attrList,v = indexMainMaxRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = 10)
             
         #set dic max(10) val
         #set mid
         for number,attrList in enumerate(midRotAttrs):
             pm.setDrivenKeyframe(attrList,v = midMainMaxRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)  
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = 10)  
             
         #set dic max(10) val
         #set ring
         for number,attrList in enumerate(ringRotAttrs):
             pm.setDrivenKeyframe(attrList,v = ringMainMaxRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)  
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = 10)  
             
         #set dic max(10) val
         #set pinky
         for number,attrList in enumerate(pinkyRotAttrs):
             pm.setDrivenKeyframe(attrList,v = pinkyMainMaxRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = 10)                                          
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = 10)                                          
             
         #get/set rotate Min val to main rot list:
         #get thumb list
@@ -1158,101 +1204,171 @@ class FingerModule(object):
         #thumb min(-3) val
         for number,attrList in enumerate(thumbRotAttrs):
             pm.setDrivenKeyframe(attrList,v = thumbMainMinRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)        
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = -3)        
         
         #index min(-3) val
         for number,attrList in enumerate(indexRotAttrs):
             pm.setDrivenKeyframe(attrList,v = indexMainMinRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = -3)
 
         #mid min(-3) val
         for number,attrList in enumerate(midRotAttrs):
             pm.setDrivenKeyframe(attrList,v = midMainMinRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)      
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = -3)      
             
         #ring min(-3) val
         for number,attrList in enumerate(ringRotAttrs):
             pm.setDrivenKeyframe(attrList,v = ringMainMinRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)      
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = -3)      
             
         #pinky min(-3) val
         for number,attrList in enumerate(pinkyRotAttrs):
             pm.setDrivenKeyframe(attrList,v = pinkyMainMinRotList[number],
-                                 cd = self.lm.config_node.control + '.' + self.attrs[number/12],dv = -3)                                                       
+                                 cd = self.armControls[1] + '.' + self.attrs[number/12],dv = -3)                                                       
                  
-    def __connectArm(self):
+    def buildConnections(self):
         
         #set whole grp
         self.handGrp = pm.group(self.thumbGrp,self.indexGrp,self.midGrp,self.ringGrp,self.pinkyGrp,n = nameUtils.getUniqueName(self.side,'hand','grp'))
-        handGrpPiv = self.lm.blendChain.chain[-1].getTranslation(space = 'world')
+        pm.select(self.armChains[5])
+        armChains5 = pm.selected()
+        pm.select(self.armChains[2])
+        armChains2 = pm.selected()
+        
+        handGrpPiv = armChains5[0].getTranslation(space = 'world')
         pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],self.handGrp + '.rotatePivot')
         pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],self.handGrp + '.scalePivot')
-        pm.pointConstraint(self.lm.blendChain.chain[-1],self.handGrp,mo = 0)
-        
+        pm.pointConstraint(armChains5[0],self.handGrp,mo = 0)
+         
         #create bridge loc and grp
         #create bri loc
         ikBri = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'armIK_bri','loc'))
         fkBri = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'armFK_bri','loc'))
         pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],ikBri)
         pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],fkBri)
-        
+         
         #create bri grp
         ikBriGrp = pm.group(ikBri,n = nameUtils.getUniqueName(self.side,'armIK_bri','grp'))
         fkBriGrp = pm.group(fkBri,n = nameUtils.getUniqueName(self.side,'armFK_bri','grp'))
         pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],ikBriGrp + '.rotatePivot')
         pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],fkBriGrp + '.scalePivot')
         ikBriGrp.v.set(0)
-        fkBriGrp.v.set(0)        
-        
+        fkBriGrp.v.set(0)
+         
         #parent bridge
-        ikBriGrp.setParent(self.lm.ikChain.ikCtrl.control)
-        fkBriGrp.setParent(self.lm.fkChain.chain[-1])
-        
-        #create OC
-        pm.orientConstraint(ikBri,fkBri,self.handGrp,mo = 0)
-        pm.connectAttr(self.lm.config_node.control + '.IKFK',self.handGrp + '_orientConstraint1.CN_l_armIK_bri_0_locW0')
-        
+        ikBriGrp.setParent(armChains2[0])
+        fkBriGrp.setParent(armChains5[0])
+         
+        #create Oristraint
+        ori = pm.orientConstraint(ikBri,fkBri,self.handGrp,mo = 0)
+        self.armControls[1].IKFK.connect(ori.attr(ikBri.name() + 'W0'))
+         
         #createNode
         reverseNode = pm.createNode('reverse',n = nameUtils.getUniqueName(self.side,'hand','REV'))
-        pm.connectAttr(self.lm.config_node.control + '.IKFK',reverseNode.inputX)
-        pm.connectAttr(reverseNode.outputX,self.handGrp + '_orientConstraint1.CN_l_armFK_bri_0_locW1')
+        self.armControls[1].IKFK.connect(reverseNode.inputX)
+        reverseNode.outputX.connect(ori.attr(fkBri.name() + 'W1'))
         
-        #clean up
-        self.handGrp.setParent(self.lm.hi.SKL)
-        self.guideGrp.setParent(self.lm.hi.GUD)
+        print '' 
+        print 'info from (' + self.armControls[1] + ') had been analyse'
+        print ''
+
+        #receive info from incoming package
+        #connect to the main meta
+        if pm.objExists(self.metaMain) == 1:
+            
+            print '' 
+            print 'target (' + self.metaMain + ') acquire'
+            print ''
+             
+            pm.select(self.metaMain) 
+            headQuarter = pm.selected()[0]
+            destinations = []
+            moduleGrp = pm.connectionInfo(headQuarter.moduleGrp, destinationFromSource = True)
+             
+            for tempDestination in moduleGrp:
+                destination = tempDestination.split('.')
+                destinations.append(destination[0])
+                 
+        else:
+            OpenMaya.MGlobal.displayError('Package :' + self.metaMain + ' is NOT exist')
+         
+        self.handGrp.setParent(destinations[1])
+        self.guideGrp.setParent(destinations[5])
         
+def getUi(parent,mainUi):
     
-#         pm.createNode('')
-#         self.handGrp.setParent(self.lm.blendChain.chain[-1])
+    return FingerModuleUi(parent,mainUi)
+
+class FingerModuleUi(object):
+    
+    def __init__(self,parent,mainUi):
+        
+        self.mainUi = mainUi
+        self.__popuItems = []
+        
+        pm.setParent(parent)
+        self.mainL = pm.columnLayout(adj = 1)
+        pm.separator(h = 10)
+        
+        #(self,baseName = 'arm',side = 'l',size = 1.5,
+        self.name = pm.text(l = '**** Finger Module ****')       
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1)
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1)
+        self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
+                                        ad2 = 1,numberOfFields = 1,value1 = 1)
+        self.armMetaNodeN = pm.textFieldGrp(l = 'armMeta :',ad2 = 1)
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
+        
+        self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
+        pm.separator(h = 10)
+        
+        self.__pointerClass = None
+        
+    def __removeInstance(self,*arg):
+        
+        pm.deleteUI(self.mainL)
+        self.mainUi.modulesUi.remove(self)
+        
+    def getModuleInstance(self):
+        
+        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
+        sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
+        armMetaNode = pm.textFieldGrp(self.armMetaNodeN,q = 1,text = 1)
+        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
+        
+        self.__pointerClass = FingerModule(baseNameT,sideT,size = cntSizeV,metaArm = armMetaNode,metaMain = mainMetaNode)
+        return self.__pointerClass        
+        
         
 # import maya.cmds as mc
-# 
+#  
 # pathOfFiles = 'C:\Users\UV\Desktop\Rigging workshop/'
 # fileType = 'obj'
 # files = cmds.getFileList(folder = pathOfFiles,fs = '*.%s' % fileType)
 # mc.file(new = 1,f = 1)
-# 
+#  
 # if len(files) == 0:
 #     mc.warning('no files found')
 # else:
 #     for fi in files:
 #         print pathOfFiles + fi
 #         mc.file(pathOfFiles + fi,i = True)
-#         
+#          
 # import sys
 # myPath = 'C:/eclipse/test/OOP/AutoRig'
-# 
+#  
 # if not myPath in sys.path:
 #     sys.path.append(myPath)    
-#     
+#      
 # import reloadMain
 # reload(reloadMain)
-# 
+#  
 # #from Modules import legModule
 # #lg = legModule.LegModule()
 # #lg.buildGuides()
 # #lg.build()        
-# 
+#  
 # from Modules import fingerModule
 # fg = fingerModule.FingerModule()
 # fg.buildGuides()
