@@ -235,7 +235,7 @@ class LimbModule(object):
         this function set ribbon for the Upper 
         '''
         #get length
-        self.upperJointLentgh = self.limbBlendChain.chain[0].tx.get()
+        self.upperJointLentgh = self.limbBlendChain.chain[1].tx.get()
         self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Length = self.upperJointLentgh,
                                    size = self.size * 0.75,subMid = 1,side = self.side,
                                    midCcName = self.baseName + self.ribbonData[0])
@@ -260,7 +260,7 @@ class LimbModule(object):
         '''
         this function set ribbon for the ShoulderElbow 
         '''
-        self.lowerJointLentgh = self.limbBlendChain.chain[1].tx.get()
+        self.lowerJointLentgh = self.limbBlendChain.chain[2].tx.get()
         self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Length = self.lowerJointLentgh,
                                        size = self.size * 0.75,subMid = 1,side = self.side,
                                        midCcName=self.baseName + self.ribbonData[1])
@@ -778,7 +778,6 @@ class LimbModule(object):
             
             print ''
             print 'Package from ' + self.metaMain + ' has been received'
-            print ''
             
             pm.select(self.metaMain) 
             headQuarter = pm.selected()[0]
