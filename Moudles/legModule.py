@@ -1,15 +1,16 @@
 import pymel.core as pm
-from subModules import fkChain,ikChain,boneChain,ribbon
-from Utils import nameUtils
+from Modules.subModules import fkChain,ikChain,boneChain,ribbon
+from Utils import nameUtils,metaUtils
 from Modules import control,hierarchy
+from maya import OpenMaya
 
 class LegModule(object):
     
-    posArray = [[6,14,0],[6,8,2],[6,2,0],[6,0,-1],[6,0,4],[4,0,2],[8,0,2],[6,0,2]]
+    posArray = [[0.772,9.008,0],[0.772,4.8,0.258],[0.772,1,-0.411],[0.772,0,-1.1],[0.772,0,1.8],[0.443,0,0.584],[1.665,0,0.584],[0.772,0,0.584]]
     rotArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
     def __init__(self,baseName = 'leg',side = 'l',size = 1.5,
-                 controlOrient = [0,0,0]):
+                 controlOrient = [0,0,0],metaMain = None):
         
         self.baseName = baseName
         self.side = side
@@ -25,9 +26,11 @@ class LegModule(object):
         self.ikRpChain = None
         self.ikBlendChain = None
         self.fkChain = None
-        self.blendChain = None
+        self.legBlendChain = None
         self.blendData = None   
         self.sklGrp = None
+        self.upperJointLentgh = None
+        self.lowerJointLentgh = None        
         
         #cc
         self.config_node = None       
@@ -48,17 +51,15 @@ class LegModule(object):
         #name list 
         self.ribbonData = ['ThighKnee','KneeAnkle','Knee']
         self.legNameList = ['Thigh','Knee','Ankle','Heel','Toe','Inside','Outside','Ball']
-        self.footNameList = ['Thigh','Knee','Ankle','Ball','Toe','Heel']        
+        self.footNameList = ['Thigh','Knee','Ankle','Ball','Toe','Heel']       
         
-        self.hi = None
+        #metanode
+        self.meta = metaUtils.createMeta(self.side,self.baseName,0)
+        self.metaMain = metaMain 
         
     def buildGuides(self):
         
-        self.hi = hierarchy.Hierarchy(characterName = 'test')
-        self.hi.build()
-        
         self.guides = []
-        
         #set pos loc    
         for i,p in enumerate(self.posArray):
             name = nameUtils.getUniqueName(self.side,self.legNameList[i],'gud')
@@ -123,20 +124,20 @@ class LegModule(object):
         for num,joint in enumerate(self.fkChain.chain):
             name = nameUtils.getUniqueName(self.side,self.footNameList[num],'fk')
             pm.rename(joint,name)
-        pm.delete('CN_l_leg_4_ccShape')
- 
+        pm.delete(self.fkChain.chain[4].getShape())
+        
         #ori chain
-        self.blendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
-        self.blendChain.fromList(self.guidePos[0:3] + footPos,self.guideRot)
-        self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikBlendChain.chain,self.blendChain.chain,
+        self.legBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.legBlendChain.fromList(self.guidePos[0:3] + footPos,self.guideRot)
+        self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikBlendChain.chain,self.legBlendChain.chain,
                                                                    self.config_node.control,'IKFK',self.baseName,self.side)
-        for num,joint in enumerate(self.blendChain.chain,):
+        for num,joint in enumerate(self.legBlendChain.chain,):
             name = nameUtils.getUniqueName(self.side,self.footNameList[num],'jj')
             pm.rename(joint,name)
          
         self.ikBlendChain.chain[-1].setParent(self.ikBlendChain.chain[-4])
         self.fkChain.chain[-1].setParent(self.fkChain.chain[-4])
-        self.blendChain.chain[-1].setParent(self.blendChain.chain[-4])
+        self.legBlendChain.chain[-1].setParent(self.legBlendChain.chain[-4])
         
         #ikfkset
         self.__ikfkBlendSet()
@@ -145,7 +146,7 @@ class LegModule(object):
         self.__setRibbonUpper()
         self.__setRibbonLower()
         self.__setRibbonSubMidCc()
-         
+          
         #foot set
         self.__editCtrl()
         self.__ikFootSet()        
@@ -187,13 +188,10 @@ class LegModule(object):
         self.ikRpPvChain.ikCtrl.control.enable_PV.connect(self.ikRpPvChain.poleVectorCtrl.controlGrp.v)
         self.ikRpChain.ikHandle.v.set(0)
         self.ikRpChain.stretchStartLoc.v.set(0)
-        self.ikRpPvChain.stretchStartLoc.v.set(0)
-        
-    
-    #set ribbon    
+        self.ikRpPvChain.stretchStartLoc.v.set(0)  
     
     def __ikfkBlendSet(self):
-        
+    
         #connect visable function
         #create node 
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'IKFK','REV')
@@ -207,30 +205,36 @@ class LegModule(object):
         reverseNode.outputX.connect(self.config_node.textObj[0].v)
         
         #set pos
-        pm.xform(self.config_node.controlGrp,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
+        pm.xform(self.config_node.controlGrp,ws = 1,matrix = self.legBlendChain.chain[2].worldMatrix.get())
         self.config_node.controlGrp.rx.set(0)
         self.config_node.controlGrp.ry.set(0)
         self.config_node.controlGrp.rz.set(0)
         pm.move(self.guidePos[2][0],self.guidePos[2][1],self.guidePos[4][2],self.config_node.controlGrp)
-        ankle_pos = pm.xform(self.blendChain.chain[2],query=1,ws=1,rp=1)
+        ankle_pos = pm.xform(self.legBlendChain.chain[2],query=1,ws=1,rp=1)
         pm.move(ankle_pos[0],ankle_pos[1],ankle_pos[2],self.config_node.controlGrp + '.rotatePivot')
         pm.move(ankle_pos[0],ankle_pos[1],ankle_pos[2],self.config_node.controlGrp + '.scalePivot')
-        pm.pointConstraint(self.blendChain.chain[2],self.config_node.controlGrp,mo = 1)
-#         pm.orientConstraint(self.blendChain.chain[2],self.config_node.controlGrp,mo = 1)   
+        pm.pointConstraint(self.legBlendChain.chain[2],self.config_node.controlGrp,mo = 1)
+#         pm.orientConstraint(self.legBlendChain.chain[2],self.config_node.controlGrp,mo = 1)   
         control.lockAndHideAttr(self.config_node.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])     
-    
+
+    #set ribbon
+      
     def __setRibbonUpper(self):
         '''
         this function set ribbon for the Upper 
         '''
-        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side,baseName=self.baseName + self.ribbonData[0])
+        self.upperJointLentgh = self.legBlendChain.chain[1].tx.get()
+        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Length = self.upperJointLentgh,
+                                   size = self.size * 0.75,subMid = 1,side = self.side,
+                                   midCcName = self.baseName + self.ribbonData[0])   
+             
         self.ribon.construction()
         
-        pm.xform(self.ribon.startLoc,ws = 1,matrix = self.blendChain.chain[0].worldMatrix.get())
-        pm.xform(self.ribon.endLoc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon.startLoc,ws = 1,matrix = self.legBlendChain.chain[0].worldMatrix.get())
+        pm.xform(self.ribon.endLoc,ws = 1,matrix = self.legBlendChain.chain[1].worldMatrix.get())
         
-        pm.parentConstraint(self.blendChain.chain[0],self.ribon.startLoc,mo = 1)
-#         pm.parentConstraint(self.blendChain.chain[0],self.blendChain.chain[1],self.ribon.epUploc,mo = 1)
+        pm.parentConstraint(self.legBlendChain.chain[0],self.ribon.startLoc,mo = 1)
+#         pm.parentConstraint(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.ribon.epUploc,mo = 1)
         
         self.__subCtrlUpper()
         
@@ -238,7 +242,7 @@ class LegModule(object):
     
     def __subCtrlUpper(self):
         
-        #connect scale for ShoulderElbow jj2
+        #connect scale for thighKnee jj2
         self.subMidCtrlThighKnee = self.ribon.subMidCtrl
         self.subMidCtrlThighKnee.control.scaleX.connect(self.ribon.jj[2].scaleX)
         self.subMidCtrlThighKnee.control.scaleY.connect(self.ribon.jj[2].scaleY)
@@ -247,16 +251,19 @@ class LegModule(object):
     def __setRibbonLower(self):
 
         '''
-        this function set ribbon for the ShoulderElbow 
+        this function set ribbon for the thighKnee 
         '''
-        
-        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Width = 1.0,Length = 5.0,UVal = 1,VVal = 5,subMid = 1,side = self.side,baseName=self.baseName + self.ribbonData[1])
+        self.lowerJointLentgh = self.legBlendChain.chain[2].tx.get()
+        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Length = self.lowerJointLentgh,
+                                   size = self.size * 0.75,subMid = 1,side = self.side,
+                                   midCcName = self.baseName + self.ribbonData[1])   
+                
         self.ribon45hp.construction()
         
-        pm.xform(self.ribon45hp.startLoc,ws = 1,matrix = self.blendChain.chain[1].worldMatrix.get())
-        pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.blendChain.chain[2].worldMatrix.get())
+        pm.xform(self.ribon45hp.startLoc,ws = 1,matrix = self.legBlendChain.chain[1].worldMatrix.get())
+        pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.legBlendChain.chain[2].worldMatrix.get())
         
-        pm.parentConstraint(self.blendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
+        pm.parentConstraint(self.legBlendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
                 
         self.__subCtrlLower()
     
@@ -271,122 +278,122 @@ class LegModule(object):
     def __setRibbonSubMidCc(self):
                 
                 
-        self.subMidCtrlKnee = control.Control(size = 1,baseName = self.ribbonData[2] + '_CC',side = self.side) 
+        self.subMidCtrlKnee = control.Control(size = self.size * 0.75,baseName = self.ribbonData[2] + '_CC',side = self.side,aimAxis = 'y') 
         self.subMidCtrlKnee.circleCtrl()
-        elbolPos = pm.xform(self.blendChain.chain[1],query=1,ws=1,rp=1)
-        pm.move(self.subMidCtrlKnee.controlGrp,elbolPos[0],elbolPos[1],elbolPos[2],a=True)
+        kneePos = pm.xform(self.legBlendChain.chain[1],query=1,ws=1,rp=1)
+        pm.move(self.subMidCtrlKnee.controlGrp,kneePos[0],kneePos[1],kneePos[2],a=True)
         
         pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon45hp.startLoc,mo = 1)
         pm.parentConstraint(self.subMidCtrlKnee.control,self.ribon.endLoc,mo = 1)
-        pm.parentConstraint(self.blendChain.chain[1],self.subMidCtrlKnee.controlGrp,mo = 1)
+        pm.parentConstraint(self.legBlendChain.chain[1],self.subMidCtrlKnee.controlGrp,mo = 1)
         
-        #name setting for the scale node for shoulderElbow Jj1
-        shoulderElbowScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'shoulderElbowScaleJj1','PMA')
+        #name setting for the scale node for thighKnee Jj1
+        thighKneeScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'thighKneeScaleJj1','PMA')
         
-        #create Node for  shoulderElbow Jj1
+        #create Node for  thighKnee Jj1
         #ribbon name for robin
-        shoulderElbowScalePlusMinusAverageNodeJj1 = pm.createNode('plusMinusAverage',n = shoulderElbowScaleNodeNameJj1)
+        thighKneeScalePlusMinusAverageNodeJj1 = pm.createNode('plusMinusAverage',n = thighKneeScaleNodeNameJj1)
         
-        #connect shoulderElbow scale for  shoulderElbow Jj1
-        self.subMidCtrlThighKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dx)
-        self.subMidCtrlKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dx)
-        self.subMidCtrlThighKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dy)
-        self.subMidCtrlKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dy)  
-        self.subMidCtrlThighKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[0].input3Dz)
-        self.subMidCtrlKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj1.input3D[1].input3Dz)     
-        shoulderElbowScalePlusMinusAverageNodeJj1.operation.set(3)
+        #connect thighKnee scale for  thighKnee Jj1
+        self.subMidCtrlThighKnee.control.scaleX.connect(thighKneeScalePlusMinusAverageNodeJj1.input3D[0].input3Dx)
+        self.subMidCtrlKnee.control.scaleX.connect(thighKneeScalePlusMinusAverageNodeJj1.input3D[1].input3Dx)
+        self.subMidCtrlThighKnee.control.scaleY.connect(thighKneeScalePlusMinusAverageNodeJj1.input3D[0].input3Dy)
+        self.subMidCtrlKnee.control.scaleY.connect(thighKneeScalePlusMinusAverageNodeJj1.input3D[1].input3Dy)  
+        self.subMidCtrlThighKnee.control.scaleZ.connect(thighKneeScalePlusMinusAverageNodeJj1.input3D[0].input3Dz)
+        self.subMidCtrlKnee.control.scaleZ.connect(thighKneeScalePlusMinusAverageNodeJj1.input3D[1].input3Dz)     
+        thighKneeScalePlusMinusAverageNodeJj1.operation.set(3)
         
-        #output scale to shoulderElbow Jj1
-        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dx.connect(self.ribon.jj[1].scaleX)
-        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dy.connect(self.ribon.jj[1].scaleY)
-        shoulderElbowScalePlusMinusAverageNodeJj1.output3D.output3Dz.connect(self.ribon.jj[1].scaleZ)
+        #output scale to thighKnee Jj1
+        thighKneeScalePlusMinusAverageNodeJj1.output3D.output3Dx.connect(self.ribon.jj[1].scaleX)
+        thighKneeScalePlusMinusAverageNodeJj1.output3D.output3Dy.connect(self.ribon.jj[1].scaleY)
+        thighKneeScalePlusMinusAverageNodeJj1.output3D.output3Dz.connect(self.ribon.jj[1].scaleZ)
         
-        #name setting for the scale node for shoulderElbow Jj3
-        shoulderElbowScaleNodeNameJj3 = nameUtils.getUniqueName(self.side,self.baseName + 'shoulderElbowScaleJj3','PMA')
+        #name setting for the scale node for thighKnee Jj3
+        thighKneeScaleNodeNameJj3 = nameUtils.getUniqueName(self.side,self.baseName + 'thighKneeScaleJj3','PMA')
         
-        #create Node for  shoulderElbow Jj3
-        shoulderElbowScalePlusMinusAverageNodeJj3 = pm.createNode('plusMinusAverage',n = shoulderElbowScaleNodeNameJj3)
+        #create Node for  thighKnee Jj3
+        thighKneeScalePlusMinusAverageNodeJj3 = pm.createNode('plusMinusAverage',n = thighKneeScaleNodeNameJj3)
            
-        #connect shoulderElbow scale for  shoulderElbow Jj3
+        #connect thighKnee scale for  thighKnee Jj3
         
-        self.subMidCtrlThighKnee.control.scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
-        self.blendChain.chain[1].scaleX.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
-        self.subMidCtrlThighKnee.control.scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
-        self.blendChain.chain[1].scaleY.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
-        self.subMidCtrlThighKnee.control.scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
-        self.blendChain.chain[1].scaleZ.connect(shoulderElbowScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
-        shoulderElbowScalePlusMinusAverageNodeJj3.operation.set(3)
+        self.subMidCtrlThighKnee.control.scaleX.connect(thighKneeScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
+        self.legBlendChain.chain[1].scaleX.connect(thighKneeScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
+        self.subMidCtrlThighKnee.control.scaleY.connect(thighKneeScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
+        self.legBlendChain.chain[1].scaleY.connect(thighKneeScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
+        self.subMidCtrlThighKnee.control.scaleZ.connect(thighKneeScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
+        self.legBlendChain.chain[1].scaleZ.connect(thighKneeScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
+        thighKneeScalePlusMinusAverageNodeJj3.operation.set(3)
         
-        #output scale to shoulderElbow Jj3
-        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dx.connect(self.ribon.jj[3].scaleX)
-        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dy.connect(self.ribon.jj[3].scaleY)
-        shoulderElbowScalePlusMinusAverageNodeJj3.output3D.output3Dz.connect(self.ribon.jj[3].scaleZ)
+        #output scale to thighKnee Jj3
+        thighKneeScalePlusMinusAverageNodeJj3.output3D.output3Dx.connect(self.ribon.jj[3].scaleX)
+        thighKneeScalePlusMinusAverageNodeJj3.output3D.output3Dy.connect(self.ribon.jj[3].scaleY)
+        thighKneeScalePlusMinusAverageNodeJj3.output3D.output3Dz.connect(self.ribon.jj[3].scaleZ)
         
-        #connect scale to shoulderElbow jj0
+        #connect scale to thighKnee jj0
         self.subMidCtrlKnee.control.scaleX.connect(self.ribon.jj[0].scaleX)
         self.subMidCtrlKnee.control.scaleY.connect(self.ribon.jj[0].scaleY)
         self.subMidCtrlKnee.control.scaleZ.connect(self.ribon.jj[0].scaleZ)
         
-        #connect scale to shoulderElbow jj4
-        self.blendChain.chain[0].scaleX.connect(self.ribon.jj[4].scaleX)
-        self.blendChain.chain[0].scaleY.connect(self.ribon.jj[4].scaleY)
-        self.blendChain.chain[0].scaleZ.connect(self.ribon.jj[4].scaleZ)
+        #connect scale to thighKnee jj4
+        self.legBlendChain.chain[0].scaleX.connect(self.ribon.jj[4].scaleX)
+        self.legBlendChain.chain[0].scaleY.connect(self.ribon.jj[4].scaleY)
+        self.legBlendChain.chain[0].scaleZ.connect(self.ribon.jj[4].scaleZ)
         
         
         
-        #name setting for the scale node for elbowWrist Jj1
-        elbowWristScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'elbowWristScaleJj1','PMA')
+        #name setting for the scale node for kneeAnkle Jj1
+        kneeAnkleScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'kneeAnkleScaleJj1','PMA')
         
-        #create Node for  elbowWrist jj1
-        elbowWristScalePlusMinusAverageNodeJj1 = pm.createNode('plusMinusAverage',n = elbowWristScaleNodeNameJj1)
+        #create Node for  kneeAnkle jj1
+        kneeAnkleScalePlusMinusAverageNodeJj1 = pm.createNode('plusMinusAverage',n = kneeAnkleScaleNodeNameJj1)
                
-        #connect elbowWrist scale for elbowWrist jj1
-        self.subMidCtrlKneeAnkle.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dx)
-        self.subMidCtrlKnee.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dx)
-        self.subMidCtrlKneeAnkle.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dy)
-        self.subMidCtrlKnee.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dy)  
-        self.subMidCtrlKneeAnkle.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[0].input3Dz)
-        self.subMidCtrlKnee.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj1.input3D[1].input3Dz)     
-        elbowWristScalePlusMinusAverageNodeJj1.operation.set(3)
+        #connect kneeAnkle scale for kneeAnkle jj1
+        self.subMidCtrlKneeAnkle.control.scaleX.connect(kneeAnkleScalePlusMinusAverageNodeJj1.input3D[0].input3Dx)
+        self.subMidCtrlKnee.control.scaleX.connect(kneeAnkleScalePlusMinusAverageNodeJj1.input3D[1].input3Dx)
+        self.subMidCtrlKneeAnkle.control.scaleY.connect(kneeAnkleScalePlusMinusAverageNodeJj1.input3D[0].input3Dy)
+        self.subMidCtrlKnee.control.scaleY.connect(kneeAnkleScalePlusMinusAverageNodeJj1.input3D[1].input3Dy)  
+        self.subMidCtrlKneeAnkle.control.scaleZ.connect(kneeAnkleScalePlusMinusAverageNodeJj1.input3D[0].input3Dz)
+        self.subMidCtrlKnee.control.scaleZ.connect(kneeAnkleScalePlusMinusAverageNodeJj1.input3D[1].input3Dz)     
+        kneeAnkleScalePlusMinusAverageNodeJj1.operation.set(3)
         
-        #output scale to elbowWrist jj1
-        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dx.connect(self.ribon45hp.jj[1].scaleX)
-        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dy.connect(self.ribon45hp.jj[1].scaleY)
-        elbowWristScalePlusMinusAverageNodeJj1.output3D.output3Dz.connect(self.ribon45hp.jj[1].scaleZ)
+        #output scale to kneeAnkle jj1
+        kneeAnkleScalePlusMinusAverageNodeJj1.output3D.output3Dx.connect(self.ribon45hp.jj[1].scaleX)
+        kneeAnkleScalePlusMinusAverageNodeJj1.output3D.output3Dy.connect(self.ribon45hp.jj[1].scaleY)
+        kneeAnkleScalePlusMinusAverageNodeJj1.output3D.output3Dz.connect(self.ribon45hp.jj[1].scaleZ)
         
-        #name setting for the scale node for elbowWrist Jj3
-        elbowWristScaleNodeNameJj3 = nameUtils.getUniqueName(self.side,self.baseName + 'elbowWristScaleJj3','PMA')
+        #name setting for the scale node for kneeAnkle Jj3
+        kneeAnkleScaleNodeNameJj3 = nameUtils.getUniqueName(self.side,self.baseName + 'kneeAnkleScaleJj3','PMA')
         
-        #create Node for  elbowWrist jj3
-        elbowWristScalePlusMinusAverageNodeJj3 = pm.createNode('plusMinusAverage',n = elbowWristScaleNodeNameJj3)
+        #create Node for  kneeAnkle jj3
+        kneeAnkleScalePlusMinusAverageNodeJj3 = pm.createNode('plusMinusAverage',n = kneeAnkleScaleNodeNameJj3)
                
-        #connect elbowWrist scale for elbowWrist jj3
-        self.subMidCtrlKneeAnkle.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
-        self.subMidCtrlKnee.control.scaleX.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
-        self.subMidCtrlKneeAnkle.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
-        self.subMidCtrlKnee.control.scaleY.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
-        self.subMidCtrlKneeAnkle.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
-        self.subMidCtrlKnee.control.scaleZ.connect(elbowWristScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
-        elbowWristScalePlusMinusAverageNodeJj3.operation.set(3)
+        #connect kneeAnkle scale for kneeAnkle jj3
+        self.subMidCtrlKneeAnkle.control.scaleX.connect(kneeAnkleScalePlusMinusAverageNodeJj3.input3D[0].input3Dx)
+        self.subMidCtrlKnee.control.scaleX.connect(kneeAnkleScalePlusMinusAverageNodeJj3.input3D[1].input3Dx)
+        self.subMidCtrlKneeAnkle.control.scaleY.connect(kneeAnkleScalePlusMinusAverageNodeJj3.input3D[0].input3Dy)
+        self.subMidCtrlKnee.control.scaleY.connect(kneeAnkleScalePlusMinusAverageNodeJj3.input3D[1].input3Dy)  
+        self.subMidCtrlKneeAnkle.control.scaleZ.connect(kneeAnkleScalePlusMinusAverageNodeJj3.input3D[0].input3Dz)
+        self.subMidCtrlKnee.control.scaleZ.connect(kneeAnkleScalePlusMinusAverageNodeJj3.input3D[1].input3Dz)     
+        kneeAnkleScalePlusMinusAverageNodeJj3.operation.set(3)
         
-        #output scale to elbowWrist jj3
-        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dx.connect(self.ribon45hp.jj[3].scaleX)
-        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dy.connect(self.ribon45hp.jj[3].scaleY)
-        elbowWristScalePlusMinusAverageNodeJj3.output3D.output3Dz.connect(self.ribon45hp.jj[3].scaleZ)
+        #output scale to kneeAnkle jj3
+        kneeAnkleScalePlusMinusAverageNodeJj3.output3D.output3Dx.connect(self.ribon45hp.jj[3].scaleX)
+        kneeAnkleScalePlusMinusAverageNodeJj3.output3D.output3Dy.connect(self.ribon45hp.jj[3].scaleY)
+        kneeAnkleScalePlusMinusAverageNodeJj3.output3D.output3Dz.connect(self.ribon45hp.jj[3].scaleZ)
         
-        #connect scale to elbowWrist jj4
+        #connect scale to kneeAnkle jj4
         self.subMidCtrlKnee.control.scaleX.connect(self.ribon45hp.jj[4].scaleX)
         self.subMidCtrlKnee.control.scaleY.connect(self.ribon45hp.jj[4].scaleY)
         self.subMidCtrlKnee.control.scaleZ.connect(self.ribon45hp.jj[4].scaleZ)
         
-        #connect scale to elbowWrist jj0
-        self.blendChain.chain[2].scaleX.connect(self.ribon45hp.jj[0].scaleX)
-        self.blendChain.chain[2].scaleY.connect(self.ribon45hp.jj[0].scaleY)
-        self.blendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
+        #connect scale to kneeAnkle jj0
+        self.legBlendChain.chain[2].scaleX.connect(self.ribon45hp.jj[0].scaleX)
+        self.legBlendChain.chain[2].scaleY.connect(self.ribon45hp.jj[0].scaleY)
+        self.legBlendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
 
     def __editCtrl(self):
         
-        control.addSwitchAttr(self.config_node.control,['CC'])         
+        control.addFloatAttr(self.config_node.control,['CC'],0,1)         
         self.ikRpPvChain.ikCtrl.control.addAttr('foot_roll',at = 'double',min = 0,max = 0,dv = 0)
         pm.setAttr(self.ikRpPvChain.ikCtrl.control + '.foot_roll',e = 0,channelBox = 1)
         self.ikRpPvChain.ikCtrl.control.foot_roll.lock(1)
@@ -527,7 +534,6 @@ class LegModule(object):
         self.config_node.controlGrp.setParent(self.cntsGrp)
         self.ikRpPvChain.ikCtrl.controlGrp.setParent(self.cntsGrp)
         self.ikRpPvChain.poleVectorCtrl.controlGrp.setParent(self.cntsGrp)
-        self.cntsGrp.setParent(self.hi.CC)
         
         #ccDef grp and v
         self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp')) 
@@ -539,12 +545,10 @@ class LegModule(object):
         
         #cc hierarchy        
         self.ccDefGrp.setParent(self.cntsGrp)
-        self.cntsGrp.setParent(self.hi.CC) 
+
         self.config_node.control.IKFK.set(1)    
         
         #ribbon hierarchy   
-        self.ribon.main.setParent(self.hi.XTR)
-        self.ribon45hp.main.setParent(self.hi.XTR)
         self.ribon.main.v.set(0)
         self.ribon45hp.main.v.set(0) 
         
@@ -552,17 +556,107 @@ class LegModule(object):
         self.sklGrp = pm.group(self.ikRpChain.stretchStartLoc,self.ikRpPvChain.stretchStartLoc,self.ikRpPvChain.lockUpStartLoc,
                                n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
 
-        for b in (self.ikRpChain,self.ikRpPvChain,self.ikBlendChain,self.fkChain,self.blendChain):
+        for b in (self.ikRpChain,self.ikRpPvChain,self.ikBlendChain,self.fkChain,self.legBlendChain):
             b.chain[0].setParent(self.sklGrp)
-        
-        self.sklGrp.setParent(self.hi.SKL)
         
         #guide grp
         self.ikRpChain.stretchEndLoc.v.set(0)
         self.guideGrp.v.set(0)
-        self.guideGrp.setParent(self.hi.GUD)
-        self.guides[2].setParent(self.hi.IK)
-        self.guides[2].v.set(0)            
+
+        self.guides[2].v.set(0)       
+        
+    def buildConnections(self):
+        
+        #reveice info from incoming package
+        if pm.objExists(self.metaMain) == 1:
+            
+            print ''
+            print 'Package from ' + self.metaMain + ' has been received'
+            
+            pm.select(self.metaMain) 
+            headQuarter = pm.selected()[0]
+            destinations = []
+            moduleGrp = pm.connectionInfo(headQuarter.moduleGrp, destinationFromSource=True)
+            
+            for tempDestination in moduleGrp:
+                destination = tempDestination.split('.')
+                destinations.append(destination[0])
+                
+# [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
+
+    #         self.sklGrp.setParent(self.hi.SKL)
+    #         self.cntsGrp.setParent(self.hi.CC) 
+    #         self.ribon.main.setParent(self.hi.XTR)
+    #         self.ribon45hp.main.setParent(self.hi.XTR)
+    #         self.guideGrp.setParent(self.hi.GUD)
+    #         self.guides[2].setParent(self.hi.IK)
+            self.sklGrp.setParent(destinations[1])
+            self.cntsGrp.setParent(destinations[0]) 
+            self.ribon.main.setParent(destinations[4])
+            self.ribon45hp.main.setParent(destinations[4])
+            self.guideGrp.setParent(destinations[5])
+            self.guides[2].setParent(destinations[2])
+            
+            print ''
+            print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
+            print ''
+            
+        else:
+            OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
+            
+        
+        #create package send for next part
+        #template:
+        #metaUtils.addToMeta(self.meta,'attr', objs)
+        metaUtils.addToMeta(self.meta,'controls',[self.config_node.control] + [self.ikChain.ikCtrl.control,self.ikChain.poleVectorCtrl.control]
+                             + [fk for fk in self.fkChain.chain])
+        metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
+        metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
+        
+
+def getUi(parent,mainUi):
+    
+    return LegModuleUi(parent,mainUi)
+
+class LegModuleUi(object):
+#     baseName = 'leg',side = 'l',size = 1.5,
+    def __init__(self,parent,mainUi):
+        
+        self.mainUi = mainUi
+        self.__popuItems = []
+        
+        pm.setParent(parent)
+        self.mainL = pm.columnLayout(adj = 1)
+        pm.separator(h = 10)
+        
+        #(self,baseName = 'arm',side = 'l',size = 1.5,
+        self.name = pm.text(l = '**** Leg Module ****')       
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'leg')
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l')
+        self.cntSizeBody = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
+                                        ad2 = 1,numberOfFields = 1,value1 = 1)
+        
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
+        
+        self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
+        pm.separator(h = 10)
+        
+        self.__pointerClass = None
+        
+    def __removeInstance(self,*arg):
+        
+        pm.deleteUI(self.mainL)
+        self.mainUi.modulesUi.remove(self)
+        
+    def getModuleInstance(self):
+        
+        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
+        sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
+        
+        self.__pointerClass = LegModule(baseName = baseNameT,side = sideT,
+                                        metaMain = mainMetaNode)
+        return self.__pointerClass             
 
 # import sys
 # myPath = 'C:/eclipse/test/OOP/AutoRig'
