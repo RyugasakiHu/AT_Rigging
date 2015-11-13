@@ -40,7 +40,8 @@ class BuildSessionUi(object):
         
         cmds.setParent(self.mainL)
         self.buildGuidesB = cmds.button(l = 'Build Guides',c = self.buildGuides)
-        self.buildRig = cmds.button(l = 'Build Rig',c = self.buildRig)
+        self.buildRigB = cmds.button(l = 'Build Rig',c = self.buildRig)
+        self.stressTestB = cmds.button(l = 'Stress Test',c = self.buildConnections)
         cmds.showWindow(self.win)
 
     def __resizeScroll(self,*args):
@@ -60,21 +61,20 @@ class BuildSessionUi(object):
         
     def buildGuides(self,*args):
         
-        pass
+        tempClasses = []
+        
+        for c in self.modulesUi:
+            tempClasses.append(c.getModuleInstance())
+            
+        self.buildSession.modules = tempClasses
+        self.buildSession.buildGuides()
     
     def buildRig(self,*args):
         
-        pass    
+        self.buildSession.build()
+        self.buildSession.buildConnections()
         
+    def buildConnections(self,*args):
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        self.buildSession.buildConnections()
         
