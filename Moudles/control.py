@@ -52,11 +52,10 @@ class Control(object):
                 dic = [0,1,0]
                 
             elif self.aimAxis == 'z':
-                dic = [0,0,1]
+                dic = [0,0,1] 
                 
-            self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size)[0]
+            self.control = pm.circle(name = self.controlName,ch = 1,o = 1 ,nr = dic,r = self.size)[0]
             self.control.s.set(self.size,self.size,self.size)
-            pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
             
         self.__finalizeCc()       
         self.__colorSet() 
@@ -138,22 +137,44 @@ class Control(object):
         self.__buildName()
         
         if self.controlName :
-            #que
-            insideCircle = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [1,0,0],r = self.size)
-            outsideCircleF = pm.circle(name = self.controlName + 'Front',ch = 0,o = 1 ,nr = [1,0,0],r = self.size * 3 / 4)
-            outsideCircleB = pm.circle(name = self.controlName + 'Back',ch = 0,o = 1 ,nr = [1,0,0],r = self.size * 3 / 4)
             
-            pm.move(float(self.size / 3),0,0,outsideCircleF[0].getShape().cv,r = 1)
+            dic = None
+            coords = []
+            
+            if self.aimAxis == 'x':
+                dic = [1,0,0]
+                for xyz in dic:
+                    coord = xyz * float(self.size / 3) 
+                    coords.append(coord)
+                
+            elif self.aimAxis == 'y':
+                dic = [0,1,0]
+                for xyz in dic:
+                    coord = xyz * float(self.size / 3) 
+                    coords.append(coord)
+                
+            elif self.aimAxis == 'z':
+                dic = [0,0,1]
+                for xyz in dic:
+                    coord = xyz * float(self.size / 3) 
+                    coords.append(coord)
+            
+            insideCircle = pm.circle(name = self.controlName,ch = 1,o = 1 ,nr = dic,r = self.size)
+
+            outsideCircleF = pm.circle(name = self.controlName + 'Front',ch = 0,o = 1 ,nr = dic,r = self.size * 3 / 4)
+            outsideCircleB = pm.circle(name = self.controlName + 'Back',ch = 0,o = 1 ,nr = dic,r = self.size * 3 / 4)
+             
+            pm.move(coords[0],coords[1],coords[2],outsideCircleF[0].getShape().cv,r = 1)
             pm.parent(outsideCircleF[0].getShape(),insideCircle,shape = 1,add = 1)
             pm.delete(outsideCircleF)
-
-            pm.move(float(-self.size / 3),0,0,outsideCircleB[0].getShape().cv,r = 1)
+ 
+            pm.move(-coords[0],-coords[1],-coords[2],outsideCircleB[0].getShape().cv,r = 1)
             pm.parent(outsideCircleB[0].getShape(),insideCircle,shape = 1,add = 1)   
             pm.delete(outsideCircleB)   
 
         self.control = insideCircle[0]
-        self.__finalizeCc()       
-        self.__colorSet() 
+        self.__finalizeCc()
+        self.__colorSet()
 
     def cogCtrlTest(self):
         self.__buildHierachyName()
@@ -176,7 +197,7 @@ class Control(object):
                                      41,42,43,44,45,46,47,48,49,50,
                                      51,52,53,54,55,56,57,58,59,60,
                                      61,62,63,64,65,66,67,67,67]) 
-#         self.__finalizeCc()  
+        self.__finalizeCc()  
         self.__colorSet()     
     
     def ikfkBlender(self):
@@ -185,17 +206,22 @@ class Control(object):
         
         if self.controlName :
             
+            self.textObj = [] 
             self.control = pm.curve(name = self.controlName , d = 1,p = [(-0.5,0.5,0.5),(0.5,0.5,0.5),(0.5,0.5,-0.5),(-0.5,0.5,-0.5),
                                                           (-0.5,0.5,0.5),(-0.5,-0.5,0.5),(-0.5,-0.5,-0.5),(0.5,-0.5,-0.5),
                                                           (0.5,-0.5,0.5),(0.5,-0.5,0.5),(-0.5,-0.5,0.5),(0.5,-0.5,0.5),
                                                           (0.5,0.5,0.5),(0.5,0.5,-0.5),(0.5,-0.5,-0.5),(-0.5,-0.5,-0.5),
                                                           (-0.5,0.5,-0.5)],k = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
             
+            text = ['F','K','I']
+            codeFName = nameUtils.getUniqueName(self.side,text[0],'cc')
+            codeKName = nameUtils.getUniqueName(self.side,text[1],'cc')
+            codeIName = nameUtils.getUniqueName(self.side,text[2],'cc')
+            
             F = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'FK')
             I = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'I')
-            text = ['F','K','I']
+            
             selectionList = pm.ls("curve*")
-            self.textObj = [] 
             for num,sl in enumerate(selectionList):
                 if num <= 2:
                     pm.parent(sl,w = 1)   
@@ -204,9 +230,15 @@ class Control(object):
                     pm.setAttr(text[num] + '.overrideDisplayType',2)
                     self.textObj.append(name)
             pm.delete('Text*')      
+            
             pm.move(self.textObj[0],-1,0.6,0)
             pm.move(self.textObj[1],0,0.6,0)
             pm.move(self.textObj[2],-0.6,0.6,0)
+            
+            pm.rename(self.textObj[0],codeFName)
+            pm.rename(self.textObj[1],codeKName)
+            pm.rename(self.textObj[2],codeIName)
+            
             pm.makeIdentity(self.textObj[0],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
             pm.makeIdentity(self.textObj[1],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
             pm.makeIdentity(self.textObj[2],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
@@ -306,18 +338,19 @@ class Control(object):
     
     def __aimCc(self):
         
-        y = 0
-        z = 0
-        
-        
-        if self.aimAxis == 'y':
-            z = 90
-          
-        if self.aimAxis == 'z':
-            y = -90   
-    
-        for s in self.control.getShapes():
-            pm.rotate(s.cv,0,y,z,r = 1)
+        pass
+#         y = 0
+#         z = 0
+#         
+#         
+#         if self.aimAxis == 'y':
+#             z = 90
+#           
+#         if self.aimAxis == 'z':
+#             y = -90   
+#     
+#         for s in self.control.getShapes():
+#             pm.rotate(s.cv,0,y,z,r = 1)
             
     def __colorSet(self):
         '''
