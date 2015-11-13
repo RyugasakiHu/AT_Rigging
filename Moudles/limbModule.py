@@ -17,13 +17,15 @@ class LimbModule(object):
     rotShoulderBladeArray = [[0,0,0],[0,0,0]]    
     
     def __init__(self,baseName = 'arm',side = 'l',size = 1.5,
-                 solver = 'ikRPsolver',controlOrient = [0,0,0],metaMain = None):
+                 solver = 'ikRPsolver',controlOrient = [0,0,0],
+                 metaSpine = None,metaMain = None,mirror = None):
         #init
         self.baseName = baseName
         self.side = side
         self.size = size
         self.solver = solver
         self.controlOrient = controlOrient
+        self.mirror = mirror
         
         #jj
         self.fkChain = None
@@ -51,6 +53,7 @@ class LimbModule(object):
         self.limbGuides = None
         self.shoulderGuides = None
         self.shoulderBladeGuides = None
+        self.totalGuides = None
         self.guideGrp = None
         
         #ribbon
@@ -64,6 +67,7 @@ class LimbModule(object):
         #AT
         self.ikAtHandle = None
         self.ikAtEffector  = None
+        self.poseReadorGrp = None
         
         #Hook
         self.__tempSpaceSwitch = None
@@ -74,12 +78,14 @@ class LimbModule(object):
         #metanode
         self.meta = metaUtils.createMeta(self.side,self.baseName,0)
         self.metaMain = metaMain
+        self.metaSpine = metaSpine
          
     def buildGuides(self):
         
         self.limbGuides = []
         self.shoulderGuides = []
         self.shoulderBladeGuides = []
+        self.totalGuides = []
         
         #limb Guides
         for num,pos in enumerate(self.posLimbArray):
@@ -121,11 +127,19 @@ class LimbModule(object):
         tempShoulderBladeGuides.reverse()
         for i in range(len(tempShoulderBladeGuides)):
             if i != (len(tempShoulderBladeGuides) - 1):
-                pm.parent(tempShoulderBladeGuides[i],tempShoulderBladeGuides[i + 1])          
+                pm.parent(tempShoulderBladeGuides[i],tempShoulderBladeGuides[i + 1])
+                
+        #perpare for the mirror
+        
+        for guides in self.limbGuides + self.shoulderGuides + self.shoulderBladeGuides:
+            self.totalGuides.append(guides)
         
         #clean up
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(self.limbGuides[0],self.shoulderGuides[0],self.shoulderBladeGuides[0],n = name)
+        self.guideGrp = pm.group(em = 1,n = name)
+        self.limbGuides[0].setParent(self.guideGrp)
+        self.shoulderGuides[0].setParent(self.guideGrp)
+        self.shoulderBladeGuides[0].setParent(self.guideGrp)
                      
     def build(self):
         
@@ -560,8 +574,8 @@ class LimbModule(object):
         #chest clean 
 #         self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
 #         self.chestGrp.setParent(self.hi.SKL)
-        self.shoulderCtrl.controlGrp.setParent(self.chestGrp)
-        self.shoulderAtChain.chain[0].setParent(self.chestGrp)
+#         self.shoulderCtrl.controlGrp.setParent(self.chestGrp)
+#         self.shoulderAtChain.chain[0].setParent(self.chestGrp)
          
         ############
         #pose Reador
@@ -603,20 +617,20 @@ class LimbModule(object):
         
         #create grp
         #main
-        poseReadorGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorMain','grp'))
+        self.poseReadorGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorMain','grp'))
         
-        poseMain.setParent(poseReadorGrp)
-        poseTar.setParent(poseReadorGrp)
-        poseUp.setParent(poseReadorGrp)
+        poseMain.setParent(self.poseReadorGrp)
+        poseTar.setParent(self.poseReadorGrp)
+        poseUp.setParent(self.poseReadorGrp)
         
-        poseTwistUp.setParent(poseReadorGrp)
-        poseTwistMain.setParent(poseReadorGrp)        
-        poseTwistTar.setParent(poseReadorGrp)
+        poseTwistUp.setParent(self.poseReadorGrp)
+        poseTwistMain.setParent(self.poseReadorGrp)        
+        poseTwistTar.setParent(self.poseReadorGrp)
                   
-        pm.xform(poseReadorGrp,ws = 1,matrix = self.limbBlendChain.chain[0].worldMatrix.get())
-        poseReadorGrp.setParent(self.shoulderAtChain.chain[0])
-        poseReadorGrp.t.set(0,0,0)
-        poseReadorGrp.r.set(0,0,0)
+        pm.xform(self.poseReadorGrp,ws = 1,matrix = self.limbBlendChain.chain[0].worldMatrix.get())
+        self.poseReadorGrp.setParent(self.shoulderAtChain.chain[0])
+        self.poseReadorGrp.t.set(0,0,0)
+        self.poseReadorGrp.r.set(0,0,0)
         
         pm.aimConstraint(poseTar,poseMain,offset = [0,0,0],w = 1,aimVector = [1,0,0],upVector = [0,-1,0],
                          worldUpType = 'object',worldUpObject = poseUp)        
@@ -629,7 +643,7 @@ class LimbModule(object):
                         worldUpType = 'object',worldUpObject = poseTwistUp)
           
         #connect 
-        poseReadorGrp.setParent(self.chestGrp)
+#         self.poseReadorGrp.setParent(self.chestGrp)
         postTarGrp = pm.group(poseTar,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTar','grp'))
           
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
@@ -673,7 +687,7 @@ class LimbModule(object):
         self.shoulderAtChain.chain[0].pose_twist.connect(multipleNode.input1Z)
           
         #clean
-        poseReadorGrp.v.set(0)
+        self.poseReadorGrp.v.set(0)
         postTarGrp.v.set(0)  
           
     def __cleanUp(self):
@@ -720,10 +734,8 @@ class LimbModule(object):
         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
             b.chain[0].setParent(self.limbGrp)
         
-        self.limbGrp.setParent(self.chestGrp)
-        self.shoulderBladeGrp.setParent(self.chestGrp)
+        self.limbGrp.setParent(self.shoulderCtrl.control)
         
-#         self.limbGrp.setParent(self.shoulderCtrl.control)
 #         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
 #             b.chain[0].setParent(self.bonesGrp)
 #          
@@ -746,27 +758,30 @@ class LimbModule(object):
           
         pm.xform(self.locWorld,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
         pm.xform(self.locLocal,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
+        
+        self.locWorld.r.set(0,0,0)
+        self.locLocal.r.set(0,0,0)
          
         self.locLocal.setParent(self.shoulderChain.chain[-1])
-#         self.locWorld.setParent(self.hi.IK)
         pm.parentConstraint(self.shoulderCtrl.control,self.locWorld,skipRotate = ['x','y','z'],mo = 1)
-         
+          
         self.fkChain.chain[0].addAttr('space',at = 'enum',en = 'world:local:',k = 1)
-         
+          
         #add target tester
         targetName = nameUtils.getUniqueName(self.side,self.baseName + 'Tar','loc')
         self.__tempSpaceSwitch = pm.spaceLocator(n = targetName)
         pm.xform(self.__tempSpaceSwitch,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
 #         self.__tempSpaceSwitch.setParent(self.hi.XTR)
         self.__tempSpaceSwitch.v.set(0)
- 
+   
         #final cnst
         finalCnst = pm.parentConstraint(self.locLocal,self.locWorld,self.__tempSpaceSwitch,mo = 1)
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Hook','REV')
         reverseNode = pm.createNode('reverse',n = reverseNodeName)
-         
+           
         #fk cnst
         pm.parentConstraint(self.__tempSpaceSwitch,self.limbGrp,mo = 1)
+        print self.limbGrp
         self.fkChain.chain[0].attr('space').connect(finalCnst.attr(self.locLocal.name() + 'W0'))
         self.fkChain.chain[0].attr('space').connect(reverseNode.inputX)
         reverseNode.outputX.connect(finalCnst.attr(self.locWorld.name() + 'W1'))
@@ -777,30 +792,52 @@ class LimbModule(object):
         if pm.objExists(self.metaMain) == 1:
             
             print ''
-            print 'Package from ' + self.metaMain + ' has been received'
+            print 'Package from (' + self.metaMain + ') has been received'
             
             pm.select(self.metaMain) 
-            headQuarter = pm.selected()[0]
-            destinations = []
-            moduleGrp = pm.connectionInfo(headQuarter.moduleGrp, destinationFromSource=True)
+            main = pm.selected()[0]
             
-            for tempDestination in moduleGrp:
-                destination = tempDestination.split('.')
-                destinations.append(destination[0])
+            pm.select(self.metaSpine)
+            spine = pm.selected()[0]
+            
+            #meta main
+            mainDestinations = []
+            moduleGrp = pm.connectionInfo(main.moduleGrp, destinationFromSource=True)
+            
+            #meta spine
+            spineDestinations = []
+            transGrp = pm.connectionInfo(spine.transGrp, destinationFromSource=True)
+            
+            #get linked
+            for tempMainDestination in moduleGrp:
+                splitTempMainDestination = tempMainDestination.split('.')
+                mainDestinations.append(splitTempMainDestination[0])
                 
-# [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
+            for tempSpineDestination in transGrp:
+                splitTempSpineDestination = tempSpineDestination.split('.')
+                spineDestinations.append(splitTempSpineDestination[0])
+#             print spineDestinations
+#             [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
 
 #             self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
 #             self.chestGrp.setParent(self.hi.SKL)
-            self.cntsGrp.setParent(destinations[0]) 
-            self.ribon.main.setParent(destinations[4])
-            self.ribon45hp.main.setParent(destinations[4])
-            self.ikChain.lockUpStartLoc.setParent(destinations[1])
-            self.ikChain.stretchStartLoc.setParent(destinations[1])
-            self.ikChain.ikHandle.setParent(destinations[2])
-            self.guideGrp.setParent(destinations[5])
-            self.locWorld.setParent(destinations[2])
-            self.__tempSpaceSwitch.setParent(destinations[4])
+            
+            #to the chest
+            self.shoulderBladeGrp.setParent(spineDestinations[0])
+            self.shoulderAtChain.chain[0].setParent(spineDestinations[0])
+            self.shoulderCtrl.controlGrp.setParent(spineDestinations[0])
+            self.poseReadorGrp.setParent(spineDestinations[0])
+            
+            #to the main hierachy
+            self.cntsGrp.setParent(mainDestinations[0]) 
+            self.ribon.main.setParent(mainDestinations[4])
+            self.ribon45hp.main.setParent(mainDestinations[4])
+            self.ikChain.lockUpStartLoc.setParent(mainDestinations[1])
+            self.ikChain.stretchStartLoc.setParent(mainDestinations[1])
+            self.ikChain.ikHandle.setParent(mainDestinations[2])
+            self.guideGrp.setParent(mainDestinations[5])
+            self.locWorld.setParent(mainDestinations[2])
+            self.__tempSpaceSwitch.setParent(mainDestinations[4])
             
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
@@ -817,6 +854,55 @@ class LimbModule(object):
                              + [fk for fk in self.fkChain.chain])
         metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
+        
+        
+#         #mirror part:
+#         if self.mirror == 1:
+#             print ''
+#             print 'mirror selection is active'
+#              
+#             #perpare 
+#             mirrorSide = None
+#             self.mirror = 2
+#             
+#             if self.side == 'l':
+#                 mirrorSide = 'r'
+#              
+#             mirrorLimb = LimbModule(self.baseName,mirrorSide,self.size,self.solver,
+#                                     self.metaSpine,self.metaMain,self.mirror)
+#              
+#             mirrorLimb.buildGuides()
+#             oriGuideList = []
+#             
+#             #mirror guide
+#             for gud in mirrorLimb.totalGuides:
+#                 
+#                 #perpare
+#                 oriName = gud.split('_')
+#                 
+#                 #sl list
+#                 pm.select(self.side + str(gud[1:]))
+#                 oriGuide = pm.selected()[0]
+#                 oriGuideList.append(oriGuide)
+#                  
+#                 #create Node Name
+#                 linearNodeName = nameUtils.getUniqueName(self.side,oriName[1],'MDL')
+#                 
+#                 #create Node
+#                 linearNode = pm.createNode('multDoubleLinear',n = linearNodeName)
+#                 
+#                 #connect Node
+#                 oriGuide.tx.connect(linearNode.input1)
+#                 linearNode.input2.set(-1)
+#                 linearNode.output.connect(gud.tx)
+#                 
+# #             print oriGuideList
+# #             print mirrorLimb.totalGuides
+#             mirrorLimb.build()
+#             mirrorLimb.buildConnections()
+#             
+#         else :
+#             print 'mirror selection is in_active'        
         
 def getUi(parent,mainUi):
     
@@ -835,14 +921,17 @@ class LimbModuleUi(object):
         
         #(self,baseName = 'arm',side = 'l',size = 1.5,
         self.name = pm.text(l = '**** Limb Module ****')       
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1)
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1)
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'arm')
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l')
         self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
                                         ad2 = 1,numberOfFields = 1,value1 = 1)
         self.solverMenu = pm.optionMenu(l = 'color')
         pm.menuItem(l = 'ikRPsolver')
         pm.menuItem(l = 'ikSCsolver')
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
+#         self.mirror = pm.radioButtonGrp('mirror',nrb = 2,label = 'Mirror:',la2 = ['yes','no'],sl = 1)    
+        
+        self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,text = 'spineMeta')        
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,text = 'mainMeta')
         
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         pm.separator(h = 10)
@@ -860,12 +949,13 @@ class LimbModuleUi(object):
         sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         solverV = pm.optionMenu(self.solverMenu, q = 1,v = 1)
+#         mirrorC = pm.radioButtonGrp(self.mirror,q = 1,sl = 1)
         mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
+        spineMetaNode = pm.textFieldGrp(self.metaSpineNodeN,q = 1,text = 1)
         
-        self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,metaMain = mainMetaNode)
+        self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
+                                         metaSpine = spineMetaNode,metaMain = mainMetaNode)        
+#         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
+#                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,mirror = mirrorC)                
+        
         return self.__pointerClass
-    
-# from Modules import limbModule
-# lm = limbModule.LimbModule()
-# lm.buildGuides()
-# lm.build()
