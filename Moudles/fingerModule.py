@@ -159,14 +159,17 @@ class FingerModule(object):
         
         #guide grp       
         guideName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(self.tempIndexGuides[0],self.tempMiddleGuides[0],
-                                 self.tempRingGuides[0],self.tempPinkyGuides[0],
-                                 self.tempThumbGuides[0],n = guideName)
-
-        self.guideGrp.v.set(0)
+        self.guideGrp = pm.group(em = 1,n = guideName)
+        self.tempIndexGuides[0].setParent(self.guideGrp)
+        self.tempMiddleGuides[0].setParent(self.guideGrp)
+        self.tempRingGuides[0].setParent(self.guideGrp)
+        self.tempPinkyGuides[0].setParent(self.guideGrp)
+        self.tempThumbGuides[0].setParent(self.guideGrp)
         
     def build(self):
-
+        
+        self.guideGrp.v.set(0)
+        
         #build index
         #thumb info
         self.guideThumbPos = [x.getTranslation(space = 'world') for x in self.thumbGuides]
@@ -1312,10 +1315,10 @@ class FingerModuleUi(object):
         
         #(self,baseName = 'arm',side = 'l',size = 1.5,
         self.name = pm.text(l = '**** Finger Module ****')       
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1)
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'finger')
         self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1)
         self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 1)
+                                        ad2 = 1,numberOfFields = 1,value1 = 0.5)
         self.armMetaNodeN = pm.textFieldGrp(l = 'armMeta :',ad2 = 1)
         self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
         
@@ -1340,36 +1343,3 @@ class FingerModuleUi(object):
         self.__pointerClass = FingerModule(baseNameT,sideT,size = cntSizeV,metaArm = armMetaNode,metaMain = mainMetaNode)
         return self.__pointerClass        
         
-        
-# import maya.cmds as mc
-#  
-# pathOfFiles = 'C:\Users\UV\Desktop\Rigging workshop/'
-# fileType = 'obj'
-# files = cmds.getFileList(folder = pathOfFiles,fs = '*.%s' % fileType)
-# mc.file(new = 1,f = 1)
-#  
-# if len(files) == 0:
-#     mc.warning('no files found')
-# else:
-#     for fi in files:
-#         print pathOfFiles + fi
-#         mc.file(pathOfFiles + fi,i = True)
-#          
-# import sys
-# myPath = 'C:/eclipse/test/OOP/AutoRig'
-#  
-# if not myPath in sys.path:
-#     sys.path.append(myPath)    
-#      
-# import reloadMain
-# reload(reloadMain)
-#  
-# #from Modules import legModule
-# #lg = legModule.LegModule()
-# #lg.buildGuides()
-# #lg.build()        
-#  
-# from Modules import fingerModule
-# fg = fingerModule.FingerModule()
-# fg.buildGuides()
-# #fg.build()
