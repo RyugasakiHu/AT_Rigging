@@ -219,7 +219,7 @@ class LimbModule(object):
         #connect node
         self.handSettingCtrl.control.IKFK.connect(self.ikChain.ikCtrl.controlGrp.v)
         self.handSettingCtrl.control.IKFK.connect(self.ikChain.poleVectorCtrl.controlGrp.v)
-        self.handSettingCtrl.control.IKFK.connect(self.handSettingCtrl.textObj[2].v)
+        self.handSettingCtrl.control.IKFK.connect(self.handSettingCtrl.textObj[1].v)
         self.handSettingCtrl.control.IKFK.connect(reverseNode.inputX)
         reverseNode.outputX.connect(self.fkChain.chain[0].v)
         reverseNode.outputX.connect(self.handSettingCtrl.textObj[0].v)             
@@ -724,9 +724,11 @@ class LimbModule(object):
         self.ikChain.lockUpStartLoc.v.set(0)
  
         #jj grp
-        self.limbGrp = pm.group(self.ikChain.lockUpStartLoc,self.ikChain.stretchStartLoc,
-                               n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
-         
+        self.limbGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
+        
+        self.ikChain.lockUpStartLoc.setParent(self.limbGrp)
+        self.ikChain.stretchStartLoc.setParent(self.limbGrp)
+        
         armInitial =  self.limbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(armInitial[0],armInitial[1],armInitial[2],self.limbGrp + '.rotatePivot')
         pm.move(armInitial[0],armInitial[1],armInitial[2],self.limbGrp + '.scalePivot')
@@ -781,7 +783,6 @@ class LimbModule(object):
            
         #fk cnst
         pm.parentConstraint(self.__tempSpaceSwitch,self.limbGrp,mo = 1)
-        print self.limbGrp
         self.fkChain.chain[0].attr('space').connect(finalCnst.attr(self.locLocal.name() + 'W0'))
         self.fkChain.chain[0].attr('space').connect(reverseNode.inputX)
         reverseNode.outputX.connect(finalCnst.attr(self.locWorld.name() + 'W1'))
