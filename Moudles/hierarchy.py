@@ -7,11 +7,11 @@ class Hierarchy(object):
     classdocs
     '''
 
-    def __init__(self, baseName = 'main',side = 'm',size = 1,characterName = None):
+    def __init__(self,side = 'm',size = 1,characterName = None):
         '''
         Constructor
         '''
-        self.baseName = baseName
+#         self.baseName = baseName
         self.side = side
         self.size = size
         self.characterName = characterName
@@ -29,19 +29,38 @@ class Hierarchy(object):
         self.XTR = None
         self.CSG = None
         self.GUD = None
-
+        
+        #setGuides
+        self.visGuides = None
+        
         #set ctrl
+        self.visCtrl = None
         self.cogCtrl = None
         self.bodyCtrl = None
         
         #create Meta
-        self.meta = metaUtils.createMeta(self.side,self.baseName,1)
+        self.meta = metaUtils.createMeta(self.side,self.characterName,1)
         
     def buildGuides(self):
         
-        pass    
+        self.visGuides = []
+        name = nameUtils.getHierachyName('visibility','gud')
+        loc = pm.spaceLocator(n = name)
+        self.visGuides.append(loc)
         
     def build(self):
+        
+        #vis cc
+        self.visGuidePos = [x.getTranslation(space = 'world') for x in self.visGuides]
+        self.visCtrl = control.Control(self.side,'visibility',self.size) 
+        self.visCtrl.visCtrl()
+        pm.move(self.visCtrl.controlGrp,self.visGuidePos[0])
+        control.addFloatAttr(self.visCtrl.control,
+                             ['spine_fk_vis','finger_ctrl_vis','facial_mouth_sec_vis','facial_panel'],0,1)
+        pm.setAttr(self.visCtrl.control.spine_fk_vis,e = 1,cb = True)
+        pm.setAttr(self.visCtrl.control.finger_ctrl_vis,e = 1,cb = True)
+        pm.setAttr(self.visCtrl.control.facial_mouth_sec_vis,e = 1,cb = True)
+        pm.setAttr(self.visCtrl.control.facial_panel,e = 1,cb = True)
         
         #build grp
         self.ALL = pm.group(empty = 1,n = nameUtils.getHierachyName(self.characterName,'ALL')) 
@@ -85,16 +104,11 @@ class Hierarchy(object):
     def __cleanUp(self):
         
 #         metaUtils.addToMeta(self.meta,, objs)
-        print 'perpare meta is : ' + self.meta
-        metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL,self.TRS,self.PP,self.SKL,self.CC,self.IK,self.LOC,self.GEO,self.GUD])  
-        metaUtils.addToMeta(self.meta,'controls', [self.cogCtrl.control])    
+        metaUtils.addToMeta(self.meta,'moduleGrp', [self.SKL,self.CC,self.IK,self.LOC,self.XTR,self.GUD,self.GEO,self.ALL,self.TRS,self.PP])  
+        metaUtils.addToMeta(self.meta,'controls', [self.cogCtrl.control])
+        print ''
+        print 'Info : ' + self.meta + ' has been integrate, ready for next module'
         
-#         metaUtils.addToMeta(self.meta,, objs)
-#         metaUtils.addToMeta(self.meta,, objs)
-#         metaUtils.addToMeta(self.meta,, objs)
-#         metaUtils.addToMeta(self.meta,, objs)
-#         metaUtils.addToMeta(self.meta,, objs)
-#         metaUtils.addToMeta(self.meta,, objs)
 #         metaUtils.addToMeta(self.meta,, objs)
 
 def getUi(parent,mainUi):
@@ -113,11 +127,10 @@ class MainModuleUi(object):
         
         #(self, baseName = 'main',side = 'm',size = 1,characterName = None):
         self.name = pm.text(l = '**** Main Module ****')
-        self.cNameT = pm.textFieldGrp(l = 'characterName : ',ad2 = 1)        
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1)
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1)
+        self.cNameT = pm.textFieldGrp(l = 'characterName : ',ad2 = 1,text = 'test')        
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'm')
         self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 1)
+                                        ad2 = 1,numberOfFields = 1,value1 = 3)
         
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         pm.separator(h = 10)
@@ -131,12 +144,11 @@ class MainModuleUi(object):
         
     def getModuleInstance(self):
         
-        baseName = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
         cName = pm.textFieldGrp(self.cNameT,q = 1,text = 1)
         side = pm.textFieldGrp(self.sideT,q = 1,text = 1)
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         
-        self.__pointerClass = Hierarchy(baseName,side,size = cntSizeV,characterName = cName)
+        self.__pointerClass = Hierarchy(side,size = cntSizeV,characterName = cName)
         return self.__pointerClass
 
     
