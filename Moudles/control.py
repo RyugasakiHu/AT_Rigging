@@ -103,7 +103,7 @@ class Control(object):
                                     p = [(0,1,0),(0,-1,0),(0,0,0),(-1,0,0),(1,0,0),
                                          (0,0,0),(0,0,1),(0,0,-1)],k = [0,1,2,3,4,5,6,7])
             
-            self.control.s.set(self.size,self.size,self.size)
+            self.control.s.set(self.size / 2,self.size / 2,self.size / 2)
             pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
             
         self.__finalizeCc()       
@@ -213,39 +213,92 @@ class Control(object):
                                                           (0.5,0.5,0.5),(0.5,0.5,-0.5),(0.5,-0.5,-0.5),(-0.5,-0.5,-0.5),
                                                           (-0.5,0.5,-0.5)],k = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
             
+            #setName
             text = ['F','K','I']
             codeFName = nameUtils.getUniqueName(self.side,text[0],'cc')
             codeKName = nameUtils.getUniqueName(self.side,text[1],'cc')
             codeIName = nameUtils.getUniqueName(self.side,text[2],'cc')
             
-            F = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'FK')
-            I = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'I')
+            #create char
+            fText = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'F')
+            fObj = pm.selected()[0]
+            fCc = fObj.getChildren()[0].getChildren()[0]
+            fChar = pm.rename(fCc,codeFName)
+            self.textObj.append(fChar)
             
-            selectionList = pm.ls("curve*")
-            for num,sl in enumerate(selectionList):
-                if num <= 2:
-                    pm.parent(sl,w = 1)   
-                    name = pm.rename(sl,text[num])
-                    pm.setAttr(text[num] + '.overrideEnabled',1)
-                    pm.setAttr(text[num] + '.overrideDisplayType',2)
-                    self.textObj.append(name)
-            pm.delete('Text*')      
+            iText = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'I')
+            iObj = pm.selected()[0]
+            iCc = iObj.getChildren()[0].getChildren()[0]
+            iChar = pm.rename(iCc,codeIName)
+            self.textObj.append(iChar)
             
+            kText = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'K')
+            kObj = pm.selected()[0]
+            kCc = kObj.getChildren()[0].getChildren()[0]
+            kChar = pm.rename(kCc,codeKName)
+            self.textObj.append(kChar)
+            
+            for char in self.textObj:
+                pm.setAttr(char + '.overrideEnabled',1)
+                pm.setAttr(char + '.overrideDisplayType',2)
+                char.setParent(self.control)
+                    
+            pm.delete(fText,iText,kText)      
+             
             pm.move(self.textObj[0],-1,0.6,0)
-            pm.move(self.textObj[1],0,0.6,0)
-            pm.move(self.textObj[2],-0.6,0.6,0)
-            
-            pm.rename(self.textObj[0],codeFName)
-            pm.rename(self.textObj[1],codeKName)
-            pm.rename(self.textObj[2],codeIName)
-            
+            pm.move(self.textObj[1],-0.6,0.6,0)
+            pm.move(self.textObj[2],0,0.6,0)
+
             pm.makeIdentity(self.textObj[0],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
             pm.makeIdentity(self.textObj[1],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
             pm.makeIdentity(self.textObj[2],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
             pm.parent(self.textObj[0],self.control)
             pm.parent(self.textObj[1],self.control)
             pm.parent(self.textObj[2],self.control)
+ 
+        self.__finalizeCc()       
+        self.__colorSet() 
+    
+    def visCtrl(self):
+        self.__buildName()
+        
+        textList = []
+            
+        vText = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'V')
+        vName = nameUtils.getHierachyName('visChar_V','cc')
+        vObj = pm.selected()[0]
+        vCc = vObj.getChildren()[0].getChildren()[0]
+        pm.rename(vCc,vName)
+        pm.move(vCc,-1.5,0.2,0)
+        
+        iText = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'I')
+        iName = nameUtils.getHierachyName('visChar_I','cc')
+        iObj = pm.selected()[0]
+        iCc = iObj.getChildren()[0].getChildren()[0]
+        pm.rename(iCc,iName)
+        pm.move(iCc,-0.2,0.2,0)
+        
+        sText = pm.textCurves(ch = 0,f = 'Goudy Old Style|w700|h-6',t = 'S')
+        sName = nameUtils.getHierachyName('visChar_S','cc')
+        sObj = pm.selected()[0]
+        sCc = sObj.getChildren()[0].getChildren()[0]
+        pm.rename(sCc,sName)
+        pm.move(sCc,0.4,0.2,0)
 
+        textList.append(vCc)
+        textList.append(iCc)
+        textList.append(sCc)
+        
+        self.control = pm.curve(n = self.controlName,d = 1,p = [[1.5,0,0],[1.5,1.8,0],[-1.9,1.8,0],[-1.9,0,0],[1.5,0,0]],k = [0,1,2,3,4])
+        
+        for text in textList:
+            pm.makeIdentity(text,apply = True,t = 1,r = 1,s = 1,n = 0,pn = 1)
+            pm.parent(text.getShape(),self.control,shape = 1,add = 1)   
+        
+        pm.delete(vText,iText,sText)
+        lockAndHideAttr(self.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])
+        
+        
         self.__finalizeCc()       
         self.__colorSet() 
         
