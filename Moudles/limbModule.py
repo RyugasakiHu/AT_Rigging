@@ -151,7 +151,8 @@ class LimbModule(object):
         
         #shoulder jj set
         self.shoulderChain = boneChain.BoneChain(self.baseName + 'Shoulder',self.side,type = 'jj')
-        self.shoulderChain.fromList(self.shoulderGuidePos,self.shoulderGuideRot)  
+        self.shoulderChain.fromList(self.shoulderGuidePos,self.shoulderGuideRot)
+        pm.rename(self.shoulderChain.chain[-1],nameUtils.getUniqueName(self.side,self.baseName + 'Shoulder','je'))
         
         ###########################
         #shoulder Blade set
@@ -161,7 +162,9 @@ class LimbModule(object):
         
         #shoulder jj set
         self.shoulderBladeChain = boneChain.BoneChain(self.baseName + 'ShoulderBlade',self.side,type = 'jj')
-        self.shoulderBladeChain.fromList(self.shoulderBladeGuidePos,self.shoulderBladeGuideRot)         
+        self.shoulderBladeChain.fromList(self.shoulderBladeGuidePos,self.shoulderBladeGuideRot)
+        pm.rename(self.shoulderBladeChain.chain[-1],nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','je'))
+        
         
         ###########################
         
@@ -196,7 +199,7 @@ class LimbModule(object):
         pm.setAttr(self.handSettingCtrl.control + '.__',k = 1,l = 1)
         
         #ori                
-        self.limbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.limbBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jc')
         self.limbBlendChain.fromList(self.limbGuidePos,self.limbGuideRot)
         
         self.blendData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikChain.chain,self.limbBlendChain.chain,
@@ -833,8 +836,8 @@ class LimbModule(object):
             self.cntsGrp.setParent(mainDestinations[0]) 
             self.ribon.main.setParent(mainDestinations[4])
             self.ribon45hp.main.setParent(mainDestinations[4])
-            self.ikChain.lockUpStartLoc.setParent(mainDestinations[1])
-            self.ikChain.stretchStartLoc.setParent(mainDestinations[1])
+#             self.ikChain.lockUpStartLoc.setParent(mainDestinations[1])
+#             self.ikChain.stretchStartLoc.setParent(mainDestinations[1])
             self.ikChain.ikHandle.setParent(mainDestinations[2])
             self.guideGrp.setParent(mainDestinations[5])
             self.locWorld.setParent(mainDestinations[2])
