@@ -123,7 +123,8 @@ class LegModule(object):
         self.hipGuidesRot = [x.getRotation(space = 'world') for x in self.hipGuides]
         
         self.hipChain = boneChain.BoneChain('hip',self.side,type = 'jj')
-        self.hipChain.fromList(self.hipGuidesPos,self.hipGuidesRot)  
+        self.hipChain.fromList(self.hipGuidesPos,self.hipGuidesRot) 
+        pm.rename(self.hipChain.chain[-1],nameUtils.getUniqueName(self.side,'hip','je')) 
         
         #create leg jj
         self.legGuidesPos = [x.getTranslation(space = 'world') for x in self.legGuides]
@@ -170,13 +171,19 @@ class LegModule(object):
         pm.delete(self.fkChain.chain[4].getShape())
         
         #ori chain
-        self.legBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jj')
+        self.legBlendChain = boneChain.BoneChain(self.baseName,self.side,type = 'jc')
         self.legBlendChain.fromList(self.legGuidesPos[0:3] + footPos,self.legGuidesRot)
         self.ikBlendChainData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikBlendChain.chain,self.legBlendChain.chain,
                                                                    self.footSettingCtrl.control,'IKFK',self.baseName,self.side)
-        for num,joint in enumerate(self.legBlendChain.chain,):
-            name = nameUtils.getUniqueName(self.side,self.footNameList[num],'jj')
+        for num,joint in enumerate(self.legBlendChain.chain):
+            name = nameUtils.getUniqueName(self.side,self.footNameList[num],'jc')
             pm.rename(joint,name)
+            
+        #self.footNameList = ['Thigh','Knee','Ankle','Ball','Toe','Heel']       
+        pm.rename(self.legBlendChain.chain[-4],nameUtils.getUniqueName(self.side,self.footNameList[-4],'jj'))
+        pm.rename(self.legBlendChain.chain[-3],nameUtils.getUniqueName(self.side,self.footNameList[-3],'jj'))
+        pm.rename(self.legBlendChain.chain[-2],nameUtils.getUniqueName(self.side,self.footNameList[-2],'je'))
+        pm.rename(self.legBlendChain.chain[-1],nameUtils.getUniqueName(self.side,self.footNameList[-1],'je'))
          
         self.ikBlendChain.chain[-1].setParent(self.ikBlendChain.chain[-4])
         self.fkChain.chain[-1].setParent(self.fkChain.chain[-4])
@@ -640,7 +647,6 @@ class LegModule(object):
 
         self.legGuides[2].v.set(0)       
         
-    
     def __buildHooks(self):
         
         #create and align
@@ -712,7 +718,7 @@ class LegModule(object):
             for tempSpineDestination in spineControls:
                 splitTempSpineDestination = tempSpineDestination.split('.')
                 spineDestinations.append(splitTempSpineDestination[0])
-            print spineDestinations
+
 # [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
             
             #to the hip
@@ -722,12 +728,15 @@ class LegModule(object):
 #             self.poseReadorGrp.setParent(spineDestinations[0])
             
             #to the main hierachy
-            self.legGrp.setParent(mainDestinations[1])
+            self.legGrp.setParent(self.hipCtrl.control)
             self.cntsGrp.setParent(mainDestinations[0]) 
             self.ribon.main.setParent(mainDestinations[4])
             self.ribon45hp.main.setParent(mainDestinations[4])
             self.legGuides[2].setParent(mainDestinations[2])
-#             self.guideGrp.setParent(mainDestinations[5])
+            self.guideGrp.setParent(mainDestinations[5])
+            self.locWorld.setParent(mainDestinations[2])
+            self.__tempSpaceSwitch.setParent(mainDestinations[4])
+            self.hipCtrl.controlGrp.setParent(spineDestinations[0])
             
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
@@ -736,7 +745,6 @@ class LegModule(object):
         else:
             OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
             
-        
         #create package send for next part
         #template:
         #metaUtils.addToMeta(self.meta,'attr', objs)
