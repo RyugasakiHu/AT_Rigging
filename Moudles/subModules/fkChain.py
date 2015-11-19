@@ -89,7 +89,7 @@ class FkChain(boneChain.BoneChain):
             pm.parent(c.control.getShape(),self.chain[i],r=1,s=1)
             
             #lock and hide
-            control.lockAndHideAttr(self.chain[i],["tx","ty","tz","sy","sz"])
+            control.lockAndHideAttr(self.chain[i],["ty","tz","sy","sz",'sx'])
         
         #delete grp   
         for i in range(len(reversedList)):
