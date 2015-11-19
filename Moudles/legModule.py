@@ -312,7 +312,7 @@ class LegModule(object):
         pm.xform(self.ribon.endLoc,ws = 1,matrix = self.legBlendChain.chain[1].worldMatrix.get())
         
         pm.parentConstraint(self.legBlendChain.chain[0],self.ribon.startLoc,mo = 1)
-#         pm.parentConstraint(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.ribon.epUploc,mo = 1)
+        pm.parentConstraint(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.ribon.epUploc,mo = 1)
         
         self.__subCtrlUpper()
         
@@ -338,9 +338,12 @@ class LegModule(object):
                 
         self.ribon45hp.construction()
         
+        #align
         pm.xform(self.ribon45hp.startLoc,ws = 1,matrix = self.legBlendChain.chain[1].worldMatrix.get())
         pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.legBlendChain.chain[2].worldMatrix.get())
         
+        #parentCnst for the ankle
+        self.ribon45hp.endLoc.ry.set(self.ribon45hp.endLoc.ry.get() + 90)
         pm.parentConstraint(self.legBlendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
                 
         self.__subCtrlLower()
