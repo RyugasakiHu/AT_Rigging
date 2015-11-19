@@ -4,26 +4,27 @@ from maya import OpenMaya,cmds
 
 class Ribbon(object):
 
-#     def __init__(self, RibbonName = 'Ribbon',Width = 1.0,Length = 5.0,UVal = 1,VVal = 5):
-    def __init__(self, RibbonName,Width,Length,UVal,VVal,segment = 5,subMid = 0,side = 'm',size = 1,baseName = 'Mid_CC'):        
+#     def __init__(self,RibbonName = 'Ribbon',Width = 1.0,Length = 10.0,segment = 10,subMid = 1):
+    def __init__(self, RibbonName,Length,segment = 5,subMid = 0,side = 'm',size = 1,midCcName = 'Mid_CC'):        
         '''
         initialize para
         '''
         
         self.RibbonName = RibbonName
-        self.Width = Width
+        self.Width = Length / 5
         self.Length = Length
-        self.UVal = UVal
-        self.VVal = VVal
         self.subMid = subMid
         self.side = side
         self.size = size
-        self.baseName = baseName
+        self.midCcName = midCcName
+        self.UVal = 1
+        self.VVal = segment        
         self.segment = segment
         
         self.folList = None
         self.folGrp = None
-                
+        
+        #loc perpare for jc        
         self.startLoc = None
         self.midLoc = None
         self.endLoc = None
@@ -99,7 +100,6 @@ class Ribbon(object):
             follicleTrans.setParent(self.folGrp)
 
         #CREATE JOINTS SNAPPED AND PARENTED TO THE FOLLICLE---
-
         for num,fol in enumerate(self.folList):
             jJoint = pm.joint(n = self.side + '_' + self.RibbonName + '_Rbbn0' + str(num) + '_jj',p = (0,0,0),rad = min(self.Width,self.Length) * .25)
             pm.parent(jJoint,fol)
@@ -143,9 +143,9 @@ class Ribbon(object):
         mpLocUp = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnMp01_up')
          
         #hide shape
-        mpLocPos.getShape().v.set(0)
-        self.mpLocAim.getShape().v.set(0)
-        mpLocUp.getShape().v.set(0)
+#         mpLocPos.getShape().v.set(0)
+#         self.mpLocAim.getShape().v.set(0)
+#         mpLocUp.getShape().v.set(0)
          
         self.midloc = mpLocPos
          
@@ -158,9 +158,9 @@ class Ribbon(object):
         self.epUploc = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnEp01_up')
          
         #hide shape
-        epLocPos.getShape().v.set(0)
-        epLocAim.getShape().v.set(0)
-        self.epUploc.getShape().v.set(0)
+#         epLocPos.getShape().v.set(0)
+#         epLocAim.getShape().v.set(0)
+#         self.epUploc.getShape().v.set(0)
          
         self.endLoc = epLocPos
          
@@ -253,7 +253,7 @@ class Ribbon(object):
 
     def __midCC(self):
         
-        self.subMidCtrl = control.Control(size = self.size,baseName = self.baseName,side = self.side) 
+        self.subMidCtrl = control.Control(size = self.size,baseName = self.midCcName,side = self.side) 
         self.subMidCtrl.circleCtrl()
         pm.setAttr(self.subMidCtrl.controlGrp +'.ry',90)
         #add parent cnst for the mid jc
@@ -261,7 +261,7 @@ class Ribbon(object):
         #add parent cnst for sub grp 
         pm.parentConstraint(self.mpLocAim,self.subMidCtrl.controlGrp,mo = 1)
         
-def getUniqueName(side,basename,suf):
+def getUniqueName(side,baseName,suf):
     
     security = 1000
     
@@ -276,13 +276,12 @@ def getUniqueName(side,basename,suf):
         OpenMaya.MGlobal.displayError('Suffix is not valid')
         return
     
-    name = side + '_' + basename + '_' + str(0) +  '_' + suf
+    name = side + '_' + baseName + '_' + str(0) +  '_' + suf
        
     i = 0
     while (cmds.objExists(name) == 1):
         if(i < security):
             i += 1
-            name = side + '_' + basename + '_' + str(i) +  '_' + suf
+            name = side + '_' + baseName + '_' + str(i) +  '_' + suf
             
     return name    
-        
