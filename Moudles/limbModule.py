@@ -262,6 +262,8 @@ class LimbModule(object):
         pm.xform(self.ribon.endLoc,ws = 1,matrix = self.limbBlendChain.chain[1].worldMatrix.get())
         
         pm.parentConstraint(self.limbBlendChain.chain[0],self.ribon.startLoc,mo = 1)
+        #flip que fix
+        pm.parentConstraint(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.ribon.epUploc,mo = 1)
         
         self.__subCtrlUpper()
         
@@ -287,6 +289,8 @@ class LimbModule(object):
         pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.limbBlendChain.chain[2].worldMatrix.get())
         
         pm.parentConstraint(self.limbBlendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
+        #flip que fix
+        pm.parentConstraint(self.limbBlendChain.chain[1],self.limbBlendChain.chain[2],self.ribon45hp.epUploc,mo = 1)
         
         self.__subCtrlLower()
           
@@ -793,7 +797,7 @@ class LimbModule(object):
     def buildConnections(self):
 
         #reveice info from incoming package
-        if pm.objExists(self.metaMain) == 1:
+        if pm.objExists(self.metaMain) and pm.objExists(self.metaSpine) == 1:
             
             print ''
             print 'Package from (' + self.metaMain + ') has been received'
@@ -850,12 +854,11 @@ class LimbModule(object):
         else:
             OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
             
-        
         #create package send for next part
         #template:
         #metaUtils.addToMeta(self.meta,'attr', objs)
-        metaUtils.addToMeta(self.meta,'controls',[self.handSettingCtrl.control] + [self.ikChain.ikCtrl.control,self.ikChain.poleVectorCtrl.control]
-                             + [fk for fk in self.fkChain.chain])
+        metaUtils.addToMeta(self.meta,'controls',[self.handSettingCtrl.control])
+#          ([self.ikChain.ikCtrl.control,self.ikChain.poleVectorCtrl.control] + [fk for fk in self.fkChain.chain])
         metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
         
