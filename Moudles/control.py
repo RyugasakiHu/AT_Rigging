@@ -107,30 +107,7 @@ class Control(object):
             pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
             
         self.__finalizeCc()       
-        self.__colorSet()      
-        
-    def shoulderCtrl(self,axis):
-         
-        self.__buildName()
-        
-        if self.controlName :
-            
-            dic = [0,0,0]
-            
-            if axis == 'x':
-                dic = [1,0,0]
-                
-            elif axis == 'y':
-                dic = [0,1,0]
-                
-            elif axis == 'z':
-                dic = [0,0,1]
-                
-            self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = dic,r = self.size)[0]
-            #self.control = mc.circle(n = self.controlName,ch = 0,o = 1,nr = (1,0,0))
-
-        self.__finalizeCc()       
-        self.__colorSet()         
+        self.__colorSet()            
         
     def bodyCtrl(self):
 
@@ -160,10 +137,21 @@ class Control(object):
                     coords.append(coord)
             
             insideCircle = pm.circle(name = self.controlName,ch = 1,o = 1 ,nr = dic,r = self.size)
-
+            arrow = pm.curve(n = self.controlName + 'Arrow',d = 1 ,p = [[0,4,0],[-2,0,0],[0,1,0],[2,0,0],[0,4,0]],k = [0,1,2,3,4])
+            pm.move(0,2,0,arrow + '.rotatePivot')
+            pm.move(0,2,0,arrow + '.scalePivot')
+            pm.move(0,-2,0,arrow)
+#             arrow.r.set(90 * dic[0],90 * dic[1],90 * dic[1])
+            arrow.s.set(0.35,0.35,0.35)
+            pm.makeIdentity(arrow,apply = True, t = 1,r = 1 ,s = 1,n = 0,pn = 1)
+            arrowObj = pm.selected()
+            pm.parent(arrowObj[0].getShape(),insideCircle,shape = 1,add = 1)
+            pm.delete(arrowObj[0])
+            
+            
             outsideCircleF = pm.circle(name = self.controlName + 'Front',ch = 0,o = 1 ,nr = dic,r = self.size * 3 / 4)
             outsideCircleB = pm.circle(name = self.controlName + 'Back',ch = 0,o = 1 ,nr = dic,r = self.size * 3 / 4)
-             
+            
             pm.move(coords[0],coords[1],coords[2],outsideCircleF[0].getShape().cv,r = 1)
             pm.parent(outsideCircleF[0].getShape(),insideCircle,shape = 1,add = 1)
             pm.delete(outsideCircleF)
@@ -302,7 +290,7 @@ class Control(object):
         self.__finalizeCc()       
         self.__colorSet() 
         
-    def ifkSwitch(self):
+    def arrow(self):
 
         self.__buildName()
         if not self.controlName :
@@ -340,15 +328,29 @@ class Control(object):
         
         if not self.controlName :
             return 
-        line = pm.curve(d = 1,p = [(0,0,0),(0.8,0,0)], k = [0,1],n = self.controlName)
-        circle = pm.circle(ch = 1,o = True,nr = (0,1,0),r=0.1)[0]
         
-        pm.move(0.9,0,0,circle.getShape().cv,r = 1)
-        pm.parent(circle.getShape(),line,shape = 1,add = 1)    
-         
-        pm.delete(circle)
-        pm.select(cl = 1)    
+        if self.aimAxis == 'x':
+            dic = [1,0,0]
+            
+        elif self.aimAxis == 'y':
+            dic = [0,1,0]
+            
+        elif self.aimAxis == 'z':
+            dic = [0,0,1] 
         
+        line = pm.curve(d = 1,p = [(0,0,0),(dic[0],dic[1],dic[2])], k = [0,1],n = self.controlName)
+        circleH = pm.circle(ch = 1,o = True,nr = (dic[1],dic[2],dic[0]),r = 0.2)[0]
+        circleV = pm.circle(ch = 1,o = True,nr = (dic[2],dic[0],dic[1]),r = 0.2)[0]
+        
+        pm.move(dic[0] * 1.2,dic[1] * 1.2,dic[2] * 1.2,circleH.getShape().cv,r = 1)
+        pm.parent(circleH.getShape(),line,shape = 1,add = 1)    
+        
+        pm.move(dic[0] * 1.2,dic[1] * 1.2,dic[2] * 1.2,circleV.getShape().cv,r = 1)
+        pm.parent(circleV.getShape(),line,shape = 1,add = 1)   
+        
+        pm.delete(circleH)
+        pm.delete(circleV)
+        pm.setAttr(line + '.scale',self.size,self.size,self.size)
         self.control = line
         
         self.__finalizeCc()
