@@ -675,8 +675,8 @@ class LimbModule(object):
           
         poseMain.ry.connect(prMultipleNode.input1Y)
         poseMain.rz.connect(prMultipleNode.input1Z)
-        prMultipleNode.input2Y.set(2)
-        prMultipleNode.input2Z.set(2)
+        prMultipleNode.input2Y.set(-2)
+        prMultipleNode.input2Z.set(-2)
         prMultipleNode.outputY.connect(poseTwistGrp.ry)
         prMultipleNode.outputZ.connect(poseTwistGrp.rz)
           
@@ -689,9 +689,9 @@ class LimbModule(object):
         poseTwistMain.rx.connect(self.shoulderAtChain.chain[0].pose_twist)
           
         #reconnect
-        self.shoulderAtChain.chain[0].pose_bend.connect(multipleNode.input1X)
-        self.shoulderAtChain.chain[0].pose_side.connect(multipleNode.input1Y)
-        self.shoulderAtChain.chain[0].pose_twist.connect(multipleNode.input1Z)
+        self.shoulderAtChain.chain[0].pose_bend.connect(multipleNode.input1Y)
+        self.shoulderAtChain.chain[0].pose_side.connect(multipleNode.input1Z)
+#         self.shoulderAtChain.chain[0].pose_twist.connect(multipleNode.input1X)
           
         #clean
         self.poseReadorGrp.v.set(0)
