@@ -55,8 +55,11 @@ class Control(object):
                 dic = [0,0,1] 
                 
             self.control = pm.circle(name = self.controlName,ch = 1,o = 1 ,nr = dic,r = self.size)[0]
+            line = pm.curve(d = 1,p = [(-dic[1],-dic[2],-dic[0]),(dic[1],dic[2],dic[0])], k = [0,1],n = nameUtils.getUniqueName(self.side,'circleV','cc'))
+            pm.parent(line.getShape(),self.control,shape = 1,add = 1)
             self.control.s.set(self.size,self.size,self.size)
-            
+            pm.delete(line)
+                 
         self.__finalizeCc()       
         self.__colorSet() 
         
@@ -339,8 +342,8 @@ class Control(object):
             dic = [0,0,1] 
         
         line = pm.curve(d = 1,p = [(0,0,0),(dic[0],dic[1],dic[2])], k = [0,1],n = self.controlName)
-        circleH = pm.circle(ch = 1,o = True,nr = (dic[1],dic[2],dic[0]),r = 0.2)[0]
-        circleV = pm.circle(ch = 1,o = True,nr = (dic[2],dic[0],dic[1]),r = 0.2)[0]
+        circleH = pm.circle(ch = 1,o = True,nr = (dic[1],dic[2],dic[0]),r = 0.2,n = nameUtils.getUniqueName(self.side,'circleH','cc'))[0]
+        circleV = pm.circle(ch = 1,o = True,nr = (dic[2],dic[0],dic[1]),r = 0.2,n = nameUtils.getUniqueName(self.side,'circleV','cc'))[0]
         
         pm.move(dic[0] * 1.2,dic[1] * 1.2,dic[2] * 1.2,circleH.getShape().cv,r = 1)
         pm.parent(circleH.getShape(),line,shape = 1,add = 1)    
@@ -352,6 +355,7 @@ class Control(object):
         pm.delete(circleV)
         pm.setAttr(line + '.scale',self.size,self.size,self.size)
         self.control = line
+        pm.delete(self.control,ch = 1)
         
         self.__finalizeCc()
         self.__colorSet()    
@@ -447,4 +451,4 @@ def addFloatAttr(objName,attrs,minV,maxV):
         
 # from Modules import control
 # cnt = control.Control(side = 'r',baseName = 'aaa',size = 1.5)
-# cnt.circleCtrl()        
+# cnt.circleCtrl()
