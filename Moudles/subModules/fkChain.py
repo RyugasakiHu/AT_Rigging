@@ -52,10 +52,12 @@ class FkChain(boneChain.BoneChain):
     def __addControls(self,skipLast = 1):
         
         for i in range(self.chainLength()):
+            
             #the last loop condition
             if skipLast == 1:
                 if i ==(self.chainLength() - 1):
                     return
+                
             #create control for each one    
             cntClass = control.Control(self.side,self.baseName,self.size) 
             cntClass.circleCtrl()
@@ -85,11 +87,14 @@ class FkChain(boneChain.BoneChain):
         reversedList.reverse()
           
         #parent shape        
-        for i,c in enumerate(self.controlsArray):
-            pm.parent(c.control.getShape(),self.chain[i],r=1,s=1)
+        for num,ctrl in enumerate(self.controlsArray):
+            
+#             for shape in ctrl.control.getShapes():
+#                 pm.parent(shape,self.chain[num],r=1,s=1)
+            pm.parent(ctrl.control.getShape(),self.chain[num],r=1,s=1)
             
             #lock and hide
-            control.lockAndHideAttr(self.chain[i],["ty","tz","sy","sz",'sx'])
+            control.lockAndHideAttr(self.chain[num],["ty","tz","sy","sz",'sx'])
         
         #delete grp   
         for i in range(len(reversedList)):
