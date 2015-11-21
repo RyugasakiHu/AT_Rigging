@@ -420,26 +420,38 @@ class LimbModule(object):
     def __shoulderCtrl(self):
         
         #add Ctrl 
-        self.shoulderCtrl = control.Control(self.side,self.baseName + 'Shoulder',self.size) 
-        self.shoulderCtrl.shoulderCtrl(axis = 'y') 
+        self.shoulderCtrl = control.Control(self.side,self.baseName + 'Shoulder',self.size,aimAxis = 'y') 
+        self.shoulderCtrl.pinCtrl() 
         
         #align
-        posArray = self.shoulderChain.chain[0]
-        pm.xform(self.shoulderCtrl.controlGrp,ws = 1,matrix = posArray.worldMatrix.get())
-        pm.setAttr(self.shoulderCtrl.controlGrp + '.tz',-self.shoulderChain.chain[1].tx.get())
+        posArraySpJj = self.shoulderChain.chain[0]
+        posArrayEpJj = self.shoulderChain.chain[1]
+        
+        posArraySp = posArraySpJj.worldMatrix.get()
+        posArrayEp = posArrayEpJj.worldMatrix.get()
+        
+        pm.xform(self.shoulderCtrl.controlGrp,ws = 1,matrix = posArraySp)
+        self.shoulderCtrl.control.sy.set(-1)
+        
+        sdCvOffset = posArraySp[-1][0] - posArrayEp[-1][0]
+        
+        for shape in self.shoulderCtrl.control.getShapes():
+            pm.move(-sdCvOffset,posArraySp[-1][1],posArraySp[-1][2],shape)
+        
+        pm.makeIdentity(self.shoulderCtrl.control,apply = True,t = 1,r = 0,s = 1,n = 0,pn = 1)    
         control.lockAndHideAttr(self.shoulderCtrl.control,['sx','sy','sz','rx','v'])
         
         #clean
         self.shoulderChain.chain[0].setParent(self.shoulderCtrl.control)
-         
+          
         #AT shoulder
         #add attr
         control.addFloatAttr(self.shoulderCtrl.control,['follow_ik'],0,1)
-         
+          
         #create AT joint 
         self.shoulderAtChain = boneChain.BoneChain(self.baseName + 'AtSd',self.side,type = 'jc')
         self.shoulderAtChain.fromList(self.limbGuidePos,self.limbGuideRot)
-         
+          
         #create ikHandle:
         atIkName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','iks')
         self.ikAtHandle,self.ikAtEffector = pm.ikHandle(sj = self.shoulderAtChain.chain[0],
@@ -447,16 +459,16 @@ class LimbModule(object):
         self.ikAtHandle.setParent(self.ikChain.ikCtrl.control)
         pm.poleVectorConstraint(self.ikChain.poleVectorCtrl.control,atIkName,w = 1)
         self.ikAtHandle.v.set(0)
-         
+          
         #connect to the shoulder
         #node name
         remapColorNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','RC')
         multipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','MDN')
-         
+          
         #create node
         remapColorNode = pm.createNode('remapColor',n = remapColorNodeName)
         multipleNode = pm.createNode('multiplyDivide',n = multipleNodeName)
-         
+          
         #parpare to connect
         self.shoulderBriGrp = pm.group(self.shoulderCtrl.control,
                                        n = nameUtils.getUniqueName(self.side,self.baseName + 'BriAtSd','grp'))
@@ -467,9 +479,9 @@ class LimbModule(object):
         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderCtrl.control + '.scalePivot')        
         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderCtrl.controlGrp + '.rotatePivot')
         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderCtrl.controlGrp + '.scalePivot')          
-         
+          
         self.shoulderBriGrp.setParent(self.shoulderCtrl.controlGrp)        
-         
+          
         #connect
         self.shoulderCtrl.control.follow_ik.connect(multipleNode.input2X)
         self.shoulderCtrl.control.follow_ik.connect(multipleNode.input2Y)
@@ -481,15 +493,15 @@ class LimbModule(object):
         multipleNode.outputX.connect(remapColorNode.colorR)
         multipleNode.outputY.connect(remapColorNode.colorG)
         multipleNode.outputZ.connect(remapColorNode.colorB)
-         
+          
         remapColorNode.outColor.outColorG.connect(self.shoulderBriGrp.ry)
         remapColorNode.outColor.outColorB.connect(self.shoulderBriGrp.rz)
-         
+          
         remapColorNode.inputMin.set(-90)
         remapColorNode.inputMax.set(90)
         remapColorNode.outputMin.set(-45)
         remapColorNode.outputMax.set(45)
-         
+          
         remapColorNode.green[0].green_FloatValue.set(0.25)
         remapColorNode.green[0].green_Position.set(0)
         remapColorNode.green[1].green_FloatValue.set(0.6)
@@ -497,7 +509,7 @@ class LimbModule(object):
         remapColorNode.green[2].green_FloatValue.set(0.5)
         remapColorNode.green[2].green_Position.set(0.5)
         remapColorNode.green[2].green_Interp.set(1)
-         
+          
         remapColorNode.blue[0].blue_FloatValue.set(0.15)
         remapColorNode.blue[0].blue_Position.set(0)
         remapColorNode.blue[1].blue_FloatValue.set(0.6)
@@ -508,29 +520,29 @@ class LimbModule(object):
         remapColorNode.blue[3].blue_FloatValue.set(0.3)
         remapColorNode.blue[3].blue_Position.set(0.25)      
         remapColorNode.blue[3].blue_Interp.set(1)   
-         
+          
         #shoulderBlade
         #initial
         pm.select(cl = 1)
         self.shoulderBladeGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','grp'))
-        pm.xform(self.shoulderBladeGrp,ws = 1,matrix = posArray.worldMatrix.get())
+        pm.xform(self.shoulderBladeGrp,ws = 1,matrix = posArraySp)
         pm.select(cl = 1)
         self.shoulderBladeBriGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade_Bri','grp'))
-        pm.xform(self.shoulderBladeBriGrp,ws = 1,matrix = posArray.worldMatrix.get())
+        pm.xform(self.shoulderBladeBriGrp,ws = 1,matrix = posArraySp)
         self.shoulderBladeBriGrp.setParent(self.shoulderBladeGrp)
         self.shoulderBladeChain.chain[0].setParent(self.shoulderBladeBriGrp)
 #         pm.select(self.shoulderBladeChain.chain[0])
 #         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBladeChain.chain[0] + '.rotatePivot')
 #         pm.move(briPos[0],briPos[1],briPos[2],self.shoulderBladeChain.chain[0] + '.scalePivot')
-         
+          
         #node name
         remapValueShoulderFBNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderFwBk','RV')
         remapValueShoulderUDNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderUpDn','RV')
-         
+          
         #create Node
         remapValueShoulderFBNode = pm.createNode('remapValue',n = remapValueShoulderFBNodeName)
         remapValueShoulderUDNode = pm.createNode('remapValue',n = remapValueShoulderUDNodeName)
-         
+          
         #connect
         #FB
 #         self.shoulderCtrl.control.rz.connect(remapValueShoulderFBNode.inputValue)
@@ -539,13 +551,13 @@ class LimbModule(object):
         remapValueShoulderFBNode.outputMin.set(-90)
         remapValueShoulderFBNode.outputMax.set(90)
         remapValueShoulderFBNode.outValue.connect(self.shoulderBladeBriGrp.rz)
- 
+  
         remapValueShoulderFBNode.value[1].value_FloatValue.set(0.75)
         remapValueShoulderFBNode.value[1].value_Position.set(1)                                                        
         remapValueShoulderFBNode.value[2].value_FloatValue.set(0.5)
         remapValueShoulderFBNode.value[2].value_Position.set(0.5)
         remapValueShoulderFBNode.value[2].value_Interp.set(1)        
-         
+          
         #UD
 #         self.shoulderCtrl.control.ry.connect(remapValueShoulderUDNode.inputValue)
         remapValueShoulderUDNode.inputMin.set(-90)
@@ -553,155 +565,155 @@ class LimbModule(object):
         remapValueShoulderUDNode.outputMin.set(float(self.shoulderChain.chain[-1].tx.get() / 4))
         remapValueShoulderUDNode.outputMax.set(-float(self.shoulderChain.chain[-1].tx.get() / 4))
         remapValueShoulderUDNode.outValue.connect(self.shoulderBladeBriGrp.tz)
- 
+  
         remapValueShoulderUDNode.value[1].value_FloatValue.set(0.75)
         remapValueShoulderUDNode.value[1].value_Position.set(1)                                                        
         remapValueShoulderUDNode.value[2].value_FloatValue.set(0.5)
         remapValueShoulderUDNode.value[2].value_Position.set(0.5)
         remapValueShoulderUDNode.value[2].value_Interp.set(1)     
-         
+          
         #connect to the AT
         #create PMA node
         plusMinusAverageAtSdNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','PMA')
-         
+          
         #create Node 
         plusMinusAverageAtSdNode = pm.createNode('plusMinusAverage',n = plusMinusAverageAtSdNodeName)
-         
+          
         #connect
         self.shoulderCtrl.control.rx.connect(plusMinusAverageAtSdNode.input3D[0].input3Dx)
         self.shoulderCtrl.control.ry.connect(plusMinusAverageAtSdNode.input3D[0].input3Dy)
         self.shoulderCtrl.control.rz.connect(plusMinusAverageAtSdNode.input3D[0].input3Dz)
         self.shoulderBriGrp.ry.connect(plusMinusAverageAtSdNode.input3D[1].input3Dy)
         self.shoulderBriGrp.rz.connect(plusMinusAverageAtSdNode.input3D[1].input3Dz)
-         
+          
         plusMinusAverageAtSdNode.output3D.output3Dy.connect(remapValueShoulderUDNode.inputValue)
         plusMinusAverageAtSdNode.output3D.output3Dz.connect(remapValueShoulderFBNode.inputValue)
-         
+          
         ##############
         #chest clean 
 #         self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
 #         self.chestGrp.setParent(self.hi.SKL)
 #         self.shoulderCtrl.controlGrp.setParent(self.chestGrp)
 #         self.shoulderAtChain.chain[0].setParent(self.chestGrp)
-         
+          
         ############
         #pose Reador
-         
+          
         #set main Loc
         poseMain = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorMain','loc'))
         poseMain.overrideEnabled.set(1)
         poseMain.overrideColor.set(16)
-         
+          
         poseUp = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorUp','loc'))
         poseUp.localScale.set(0.5,0.5,0.5)
         poseUp.overrideEnabled.set(1)
         poseUp.overrideColor.set(16)
-         
+          
         poseTar = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTar','loc'))
         poseTar.localScale.set(0.25,0.25,0.25)
         poseTar.overrideEnabled.set(1)
         poseTar.overrideColor.set(16)
-        
+         
         #set twist loc
         poseTwistMain = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistMain','loc'))
         poseTwistMain.overrideEnabled.set(1)
         poseTwistMain.overrideColor.set(4)
-        
+         
         poseTwistUp = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistUp','loc'))
         poseTwistUp.localScale.set(0.5,0.5,0.5)
         poseTwistUp.overrideEnabled.set(1)
         poseTwistUp.overrideColor.set(4)
-        
+         
         poseTwistTar = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwistTar','loc'))
         poseTwistTar.localScale.set(0.25,0.25,0.25)
         poseTwistTar.overrideEnabled.set(1)
         poseTwistTar.overrideColor.set(4) 
-        
+         
         pm.setAttr(poseMain + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
         pm.setAttr(poseTar + '.tx',float(self.shoulderAtChain.chain[1].tx.get() / 4))
         pm.setAttr(poseUp + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
         pm.setAttr(poseUp + '.ty',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
-        
+         
         #create grp
         #main
         self.poseReadorGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorMain','grp'))
-        
+         
         poseMain.setParent(self.poseReadorGrp)
         poseTar.setParent(self.poseReadorGrp)
         poseUp.setParent(self.poseReadorGrp)
-        
+         
         poseTwistUp.setParent(self.poseReadorGrp)
         poseTwistMain.setParent(self.poseReadorGrp)        
         poseTwistTar.setParent(self.poseReadorGrp)
-                  
+                   
         pm.xform(self.poseReadorGrp,ws = 1,matrix = self.limbBlendChain.chain[0].worldMatrix.get())
         self.poseReadorGrp.setParent(self.shoulderAtChain.chain[0])
         self.poseReadorGrp.t.set(0,0,0)
         self.poseReadorGrp.r.set(0,0,0)
-        
+         
         pm.aimConstraint(poseTar,poseMain,offset = [0,0,0],w = 1,aimVector = [1,0,0],upVector = [0,-1,0],
                          worldUpType = 'object',worldUpObject = poseUp)        
-
+ 
         #twist
         pm.setAttr(poseTwistTar + '.ty',float(-self.shoulderAtChain.chain[1].tx.get() / 4))
         pm.setAttr(poseTwistUp + '.tx',float(-self.shoulderAtChain.chain[1].tx.get() / 8))
-          
+           
         pm.aimConstraint(poseTwistTar,poseTwistMain,offset = [0,0,0],w = 1,aimVector = [0,-1,0],upVector = [-1,0,0],
                         worldUpType = 'object',worldUpObject = poseTwistUp)
-          
+           
         #connect 
 #         self.poseReadorGrp.setParent(self.chestGrp)
         postTarGrp = pm.group(poseTar,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTar','grp'))
-          
+           
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
                 self.limbBlendChain.chain[0].tz.get(),postTarGrp + '.rotatePivot')
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
                 self.limbBlendChain.chain[0].tz.get(),postTarGrp + '.scalePivot')
-          
+           
         postTarGrp.setParent(self.shoulderAtChain.chain[0])
         poseTwistTar.setParent(postTarGrp)
         poseTwistGrp = pm.group(poseTwistUp,poseTwistMain,n = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorTwist','grp'))
-          
+           
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
                 self.limbBlendChain.chain[0].tz.get(),poseTwistGrp + '.rotatePivot')
         pm.move(self.limbBlendChain.chain[0].tx.get(),self.limbBlendChain.chain[0].ty.get(),
                 self.limbBlendChain.chain[0].tz.get(),poseTwistGrp + '.scalePivot')        
-          
+           
         #multiple node name
         prMultipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'PoseReadorBri','MDN')
-          
+           
         #create Node
         prMultipleNode = pm.createNode('multiplyDivide',n = prMultipleNodeName)
-          
+           
         poseMain.ry.connect(prMultipleNode.input1Y)
         poseMain.rz.connect(prMultipleNode.input1Z)
         prMultipleNode.input2Y.set(-2)
         prMultipleNode.input2Z.set(-2)
         prMultipleNode.outputY.connect(poseTwistGrp.ry)
         prMultipleNode.outputZ.connect(poseTwistGrp.rz)
-          
+           
         control.addFloatAttr(self.shoulderAtChain.chain[0],
                              ['pose_bend','pose_side','pose_twist'],-3600,3600) 
-          
+           
         #get correct value
         prMultipleNode.outputY.connect(self.shoulderAtChain.chain[0].pose_bend)
         prMultipleNode.outputZ.connect(self.shoulderAtChain.chain[0].pose_side)
         poseTwistMain.rx.connect(self.shoulderAtChain.chain[0].pose_twist)
-          
+           
         #reconnect
         self.shoulderAtChain.chain[0].pose_bend.connect(multipleNode.input1Y)
         self.shoulderAtChain.chain[0].pose_side.connect(multipleNode.input1Z)
 #         self.shoulderAtChain.chain[0].pose_twist.connect(multipleNode.input1X)
-          
+           
         #clean
         self.poseReadorGrp.v.set(0)
         postTarGrp.v.set(0)  
-          
+           
     def __cleanUp(self):
-         
+          
         #add cc ctrl
         control.addFloatAttr(self.handSettingCtrl.control,['CC'],0,1) 
-         
+          
         #ccDef grp and v
         self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp')) 
         self.subMidCtrlShoulderElbow.controlGrp.setParent(self.ccDefGrp)
@@ -709,42 +721,42 @@ class LimbModule(object):
         self.subMidCtrlElbow.controlGrp.setParent(self.ccDefGrp)
         self.handSettingCtrl.control.CC.set(0)
         self.handSettingCtrl.control.CC.connect(self.ccDefGrp.v)
-         
+          
         #cc hierarchy        
         self.cntsGrp = pm.group(self.ikChain.ikCtrl.controlGrp,
                                 n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp'))
-         
- 
+          
+  
         self.ccDefGrp.setParent(self.cntsGrp)
 #         self.cntsGrp.setParent(self.hi.CC) 
         self.handSettingCtrl.controlGrp.setParent(self.cntsGrp)    
-                 
+                  
         if self.solver == 'ikRPsolver':
             pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)        
-         
+          
         #ribbon hierarchy   
         self.ribon.main.v.set(0)
         self.ribon45hp.main.v.set(0)
-         
+          
         #ik stretch loc vis
         self.ikChain.stretchStartLoc.v.set(0)
         self.ikChain.lockUpStartLoc.v.set(0)
- 
+  
         #jj grp
         self.limbGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
-        
+         
         self.ikChain.lockUpStartLoc.setParent(self.limbGrp)
         self.ikChain.stretchStartLoc.setParent(self.limbGrp)
-        
+         
         armInitial =  self.limbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(armInitial[0],armInitial[1],armInitial[2],self.limbGrp + '.rotatePivot')
         pm.move(armInitial[0],armInitial[1],armInitial[2],self.limbGrp + '.scalePivot')
-         
+          
         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
             b.chain[0].setParent(self.limbGrp)
-        
+         
         self.limbGrp.setParent(self.shoulderCtrl.control)
-        
+         
 #         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
 #             b.chain[0].setParent(self.bonesGrp)
 #          
@@ -753,41 +765,41 @@ class LimbModule(object):
 #              
 #         self.mainGrp = pm.group(self.bonesGrp,self.cntsGrp,self.handSettingCtrl,
 #                                 n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))   
-
+ 
     def __buildHooks(self):
-
+ 
         #create and align
         worldName = nameUtils.getUniqueName(self.side,self.baseName + 'World','loc')
         self.locWorld = pm.spaceLocator(n = worldName)
         self.locWorld.v.set(0)
-          
+           
         localName = nameUtils.getUniqueName(self.side,self.baseName + 'Local','loc')
         self.locLocal = pm.spaceLocator(n = localName)
         self.locLocal.v.set(0)
-          
+           
         pm.xform(self.locWorld,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
         pm.xform(self.locLocal,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
-        
+         
         self.locWorld.r.set(0,0,0)
         self.locLocal.r.set(0,0,0)
-         
+          
         self.locLocal.setParent(self.shoulderChain.chain[-1])
         pm.parentConstraint(self.shoulderCtrl.control,self.locWorld,skipRotate = ['x','y','z'],mo = 1)
-          
+           
         self.fkChain.chain[0].addAttr('space',at = 'enum',en = 'world:local:',k = 1)
-          
+           
         #add target tester
         targetName = nameUtils.getUniqueName(self.side,self.baseName + 'Tar','loc')
         self.__tempSpaceSwitch = pm.spaceLocator(n = targetName)
         pm.xform(self.__tempSpaceSwitch,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
 #         self.__tempSpaceSwitch.setParent(self.hi.XTR)
         self.__tempSpaceSwitch.v.set(0)
-   
+    
         #final cnst
         finalCnst = pm.parentConstraint(self.locLocal,self.locWorld,self.__tempSpaceSwitch,mo = 1)
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Hook','REV')
         reverseNode = pm.createNode('reverse',n = reverseNodeName)
-           
+            
         #fk cnst
         pm.parentConstraint(self.__tempSpaceSwitch,self.limbGrp,mo = 1)
         self.fkChain.chain[0].attr('space').connect(finalCnst.attr(self.locLocal.name() + 'W0'))
