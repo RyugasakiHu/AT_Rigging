@@ -951,7 +951,7 @@ class LimbModuleUi(object):
         
         self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,text = 'spineMeta')        
         self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,text = 'mainMeta')
-        
+        self.ver2Loc = pm.button(l = 'ver2Loc',c = self.__clusLoc)
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         pm.separator(h = 10)
         
@@ -978,3 +978,24 @@ class LimbModuleUi(object):
 #                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,mirror = mirrorC)                
         
         return self.__pointerClass
+    
+    def __clusLoc(self,*arg):
+        
+        '''create a clus base on edges'''        
+        sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
+        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
+
+        #sl edges
+        edges = pm.selected(flatten = True)
+        #convert to edges
+        verts = list(set(sum([list(e.connectedVertices()) for e in edges],[])))
+
+        #create clus
+        clusShp,clusTras = pm.cluster(verts)
+          
+        helpCtrl = control.Control(side = sideT,baseName = baseNameT + 'Pos',size = cntSizeV)
+        helpCtrl.solidSphereCtrl()
+        pcn = pm.pointConstraint(clusTras,helpCtrl.controlGrp, mo = False)
+        pm.delete(pcn)
+        pm.delete(clusTras)    
