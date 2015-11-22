@@ -55,6 +55,27 @@ class Control(object):
                 dic = [0,0,1] 
                 
             self.control = pm.circle(name = self.controlName,ch = 1,o = 1 ,nr = dic,r = self.size)[0]
+            self.control.s.set(self.size,self.size,self.size)
+                 
+        self.__finalizeCc()       
+        self.__colorSet()     
+        
+    def circleSplitCtrl(self):
+         
+        self.__buildName()
+        
+        if self.controlName :
+            
+            if self.aimAxis == 'x':
+                dic = [1,0,0]
+                
+            elif self.aimAxis == 'y':
+                dic = [0,1,0]
+                
+            elif self.aimAxis == 'z':
+                dic = [0,0,1] 
+                
+            self.control = pm.circle(name = self.controlName,ch = 1,o = 1 ,nr = dic,r = self.size)[0]
             line = pm.curve(d = 1,p = [(-dic[1],-dic[2],-dic[0]),(dic[1],dic[2],dic[0])], k = [0,1],n = nameUtils.getUniqueName(self.side,'circleV','cc'))
             pm.parent(line.getShape(),self.control,shape = 1,add = 1)
             self.control.s.set(self.size,self.size,self.size)
