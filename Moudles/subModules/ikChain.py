@@ -4,26 +4,23 @@ from maya import cmds , OpenMaya
 from Modules import control
 from Utils import nameUtils
 
-#ik pc
-
 class IkChain(boneChain.BoneChain):
 
-    def __init__(self, baseName = 'arm',side = 'c',size = 1,solver = 'ikSCsolver',
+    def __init__(self, baseName = 'arm',side = 'm',size = 1,solver = 'ikSCsolver',
                  controlOrient = [0,0,0],type = 'ikSC'):    
         '''
         Constructor
         '''
-        
+        #init
         self.baseName = baseName
         self.side = side
         self.size = size
         self.solver = solver
         self.controlOrient = controlOrient
         self.type = type
-        
         self.__acceptedSolvers = ['ikSCsolver','ikRPsolver']
-        self.__accpetedskipLast = [0,1]
         
+        #cc
         self.ikCtrl = None
         self.poleVectorCtrl = None
         self.ikHandle = None
@@ -36,6 +33,7 @@ class IkChain(boneChain.BoneChain):
         self.stretchEndLoc = None
         self.stretchData = None
         self.stretchBlendcolorNode = None
+        self.length = None
         
         #elbow data
         self.armLockData = ['armElbow','elbowWrist','EBlock']
@@ -43,8 +41,7 @@ class IkChain(boneChain.BoneChain):
         self.lockUpStartLoc = None
         self.lockUpEndLoc = None
   
-        
-        boneChain.BoneChain.__init__(self, baseName, side,type = self.type)
+        boneChain.BoneChain.__init__(self,baseName,side,type = self.type)
         
     def fromList(self,posList = [],orientList = [],autoOrient = 1):
         '''
@@ -58,6 +55,7 @@ class IkChain(boneChain.BoneChain):
             return
 
         boneChain.BoneChain.fromList(self, posList, orientList, autoOrient)
+        
         #create ctrl:
         self.__addControls() 
         
@@ -83,7 +81,7 @@ class IkChain(boneChain.BoneChain):
 
         #create control  
         self.ikCtrl = control.Control(self.side,self.baseName + self.type,self.size) 
-        self.ikCtrl.circleCtrl()
+        self.ikCtrl.circleSplitCtrl()
         self.ikCtrl.controlGrp.rotate.set(self.controlOrient)
         
         #snap to the last joint matrix = self.chain[i].worldMatrix.get()
@@ -92,14 +90,16 @@ class IkChain(boneChain.BoneChain):
         control.lockAndHideAttr(self.ikCtrl.control,["sx","sy","sz","v"])
         
         #add stretch attr
-        control.addSwitchAttr(self.ikCtrl.control,['stretch'])
+        control.addFloatAttr(self.ikCtrl.control,['stretch'],0,1)
         
         if self.type == 'ikRP':
             #create control      
             self.poleVectorCtrl = control.Control(self.side,self.baseName + 'pv',self.size) 
-            self.poleVectorCtrl.poleCtrl()
+            self.poleVectorCtrl.cubeCtrl()
             self.poleVectorCtrl.controlGrp.rotate.set(self.controlOrient)
-            control.addSwitchAttr(self.poleVectorCtrl.control,['elbow_lock'])
+            self.poleVectorCtrl.control.s.set(self.size / 4,self.size / 4,self.size / 4)
+            pm.makeIdentity(self.poleVectorCtrl.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
+            control.addFloatAttr(self.poleVectorCtrl.control,['elbow_lock'],0,1)
             
             #get joint info 
             startJoint = self.chain[0]
@@ -130,11 +130,29 @@ class IkChain(boneChain.BoneChain):
             startEndN = startEnd.normal()
             projV = startEndN * proj
             arrowV = startMid - projV
-            arrowV *= 1 
+            arrowV *= 50
             finalV = arrowV + midV
             
             #place pole vector
             pm.xform(self.poleVectorCtrl.controlGrp,ws = 1,t= (finalV.x , finalV.y ,finalV.z))
+            
+            #aim curve
+            ikBeamCurve = pm.curve(d = 1,p = [self.poleVectorCtrl.control.getTranslation(space = 'world'),
+                                              self.chain[1].getTranslation(space = 'world')],k = [0,1],
+                                    n = nameUtils.getUniqueName(self.side,'beam','cc'))
+            ikBeamCurve.overrideEnabled.set(1)
+            ikBeamCurve.overrideDisplayType.set(1)
+            
+            #cls
+            beamClusterStart = pm.cluster(ikBeamCurve.cv[0])
+            pm.rename(beamClusterStart[1].name(),nameUtils.getUniqueName(self.side,'beam' + 'Start','cls'))
+            beamClusterStart[1].setParent(self.poleVectorCtrl.control)
+            beamClusterStart[1].v.set(0)
+            
+            beamClusterEnd = pm.cluster(ikBeamCurve.cv[1])
+            pm.rename(beamClusterEnd[1].name(),nameUtils.getUniqueName(self.side,'beam' + 'End','cls'))
+            beamClusterEnd[1].setParent(self.chain[1])
+            beamClusterEnd[1].v.set(0)
         
     def __stretchIk(self):
 
@@ -167,6 +185,7 @@ class IkChain(boneChain.BoneChain):
         #base on trans
         self.stretchStartLoc.worldPosition[0].connect(distBetweenNode.point1) 
         self.stretchEndLoc.worldPosition[0].connect(distBetweenNode.point2) 
+        self.length = distBetweenNode.distance.get()
         distBetweenNode.distance.connect(ratioMultipleNode.input1X)
         ratioMultipleNode.input2X.set(self.chain[1].tx.get() + self.chain[2].tx.get())
         ratioMultipleNode.operation.set(2)
