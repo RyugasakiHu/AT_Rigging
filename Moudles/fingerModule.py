@@ -30,12 +30,19 @@ class FingerModule(object):
         self.guides = None
         self.guideGrp = None     
         
-        #cc
+        #sdk
         self.thumbSdks = []
         self.indexSdks = []
         self.midSdks = []
         self.ringSdks = []
-        self.pinkySdks = []   
+        self.pinkySdks = []
+        
+        #cc  
+        self.thumbCc = []
+        self.indexCc = []
+        self.midCc = []
+        self.ringCc = []
+        self.pinkyCc = []   
         
         #jj
         self.thumbGrp = None
@@ -238,7 +245,7 @@ class FingerModule(object):
         pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.scalePivot')               
  
         self.__fingerCC()
-        self.__setSDK()
+#         self.__setSDK()
     
     def __fingerCC(self):
         
@@ -297,101 +304,122 @@ class FingerModule(object):
         
             #add attr
             control.addFloatAttr(self.armControls[0],self.attrs,-3,10)         
-            
+        
+        
+        ###########
+        #ready to roll
+        ###########
         #create thumb cc ctrl     
         for num,thumbJointName in enumerate(self.thumbChain.chain):
             #correct jj name
             pm.rename(thumbJointName,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJointName[num],'jj'))
-            if num < self.thumbChain.chainLength() - 1:
+            
+            if num < self.thumbChain.chainLength() - 1:    
                 #create sdk and correct cc name
 #                 cc = control.Control(self.side,self.baseName,size = thumbJointName.getRadius() / 5) 
                 cc = control.Control(self.side,self.baseName,size = self.size) 
                 cc.circleCtrl()
-                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJointName[num],'cc'))
-                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJointName[num],'SDK'))
-                self.thumbSdks.append(cc.controlGrp)
-                #align cc grp
+                self.thumbCc.append(cc.control)
+                
+                #create sdk grp
+                sdkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJointName[num],'SDK'))
+                self.thumbSdks.append(sdkGrp)
+                
+                #align cc,sdk grp
                 pm.xform(cc.controlGrp,ws = 1,matrix = thumbJointName.worldMatrix.get())
-                #parent jj
-                cc.controlGrp.setParent(thumbJointName)
-                self.thumbChain.chain[num + 1].setParent(cc.control)
+                pm.xform(sdkGrp,ws = 1,matrix = thumbJointName.worldMatrix.get())
+                
+                cc.control.setParent(sdkGrp)
+                sdkGrp.setParent(cc.controlGrp)       
+                
+                #clean up and rename
+                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJointName[num],'cc'))
+                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJointName[num],'grp'))
+        
+        #jj clean up
+        for num,ctrl in enumerate(self.thumbCc):
+            self.thumbChain.chain[num].setParent(ctrl)
+            if num > 0 :
+                ctrl.getParent().getParent().setParent(self.thumbChain.chain[num - 1])
+        #thumb clean up       
+        self.thumbCc[0].getParent().getParent().setParent(self.thumbGrp )
         pm.rename(self.thumbChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[0]  + self.thumbJointName[-1],'je')) 
         
-        #create index cc ctrl
-        for num,indexJoint in enumerate(self.indexChain.chain):
-            #correct jj name
-            pm.rename(indexJoint,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJointName[num],'jj'))
-            if num < self.indexChain.chainLength() - 1:
-                #create sdk and correct cc name
-#                 cc = control.Control(self.side,self.baseName,size = indexJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size)
-                cc.circleCtrl()
-                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJointName[num],'cc'))
-                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJointName[num],'SDK'))
-                self.indexSdks.append(cc.controlGrp)
-                #align cc grp
-                pm.xform(cc.controlGrp,ws = 1,matrix = indexJoint.worldMatrix.get())
-                #parent jj
-                cc.controlGrp.setParent(indexJoint)
-                self.indexChain.chain[num + 1].setParent(cc.control)   
-        pm.rename(self.indexChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[1]  + self.fingerJointName[-1],'je'))
-
-        #create mid cc ctrl
-        for num,midJoint in enumerate(self.midChain.chain):
-            #correct jj name
-            pm.rename(midJoint,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'jj'))                        
-            if num < self.midChain.chainLength() - 1:                
-                #create sdk and correct cc name
-#                 cc = control.Control(self.side,self.baseName,size = midJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size) 
-                cc.circleCtrl()
-                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'cc'))
-                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'SDK'))
-                self.midSdks.append(cc.controlGrp)                
-                #align cc grp
-                pm.xform(cc.controlGrp,ws = 1,matrix = midJoint.worldMatrix.get())                
-                #parent jj
-                cc.controlGrp.setParent(midJoint)
-                self.midChain.chain[num + 1].setParent(cc.control)
-        pm.rename(self.midChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[-1],'je'))         
-
-        #create ring cc ctrl
-        for num,ringJoint in enumerate(self.ringChain.chain):
-            #correct jj name
-            pm.rename(ringJoint,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'jj'))                        
-            if num < self.ringChain.chainLength() - 1:                
-                #create sdk and correct cc name
-#                 cc = control.Control(self.side,self.baseName,size = ringJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size) 
-                cc.circleCtrl()
-                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'cc'))
-                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'SDK'))
-                self.ringSdks.append(cc.controlGrp)                
-                #align cc grp
-                pm.xform(cc.controlGrp,ws = 1,matrix = ringJoint.worldMatrix.get())                
-                #parent jj
-                cc.controlGrp.setParent(ringJoint)
-                self.ringChain.chain[num + 1].setParent(cc.control)
-        pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[-1],'je'))     
-           
-        #create pinky cc ctrl
-        for num,pinkyJoint in enumerate(self.pinkyChain.chain):
-            #correct jj name
-            pm.rename(pinkyJoint,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'jj'))                        
-            if num < self.pinkyChain.chainLength() - 1:                
-                #create sdk and correct cc name
-#                 cc = control.Control(self.side,self.baseName,size = pinkyJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size) 
-                cc.circleCtrl()
-                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'cc'))
-                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'SDK'))
-                self.pinkySdks.append(cc.controlGrp)                
-                #align cc grp
-                pm.xform(cc.controlGrp,ws = 1,matrix = pinkyJoint.worldMatrix.get())                
-                #parent jj
-                cc.controlGrp.setParent(pinkyJoint)
-                self.pinkyChain.chain[num + 1].setParent(cc.control)
-        pm.rename(self.pinkyChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[-1],'je'))             
+#         #create index cc ctrl
+#         for num,indexJoint in enumerate(self.indexChain.chain):
+#             #correct jj name
+#             pm.rename(indexJoint,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJointName[num],'jj'))
+#             if num < self.indexChain.chainLength() - 1:
+#                 #create sdk and correct cc name
+# #                 cc = control.Control(self.side,self.baseName,size = indexJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = self.size)
+#                 cc.circleCtrl()
+#                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJointName[num],'cc'))
+#                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJointName[num],'SDK'))
+#                 self.indexSdks.append(cc.controlGrp)
+#                 #align cc grp
+#                 pm.xform(cc.controlGrp,ws = 1,matrix = indexJoint.worldMatrix.get())
+#                 #parent jj
+#                 cc.controlGrp.setParent(indexJoint)
+#                 self.indexChain.chain[num + 1].setParent(cc.control)   
+#         pm.rename(self.indexChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[1]  + self.fingerJointName[-1],'je'))
+# 
+#         #create mid cc ctrl
+#         for num,midJoint in enumerate(self.midChain.chain):
+#             #correct jj name
+#             pm.rename(midJoint,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'jj'))                        
+#             if num < self.midChain.chainLength() - 1:                
+#                 #create sdk and correct cc name
+# #                 cc = control.Control(self.side,self.baseName,size = midJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = self.size) 
+#                 cc.circleCtrl()
+#                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'cc'))
+#                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'SDK'))
+#                 self.midSdks.append(cc.controlGrp)                
+#                 #align cc grp
+#                 pm.xform(cc.controlGrp,ws = 1,matrix = midJoint.worldMatrix.get())                
+#                 #parent jj
+#                 cc.controlGrp.setParent(midJoint)
+#                 self.midChain.chain[num + 1].setParent(cc.control)
+#         pm.rename(self.midChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[-1],'je'))         
+# 
+#         #create ring cc ctrl
+#         for num,ringJoint in enumerate(self.ringChain.chain):
+#             #correct jj name
+#             pm.rename(ringJoint,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'jj'))                        
+#             if num < self.ringChain.chainLength() - 1:                
+#                 #create sdk and correct cc name
+# #                 cc = control.Control(self.side,self.baseName,size = ringJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = self.size) 
+#                 cc.circleCtrl()
+#                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'cc'))
+#                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'SDK'))
+#                 self.ringSdks.append(cc.controlGrp)                
+#                 #align cc grp
+#                 pm.xform(cc.controlGrp,ws = 1,matrix = ringJoint.worldMatrix.get())                
+#                 #parent jj
+#                 cc.controlGrp.setParent(ringJoint)
+#                 self.ringChain.chain[num + 1].setParent(cc.control)
+#         pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[-1],'je'))     
+#            
+#         #create pinky cc ctrl
+#         for num,pinkyJoint in enumerate(self.pinkyChain.chain):
+#             #correct jj name
+#             pm.rename(pinkyJoint,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'jj'))                        
+#             if num < self.pinkyChain.chainLength() - 1:                
+#                 #create sdk and correct cc name
+# #                 cc = control.Control(self.side,self.baseName,size = pinkyJoint.getRadius() / 5) 
+#                 cc = control.Control(self.side,self.baseName,size = self.size) 
+#                 cc.circleCtrl()
+#                 pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'cc'))
+#                 pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'SDK'))
+#                 self.pinkySdks.append(cc.controlGrp)                
+#                 #align cc grp
+#                 pm.xform(cc.controlGrp,ws = 1,matrix = pinkyJoint.worldMatrix.get())                
+#                 #parent jj
+#                 cc.controlGrp.setParent(pinkyJoint)
+#                 self.pinkyChain.chain[num + 1].setParent(cc.control)
+#         pm.rename(self.pinkyChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[-1],'je'))             
            
     def __setSDK(self):
 
