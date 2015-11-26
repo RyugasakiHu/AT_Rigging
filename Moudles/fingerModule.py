@@ -31,18 +31,25 @@ class FingerModule(object):
         self.guideGrp = None     
         
         #sdk
-        self.thumbSdks = []
-        self.indexSdks = []
-        self.midSdks = []
-        self.ringSdks = []
-        self.pinkySdks = []
+        self.thumbSdks = None
+        self.indexSdks = None
+        self.midSdks = None
+        self.ringSdks = None
+        self.pinkySdks = None
         
         #cc  
-        self.thumbCc = []
-        self.indexCc = []
-        self.midCc = []
-        self.ringCc = []
-        self.pinkyCc = []   
+        self.thumbCc = None
+        self.indexCc = None
+        self.midCc = None
+        self.ringCc = None
+        self.pinkyCc = None
+        
+        #Partial
+        self.thumbPartial = None
+        self.indexPartial = None
+        self.midPartial = None
+        self.ringPartial = None
+        self.pinkyPartial = None
         
         #jj
         self.thumbGrp = None
@@ -245,6 +252,7 @@ class FingerModule(object):
         pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.scalePivot')               
  
         self.__fingerCC()
+        self.__partialJoint()
         self.__setSDK()
     
     def __fingerCC(self):
@@ -305,9 +313,19 @@ class FingerModule(object):
             #add attr
             control.addFloatAttr(self.armControls[0],self.attrs,-3,10)         
         
-        ###########
-        #ready to roll
-        ###########
+        #sdk init
+        self.thumbSdks = []
+        self.indexSdks = []
+        self.midSdks = []
+        self.ringSdks = []
+        self.pinkySdks = []
+        
+        #cc init
+        self.thumbCc = []
+        self.indexCc = []
+        self.midCc = []
+        self.ringCc = []
+        self.pinkyCc = []
         
         #create thumb cc ctrl     
         for num,thumbJointName in enumerate(self.thumbChain.chain):
@@ -344,7 +362,7 @@ class FingerModule(object):
                 
         #thumb clean up       
         self.thumbCc[0].getParent().getParent().setParent(self.thumbGrp )
-        pm.rename(self.thumbChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[0]  + self.thumbJointName[-2],'je')) 
+        pm.rename(self.thumbChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[0]  + self.thumbJointName[4],'je')) 
         
         #create index cc ctrl
         for num,indexJoint in enumerate(self.indexChain.chain):
@@ -381,7 +399,7 @@ class FingerModule(object):
                 
         #index clean up       
         self.indexCc[0].getParent().getParent().setParent(self.indexGrp )
-        pm.rename(self.indexChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[1]  + self.fingerJointName[-2],'je')) 
+        pm.rename(self.indexChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[1]  + self.fingerJointName[4],'je')) 
                 
         #create mid cc ctrl
         for num,midJoint in enumerate(self.midChain.chain):
@@ -418,7 +436,7 @@ class FingerModule(object):
                 
         #mid clean up       
         self.midCc[0].getParent().getParent().setParent(self.midGrp )
-        pm.rename(self.midChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[-2],'je'))                 
+        pm.rename(self.midChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[4],'je'))                 
                    
         #create ring cc ctrl
         for num,ringJoint in enumerate(self.ringChain.chain):
@@ -455,7 +473,7 @@ class FingerModule(object):
                 
         #ring clean up       
         self.ringCc[0].getParent().getParent().setParent(self.ringGrp )
-        pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[-2],'je'))          
+        pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[4],'je'))          
         
         #create pinky cc ctrl
         for num,pinkyJoint in enumerate(self.pinkyChain.chain):
@@ -492,7 +510,54 @@ class FingerModule(object):
                 
         #pinky clean up       
         self.pinkyCc[0].getParent().getParent().setParent(self.pinkyGrp )
-        pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[-2],'je'))                       
+        pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[4],'je'))                       
+           
+    def __partialJoint(self):
+        
+        #Init
+        self.thumbPartial = []
+        self.indexPartial = []
+        self.midPartial = []
+        self.ringPartial = []
+        self.pinkyPartial = []  
+        
+        #index
+        for num,joint in enumerate(self.indexChain.chain):
+            #create partial jj
+            if num < (self.indexChain.chainLength() - 1):
+                partial = pm.joint(n = nameUtils.getUniqueName(self.side,self.fingerName[1]  + self.fingerJointName[num] + self.fingerJointName[5],'jj'),
+                                   position = (0,0,0))
+                pm.xform(partial,ws = 1,matrix = joint.worldMatrix.get())
+                partial.setParent(self.indexCc[num].getParent().getParent())
+                
+                #node name
+                plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[1]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
+                multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[1]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
+                
+                #create node 
+                plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
+                multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
+                
+                #connect node
+                #PMA
+                self.indexSdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
+                self.indexSdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
+                self.indexSdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
+                self.indexCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
+                self.indexCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
+                self.indexCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
+                
+                #MDN
+                plusAverage.output3Dx.connect(multipleDivide.input1X)
+                plusAverage.output3Dy.connect(multipleDivide.input1Y)
+                plusAverage.output3Dz.connect(multipleDivide.input1Z)
+                multipleDivide.input2X.set(0.5)
+                multipleDivide.input2Y.set(0.5)
+                multipleDivide.input2Z.set(0.5)
+                
+            print self.indexSdks
+            print num
+            
            
     def __setSDK(self):
 
