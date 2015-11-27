@@ -526,40 +526,45 @@ class FingerModule(object):
             #create partial jj
             if num < (self.thumbChain.chainLength() - 1):
                 partial = pm.joint(n = nameUtils.getUniqueName(self.side,self.fingerName[0]  + self.fingerJointName[num] + self.fingerJointName[5],'jj'),
-                                   position = (0,0,0))
+                                   position = (0,0,0),orientation = (0,0,0))
+                    
                 pm.xform(partial,ws = 1,matrix = joint.worldMatrix.get())
                 partial.setParent(self.thumbCc[num].getParent().getParent())
                 
-#                 #node name
-#                 plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[0]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
-#                 multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[0]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
-#                 
-#                 #create node 
-#                 plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
-#                 multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
-#                 
-#                 #connect node
-#                 #PMA
-#                 self.thumbSdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
-#                 self.thumbSdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
-#                 self.thumbSdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
-#                 self.thumbCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
-#                 self.thumbCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
-#                 self.thumbCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
-#                 
-#                 #MDN
-#                 #input 
-#                 plusAverage.output3Dx.connect(multipleDivide.input1X)
-#                 plusAverage.output3Dy.connect(multipleDivide.input1Y)
-#                 plusAverage.output3Dz.connect(multipleDivide.input1Z)
-#                 multipleDivide.input2X.set(0.5)
-#                 multipleDivide.input2Y.set(0.5)
-#                 multipleDivide.input2Z.set(0.5)
-#                 #output
-#                 multipleDivide.output.outputX.connect(partial.rx)
-#                 multipleDivide.output.outputY.connect(partial.ry)
-#                 multipleDivide.output.outputZ.connect(partial.rz)
-        
+                #node name
+                plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[0]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
+                multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[0]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
+                 
+                #create node 
+                plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
+                multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
+                 
+                #connect node
+                #PMA
+                self.thumbSdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
+                self.thumbSdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
+                self.thumbSdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
+                self.thumbCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
+                self.thumbCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
+                self.thumbCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
+                 
+                #MDN
+                #input 
+                plusAverage.output3Dx.connect(multipleDivide.input1X)
+                plusAverage.output3Dy.connect(multipleDivide.input1Y)
+                plusAverage.output3Dz.connect(multipleDivide.input1Z)
+                multipleDivide.input2X.set(0.5)
+                multipleDivide.input2Y.set(0.5)
+                multipleDivide.input2Z.set(0.5)
+                #output
+                multipleDivide.output.outputX.connect(partial.rx)
+                multipleDivide.output.outputY.connect(partial.ry)
+                multipleDivide.output.outputZ.connect(partial.rz)
+                
+                #jointOrient
+                for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
+                    partial.attr(jointOrient).set(0)
+                    
         #index
         for num,joint in enumerate(self.indexChain.chain):
             #create partial jj
@@ -598,6 +603,10 @@ class FingerModule(object):
                 multipleDivide.output.outputX.connect(partial.rx)
                 multipleDivide.output.outputY.connect(partial.ry)
                 multipleDivide.output.outputZ.connect(partial.rz)
+                
+                #jointOrient
+                for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
+                    partial.attr(jointOrient).set(0)
 
         #middle
         for num,joint in enumerate(self.midChain.chain):
@@ -636,7 +645,11 @@ class FingerModule(object):
                 #output
                 multipleDivide.output.outputX.connect(partial.rx)
                 multipleDivide.output.outputY.connect(partial.ry)
-                multipleDivide.output.outputZ.connect(partial.rz)            
+                multipleDivide.output.outputZ.connect(partial.rz)
+                
+                #jointOrient
+                for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
+                    partial.attr(jointOrient).set(0)        
 
         #ring
         for num,joint in enumerate(self.ringChain.chain):
@@ -675,7 +688,11 @@ class FingerModule(object):
                 #output
                 multipleDivide.output.outputX.connect(partial.rx)
                 multipleDivide.output.outputY.connect(partial.ry)
-                multipleDivide.output.outputZ.connect(partial.rz)        
+                multipleDivide.output.outputZ.connect(partial.rz)
+                
+                #jointOrient
+                for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
+                    partial.attr(jointOrient).set(0)        
            
         #pinky
         for num,joint in enumerate(self.pinkyChain.chain):
@@ -714,7 +731,11 @@ class FingerModule(object):
                 #output
                 multipleDivide.output.outputX.connect(partial.rx)
                 multipleDivide.output.outputY.connect(partial.ry)
-                multipleDivide.output.outputZ.connect(partial.rz)             
+                multipleDivide.output.outputZ.connect(partial.rz)
+                
+                #jointOrient
+                for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
+                    partial.attr(jointOrient).set(0)             
            
     def __setSDK(self):
 
