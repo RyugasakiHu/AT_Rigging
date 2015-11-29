@@ -50,7 +50,7 @@ class HeadModule(object):
         
         #jj
         self.neckFkChain = None
-        self.sklGrp = None
+#         self.sklGrp = None
         
         #guides 
         #single guides
@@ -1077,6 +1077,42 @@ class HeadModule(object):
     def buildConnections(self):
         pass
 
+class LidClass(object):
+
+    def __init__(self,eyeBall,lidSide,lidPos):
+        
+        #initial
+        self.eyeBall = eyeBall
+        self.lidSide = None
+        self.lidPos = None
+        
+        #name
+        self.nameList = ['lid','Base','Hi','Lo','Blink']
+        
+        if lidSide == 1:
+            self.lidSide = 'r'
+         
+        elif lidSide == 2:
+            self.lidSide =  'l'
+            
+        if lidPos == 1:
+            self.lidPos = 'Up'
+         
+        elif lidPos == 2:
+            self.lidPos =  'Dn'
+
+    def createLid(self,*arg):
+ 
+        self.__createLoc()
+        
+    def __createLoc(self):
+        
+        #create base loc 
+        pm.select(self.eyeBallT)
+        self.eyeBall = pm.selected()[0]
+        self.baseLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.eyeLidSide,self.nameList[0] + self.nameList[1],'loc'))
+        pm.xform(self.baseLoc,ws = 1,matrix = self.eyeBall.worldMatrix.get())
+
 def getUi(parent,mainUi):
     
     return HeadModuleUi(parent,mainUi)
@@ -1108,9 +1144,13 @@ class HeadModuleUi(object):
         self.lidTool = pm.text(l = '**** Lid Tool ****')
         self.eyeBallT = pm.textFieldGrp('eyeBall',l='eyeBall :',cl2 = ['left','left'],
                                          ad2 = 1,text = 'eyeBall')
-#         self.eyeBallB = pm.textFieldButtonGrp('eyeBall',l='eyeBall :',cal = [1,'left'],
-#                                              text='',ad2 = 1,ed = False,buttonLabel='Sel Eyeball',bc = '')
-        self.lidB = pm.button(l = 'create',c = self.__createLid)
+        self.eyeBallR = pm.radioButtonGrp('lid_side',nrb = 2,label = 'eyeBall side:',
+                                          cal = [1,'left'],la2 = ['right','left'],sl = 1)
+        self.eyeLidR = pm.radioButtonGrp('lid_pos',nrb = 2,label = 'eyeBall position:',
+                                          cal = [1,'left'],la2 = ['up','dowm'],sl = 1)
+            
+        pm.columnLayout(adjustableColumn = True)
+        self.lidB = pm.button(l = 'create',c = self.getLidInstance)
         pm.columnLayout(adjustableColumn=True)
         
         #erase button
@@ -1130,20 +1170,19 @@ class HeadModuleUi(object):
         sizeF = pm.floatFieldGrp(self.cntSizeF,q = 1,v = 1)
         mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
         spineMetaNode = pm.textFieldGrp(self.metaSpineNodeN,q = 1,text = 1)
-        eyeBallT = pm.textFieldGrp(self.eyeBallT,q = 1,text = 1)
         
         self.__pointerClass = HeadModule(baseName = baseNameT,size = sizeF,
                                          metaMain = mainMetaNode,metaSpine = spineMetaNode)
         return self.__pointerClass                     
+
+    def getLidInstance(self,*arg):
         
-    def __createLid(self,*arg):
+        eyeBallR = pm.textFieldGrp('eyeBall',q = 1,text = 1)
+        eyeLidR = pm.radioButtonGrp('lid_side',q = 1,sl = 1)
+        eyeLidP =  pm.radioButtonGrp('lid_pos',q = 1,sl = 1)
         
-        if self.__pointerClass != None:
-            print self.__pointerClass
-            print 'Initial settings detect'
-            
-        else :
-            print 'This is an indivial part'
+        self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR,lidPos = eyeLidP)
+        self.lidClass.createLid()
         
 # from Modules import legModule,footModule
 # hg = headModule.HeadModule()
