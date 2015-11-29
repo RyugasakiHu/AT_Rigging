@@ -1,4 +1,5 @@
 import pymel.core as pm
+import maya.cmds as mc
 from Modules.subModules import fkChain,ikChain,boneChain
 from Utils import nameUtils,metaUtils
 from Modules import control,hierarchy,legModule
@@ -1094,10 +1095,10 @@ class LidClass(object):
         self.nameList = ['lid','Base','Hi','Lo','Blink']
         
         if lidSide == 1:
-            self.lidSide = 'r'
+            self.lidSide = 'l'
          
         elif lidSide == 2:
-            self.lidSide =  'l'
+            self.lidSide =  'r'
             
         if lidPos == 1:
             self.lidPos = 'Up'
@@ -1113,43 +1114,61 @@ class LidClass(object):
     def loadVertex(self):
         
         self.vertexes = []
-        vertexes = pm.ls(sl=1)
+        vertexes = pm.ls(sl = 1,fl = 1)
         
         for vertex in vertexes:
             self.vertexes.append(vertex)
-        
+
         return self.vertexes
     
     def __createLoc(self):
         
         #create base loc make center
-        pm.select(self.eyeBall)
-        self.eyeBall = pm.selected()
-        self.baseLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[1],'loc'))
-        pm.xform(self.baseLoc,ws = 1,matrix = self.eyeBall[0].worldMatrix.get())
-        pm.select(cl = 1)
+        if self.eyeBall != None:
+            pm.select(self.eyeBall)
+            self.eyeBall = pm.selected()
+            self.baseLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[1],'loc'))
+            pm.xform(self.baseLoc,ws = 1,matrix = self.eyeBall[0].worldMatrix.get())
+            pm.select(cl = 1)
         
     def __createJj(self):
         
         self.jj = []
-
+        self.jointGrp = pm.group(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.lidPos,'grp'))
+        
         for vertex in self.vertexes:
-            print vertex
-            self.vertexes.append(vertex)
+            
+            #create je and align
+            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.lidPos,'je'))
+            pos = pm.xform(vertex, q=1, ws=1, t=1)
+            pm.xform(je, ws=1, t=pos)
+            
+            #create jj
             pm.select(cl=1)
-            jnt = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0],'je'))
-            pos = pm.xform (vertex, q=1, ws=1, t=1)
-            pm.xform(jnt, ws=1, t=pos)
-            posC= pm.xform(self.eyeBall[0], q=1, ws=1, t=1)
-            pm.select(cl=1)
-            jntC=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0],'jj'))
-            self.jj.append(jntC)
-            pm.xform (jntC, ws=1, t=posC)
-            pm.parent(jnt, jntC)
-              
+            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.lidPos,'jj'))
+            self.jj.append(jj)
+            alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
+            pm.delete(alginCnst)
+            
+            pm.parent(je, jj)
+            
             #orient joints
-            pm.joint (jntC, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
+            pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
+            
+            #clean up
+            jj.setParent(self.jointGrp)
+            
+#     def  __aimCnst(self):
+#         
+#         
+#         for s in sel:
+#             loc =mc.spaceLocator()[0]
+#             pos =mc.xform(s, q=1, ws=1, t=1)
+#             mc.xform(loc, ws=1, t=pos)
+#             par=mc.listRelatives(s, p=1,)[0]
+#             mc.aimConstraint(loc, par, mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0), worldUpType='object', worldUpObject='L_eyeUpVec_LOC' )
 
+    
 def getUi(parent,mainUi):
     
     return HeadModuleUi(parent,mainUi)
@@ -1180,15 +1199,18 @@ class HeadModuleUi(object):
         #lid part        
         self.lidTool = pm.text(l = '**** Lid Tool ****')
         self.eyeBallT = pm.textFieldGrp('eyeBall',l='eyeBall :',cl2 = ['left','left'],
-                                         ad2 = 1,text = 'pSphere1')
-        self.eyeBallR = pm.radioButtonGrp('lid_side',nrb = 2,label = 'eyeBall side:',
-                                          cal = [1,'left'],la2 = ['right','left'],sl = 1)
-        self.eyeLidR = pm.radioButtonGrp('lid_pos',nrb = 2,label = 'eyeBall position:',
+                                         ad2 = 1,text = 'eyeBall')
+        self.eyeBallR = pm.radioButtonGrp('lid_side',nrb = 2,label = 'eyeBall side :',
+                                          cal = [1,'left'],la2 = ['left','right'],sl = 1)
+        self.eyeLidR = pm.radioButtonGrp('lid_pos',nrb = 2,label = 'eyeBall position :',
                                           cal = [1,'left'],la2 = ['up','dowm'],sl = 1)
         pm.columnLayout(adjustableColumn = True)
-        self.lidB = pm.button(l = 'create',c = self.getLidInstance)
+        
+        self.lidLoadB = pm.button(l = 'load Lid Class',c = self.getLidInstance)
         pm.columnLayout(adjustableColumn=True)
-        self.vexB = pm.button(l = 'store select vertexes',c = self.getLidInstance)
+        self.vexSelB = pm.button(l = 'load Vertex',c = self.__loadVertex)
+        pm.columnLayout(adjustableColumn=True)
+        self.lidCreateB = pm.button(l = 'create Lid Setting',c = self.__createLid)
         pm.columnLayout(adjustableColumn=True)
         
         #erase button
@@ -1220,7 +1242,18 @@ class HeadModuleUi(object):
         eyeLidP =  pm.radioButtonGrp('lid_pos',q = 1,sl = 1)
         
         self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR,lidPos = eyeLidP)
+        print self.lidClass
+        return self.lidClass
+    
+    def __loadVertex(self,*arg):
+        
+        self.lidClass.loadVertex()
+        print 'Vertex loaded'
+        
+    def __createLid(self,*arg):
+        
         self.lidClass.createLid()
+        
         
 # from Modules import legModule,footModule
 # hg = headModule.HeadModule()
