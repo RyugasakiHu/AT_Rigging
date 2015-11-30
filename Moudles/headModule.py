@@ -1080,7 +1080,7 @@ class HeadModule(object):
 
 class LidClass(object):
 
-    def __init__(self,eyeBall,lidSide,lidPos):
+    def __init__(self,eyeBall,lidSide):
         
         #initial
         self.eyeBall = eyeBall
@@ -1088,11 +1088,12 @@ class LidClass(object):
         self.lidPos = None
         
         #select
-        self.vertexes = None
+        self.upVertexes = None
+        self.downVertexes = None
         self.jj = None
         
         #name
-        self.nameList = ['lid','Base','Hi','Lo','Blink']
+        self.nameList = ['lid','Base','Hi','Lo','Blink','Up','Dn']
         
         if lidSide == 1:
             self.lidSide = 'l'
@@ -1100,26 +1101,36 @@ class LidClass(object):
         elif lidSide == 2:
             self.lidSide =  'r'
             
-        if lidPos == 1:
-            self.lidPos = 'Up'
-         
-        elif lidPos == 2:
-            self.lidPos =  'Dn'
+#         if lidPos == 1:
+#             self.lidPos = 'Up'
+#          
+#         elif lidPos == 2:
+#             self.lidPos =  'Dn'
 
     def createLid(self,*arg):
  
         self.__createLoc()
         self.__createJj()
     
-    def loadVertex(self):
+    def loadUpVertex(self):
         
-        self.vertexes = []
-        vertexes = pm.ls(sl = 1,fl = 1)
+        self.upVertexes = []
+        upVertexes = pm.ls(sl = 1,fl = 1)
         
-        for vertex in vertexes:
-            self.vertexes.append(vertex)
+        for upVertex in upVertexes:
+            self.upVertexes.append(upVertex)
 
-        return self.vertexes
+        return self.upVertexes
+    
+    def loadDnVertex(self):
+        
+        self.downVertexes = []
+        downVertexes = pm.ls(sl = 1,fl = 1)
+        
+        for downVertex in downVertexes:
+            self.downVertexes.append(downVertex)
+
+        return self.downVertexes
     
     def __createLoc(self):
         
@@ -1134,30 +1145,57 @@ class LidClass(object):
     def __createJj(self):
         
         self.jj = []
-        self.jointGrp = pm.group(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.lidPos,'grp'))
+        self.upJointGrp = pm.group(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'grp'))
+        pm.select(cl = 1)
+        self.downJointGrp = pm.group(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'grp'))
+        pm.select(cl = 1)
         
-        for vertex in self.vertexes:
-            
+        #up 
+        for downVertex in self.upVertexes:
+             
             #create je and align
-            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.lidPos,'je'))
-            pos = pm.xform(vertex, q=1, ws=1, t=1)
+            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'je'))
+            pos = pm.xform(downVertex, q=1, ws=1, t=1)
             pm.xform(je, ws=1, t=pos)
-            
+             
             #create jj
             pm.select(cl=1)
-            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.lidPos,'jj'))
+            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jj'))
             self.jj.append(jj)
             alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
             pm.delete(alginCnst)
-            
+             
             pm.parent(je, jj)
-            
+             
             #orient joints
             pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
-            
+             
             #clean up
-            jj.setParent(self.jointGrp)
-            
+            jj.setParent(self.upJointGrp)
+        
+        #down
+        for vertex in self.downVertexes:
+             
+            #create je and align
+            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'je'))
+            pos = pm.xform(vertex, q=1, ws=1, t=1)
+            pm.xform(je, ws=1, t=pos)
+             
+            #create jj
+            pm.select(cl=1)
+            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jj'))
+            self.jj.append(jj)
+            alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
+            pm.delete(alginCnst)
+             
+            pm.parent(je, jj)
+             
+            #orient joints
+            pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
+             
+            #clean up
+            jj.setParent(self.downJointGrp)
+        
 #     def  __aimCnst(self):
 #         
 #         
@@ -1202,14 +1240,19 @@ class HeadModuleUi(object):
                                          ad2 = 1,text = 'eyeBall')
         self.eyeBallR = pm.radioButtonGrp('lid_side',nrb = 2,label = 'eyeBall side :',
                                           cal = [1,'left'],la2 = ['left','right'],sl = 1)
-        self.eyeLidR = pm.radioButtonGrp('lid_pos',nrb = 2,label = 'eyeBall position :',
-                                          cal = [1,'left'],la2 = ['up','dowm'],sl = 1)
+#         self.eyeLidR = pm.radioButtonGrp('lid_pos',nrb = 2,label = 'eyeBall position :',
+#                                           cal = [1,'left'],la2 = ['up','dowm'],sl = 1)
         pm.columnLayout(adjustableColumn = True)
         
         self.lidLoadB = pm.button(l = 'load Lid Class',c = self.getLidInstance)
         pm.columnLayout(adjustableColumn=True)
-        self.vexSelB = pm.button(l = 'load Vertex',c = self.__loadVertex)
+        
+        self.vexUpSelB = pm.button(l = 'load Up Vertex',c = self.__loadUpVertex)
         pm.columnLayout(adjustableColumn=True)
+        
+        self.vexDnSelB = pm.button(l = 'load Dn Vertex',c = self.__loadDnVertex)
+        pm.columnLayout(adjustableColumn=True)
+        
         self.lidCreateB = pm.button(l = 'create Lid Setting',c = self.__createLid)
         pm.columnLayout(adjustableColumn=True)
         
@@ -1239,16 +1282,21 @@ class HeadModuleUi(object):
         
         eyeBallR = pm.textFieldGrp('eyeBall',q = 1,text = 1)
         eyeLidR = pm.radioButtonGrp('lid_side',q = 1,sl = 1)
-        eyeLidP =  pm.radioButtonGrp('lid_pos',q = 1,sl = 1)
-        
-        self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR,lidPos = eyeLidP)
+#         eyeLidP =  pm.radioButtonGrp('lid_pos',q = 1,sl = 1)
+        self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR)
+#         self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR,lidPos = eyeLidP)
         print self.lidClass
         return self.lidClass
     
-    def __loadVertex(self,*arg):
+    def __loadUpVertex(self,*arg):
         
-        self.lidClass.loadVertex()
-        print 'Vertex loaded'
+        self.lidClass.loadUpVertex()
+        print 'Up Vertex loaded'
+        
+    def __loadDnVertex(self,*arg):
+        
+        self.lidClass.loadDnVertex()
+        print 'Down Vertex loaded'        
         
     def __createLid(self,*arg):
         
