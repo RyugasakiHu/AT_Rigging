@@ -1090,27 +1090,32 @@ class LidClass(object):
         #select
         self.upVertexes = None
         self.downVertexes = None
-        self.jj = None
+        self.upJj = None
+        self.downJj = None
+        
+        #grp
+        self.upJointGrp = None
+        self.downJointGrp = None
+        self.upLocGrp = None
+        self.downLocGrp = None
+        
+        #loc
+        self.aimLoc = None
         
         #name
-        self.nameList = ['lid','Base','Hi','Lo','Blink','Up','Dn']
+        self.nameList = ['lid','Base','Hi','Lo','Blink','Up','Dn','Aim','Loc']
         
         if lidSide == 1:
             self.lidSide = 'l'
          
         elif lidSide == 2:
             self.lidSide =  'r'
-            
-#         if lidPos == 1:
-#             self.lidPos = 'Up'
-#          
-#         elif lidPos == 2:
-#             self.lidPos =  'Dn'
 
     def createLid(self,*arg):
  
         self.__createLoc()
         self.__createJj()
+        self.__aimCnst()
     
     def loadUpVertex(self):
         
@@ -1135,37 +1140,36 @@ class LidClass(object):
     def __createLoc(self):
         
         #create base loc make center
-        if self.eyeBall != None:
-            pm.select(self.eyeBall)
-            self.eyeBall = pm.selected()
-            self.baseLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[1],'loc'))
-            pm.xform(self.baseLoc,ws = 1,matrix = self.eyeBall[0].worldMatrix.get())
-            pm.select(cl = 1)
+        pm.select(self.eyeBall)
+        self.eyeBall = pm.selected()
+        self.baseLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[1],'loc'))
+        pm.xform(self.baseLoc,ws = 1,matrix = self.eyeBall[0].worldMatrix.get())
+        pm.select(cl = 1)
         
     def __createJj(self):
         
-        self.jj = []
-        self.upJointGrp = pm.group(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'grp'))
-        pm.select(cl = 1)
-        self.downJointGrp = pm.group(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'grp'))
-        pm.select(cl = 1)
+        self.upJj = []
+        self.downJj = []
+        
+        self.upJointGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'grp'))
+        self.downJointGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'grp'))
         
         #up 
-        for downVertex in self.upVertexes:
+        for upVertex in self.upVertexes:
              
             #create je and align
             je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'je'))
-            pos = pm.xform(downVertex, q=1, ws=1, t=1)
+            pos = pm.xform(upVertex, q=1, ws=1, t=1)
             pm.xform(je, ws=1, t=pos)
              
             #create jj
             pm.select(cl=1)
             jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jj'))
-            self.jj.append(jj)
             alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
             pm.delete(alginCnst)
              
             pm.parent(je, jj)
+            self.upJj.append(jj)
              
             #orient joints
             pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
@@ -1174,37 +1178,61 @@ class LidClass(object):
             jj.setParent(self.upJointGrp)
         
         #down
-        for vertex in self.downVertexes:
+        for downVertex in self.downVertexes:
              
             #create je and align
             je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'je'))
-            pos = pm.xform(vertex, q=1, ws=1, t=1)
+            pos = pm.xform(downVertex, q=1, ws=1, t=1)
             pm.xform(je, ws=1, t=pos)
              
             #create jj
             pm.select(cl=1)
             jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jj'))
-            self.jj.append(jj)
             alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
             pm.delete(alginCnst)
              
             pm.parent(je, jj)
+            self.downJj.append(jj)
              
             #orient joints
             pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
-             
+            
             #clean up
             jj.setParent(self.downJointGrp)
         
-#     def  __aimCnst(self):
-#         
-#         
-#         for s in sel:
-#             loc =mc.spaceLocator()[0]
-#             pos =mc.xform(s, q=1, ws=1, t=1)
-#             mc.xform(loc, ws=1, t=pos)
-#             par=mc.listRelatives(s, p=1,)[0]
-#             mc.aimConstraint(loc, par, mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0), worldUpType='object', worldUpObject='L_eyeUpVec_LOC' )
+    def  __aimCnst(self):
+        
+        #init   
+        self.upLocGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[8],'grp'))
+        self.downLocGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[8],'grp'))
+           
+        #create aim loc
+        aimLocName = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[7],'loc')
+        self.aimLoc = pm.spaceLocator(n = aimLocName)
+        eyeBallPos = pm.xform(self.upJj[0], q=1, ws=1, t=1)
+        pm.xform(self.aimLoc,ws = 1,t = (eyeBallPos[0],eyeBallPos[1] + self.upJj[len(self.upJj) / 2].getChildren()[0].tx.get(),eyeBallPos[2]))
+        
+        #up 
+        for upJj in self.upJj:
+            locName = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'loc')
+            loc = pm.spaceLocator(n = locName)
+            pos = pm.xform(upJj.getChildren(), q=1, ws=1, t=1)
+            pm.xform(loc, ws=1, t=pos)
+            loc.setParent(self.upLocGrp)
+            
+            pm.aimConstraint(loc, upJj, mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0),
+                            worldUpType='object', worldUpObject=self.aimLoc)
+            
+        #down
+        for downJj in self.downJj:
+            locName = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'loc')
+            loc = pm.spaceLocator(n = locName)
+            pos = pm.xform(downJj.getChildren(), q=1, ws=1, t=1)
+            pm.xform(loc, ws=1, t=pos)
+            loc.setParent(self.downLocGrp)
+            
+            pm.aimConstraint(loc, downJj, mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0),
+                            worldUpType='object', worldUpObject=self.aimLoc)            
 
     
 def getUi(parent,mainUi):
