@@ -1,8 +1,8 @@
 import pymel.core as pm
-import maya.cmds as mc
 from Modules.subModules import fkChain,ikChain,boneChain
 from Utils import nameUtils,metaUtils
 from Modules import control,hierarchy,legModule
+from maya import OpenMaya
 
 class HeadModule(object):
 
@@ -1087,11 +1087,17 @@ class LidClass(object):
         self.lidSide = None
         self.lidPos = None
         
-        #select
+        #list
         self.upVertexes = None
         self.downVertexes = None
         self.upJj = None
         self.downJj = None
+        self.upLocList = None
+        self.downLocList = None
+        
+        #curve
+        self.eyeUpHiCur = None
+        self.eyeDnHiCur = None
         
         #grp
         self.upJointGrp = None
@@ -1115,22 +1121,25 @@ class LidClass(object):
  
         self.__createLoc()
         self.__createJj()
-        self.__aimCnst()
+        self.__createAimCnst()
+        self.__createHiCurve()
+        self.__locToCurve()
     
     def loadUpVertex(self):
         
         self.upVertexes = []
-        upVertexes = pm.ls(sl = 1,fl = 1)
+        upVertexes = pm.ls(os = 1,fl = 1)
         
         for upVertex in upVertexes:
             self.upVertexes.append(upVertex)
-
+        
+        print self.upVertexes
         return self.upVertexes
-    
+        
     def loadDnVertex(self):
         
         self.downVertexes = []
-        downVertexes = pm.ls(sl = 1,fl = 1)
+        downVertexes = pm.ls(os = 1,fl = 1)
         
         for downVertex in downVertexes:
             self.downVertexes.append(downVertex)
@@ -1200,9 +1209,11 @@ class LidClass(object):
             #clean up
             jj.setParent(self.downJointGrp)
         
-    def  __aimCnst(self):
+    def __createAimCnst(self):
         
         #init   
+        self.upLocList = []
+        self.downLocList = []
         self.upLocGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[8],'grp'))
         self.downLocGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[8],'grp'))
            
@@ -1216,6 +1227,7 @@ class LidClass(object):
         for upJj in self.upJj:
             locName = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'loc')
             loc = pm.spaceLocator(n = locName)
+            self.upLocList.append(loc)
             pos = pm.xform(upJj.getChildren(), q=1, ws=1, t=1)
             pm.xform(loc, ws=1, t=pos)
             loc.setParent(self.upLocGrp)
@@ -1227,6 +1239,7 @@ class LidClass(object):
         for downJj in self.downJj:
             locName = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'loc')
             loc = pm.spaceLocator(n = locName)
+            self.downLocList.append(loc)
             pos = pm.xform(downJj.getChildren(), q=1, ws=1, t=1)
             pm.xform(loc, ws=1, t=pos)
             loc.setParent(self.downLocGrp)
@@ -1234,7 +1247,87 @@ class LidClass(object):
             pm.aimConstraint(loc, downJj, mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0),
                             worldUpType='object', worldUpObject=self.aimLoc)            
 
-    
+    def __createHiCurve(self):
+        
+        tempUpPos = []
+        tempDownPos = []
+        
+        #up
+        #get pos        
+        for loc in self.upLocList:
+            pos = pm.xform(loc, q=1, ws=1, t=1)
+            tempUpPos.append(pos)
+#         print self.upLocList
+
+        self.eyeUpHiCur = pm.curve(d = 1,p = [x for x in tempUpPos],
+                                   k = [n for n in range(0,len(tempUpPos))],
+                                   n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[2],'cur'))
+        pm.select(cl = 1)
+        
+        #down
+        #get pos        
+        for loc in self.downLocList:
+            pos = pm.xform(loc, q=1, ws=1, t=1)
+            tempDownPos.append(pos)
+#         print self.downLocList
+        
+        self.eyeDnHiCur = pm.curve(d = 1,p = [x for x in tempDownPos],
+                                   k = [n for n in range(0,len(tempDownPos))],
+                                   n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[2],'cur'))
+        pm.select(cl = 1)
+        
+    def __locToCurve(self):
+        
+        for upLoc in self.upLocList:
+            pos = pm.xform(upLoc, q=1, ws=1, t=1)
+            print pos
+            print upLoc
+            print self.eyeUpHiCur.getShape()
+            u = self.__getUParam(pos, self.eyeUpHiCur.getShape())
+            #create point on curve node. Make sure Locators have suffix of _LOX
+            name= upLoc.replace('_loc', '_PCI')
+            pci= pm.createNode('pointOnCurveInfo', n=name)
+            pm.connectAttr(self.eyeUpHiCur +'.worldSpace', pci+'.inputCurve')
+            pm.setAttr(pci+'.parameter', u)
+            pm.connectAttr(pci+'.position', upLoc +'.t')
+        
+    def __getUParam(self,pnt = [], crv = None):
+
+        point = OpenMaya.MPoint(pnt[0],pnt[1],pnt[2])
+        print pnt[0]
+        curveFn = OpenMaya.MFnNurbsCurve(self.__getDagPath(crv))
+        paramUtill=OpenMaya.MScriptUtil()
+        paramPtr=paramUtill.asDoublePtr()
+        isOnCurve = curveFn.isPointOnCurve(point)
+        if isOnCurve == True:
+            
+            curveFn.getParamAtPoint(point , paramPtr,0.001,OpenMaya.MSpace.kObject )
+        else :
+            point = curveFn.closestPoint(point,paramPtr,0.001,OpenMaya.MSpace.kObject)
+            curveFn.getParamAtPoint(point , paramPtr,0.001,OpenMaya.MSpace.kObject )
+        
+        param = paramUtill.getDouble(paramPtr)  
+        return param
+
+    def __getDagPath(self,objectName):
+        
+        if isinstance(objectName, list)==True:
+            oNodeList=[]
+            print objectName
+            for o in objectName:
+                selectionList = OpenMaya.MSelectionList()
+                selectionList.add(o)
+                oNode = OpenMaya.MDagPath()
+                selectionList.getDagPath(0, oNode)
+                oNodeList.append(oNode)
+            return oNodeList
+        else:
+            selectionList = OpenMaya.MSelectionList()
+            selectionList.add(objectName)
+            oNode = OpenMaya.MDagPath()
+            selectionList.getDagPath(0, oNode)
+            return oNode    
+        
 def getUi(parent,mainUi):
     
     return HeadModuleUi(parent,mainUi)
@@ -1313,7 +1406,8 @@ class HeadModuleUi(object):
 #         eyeLidP =  pm.radioButtonGrp('lid_pos',q = 1,sl = 1)
         self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR)
 #         self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR,lidPos = eyeLidP)
-        print self.lidClass
+        pm.selectPref(tso = 1)
+        print 'LidClass ready to roll'
         return self.lidClass
     
     def __loadUpVertex(self,*arg):
@@ -1325,6 +1419,7 @@ class HeadModuleUi(object):
         
         self.lidClass.loadDnVertex()
         print 'Down Vertex loaded'        
+        pm.selectPref(tso = 0)
         
     def __createLid(self,*arg):
         
