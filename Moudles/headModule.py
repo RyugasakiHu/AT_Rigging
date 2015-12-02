@@ -1098,6 +1098,8 @@ class LidClass(object):
         #curve
         self.eyeUpHiCur = None
         self.eyeDnHiCur = None
+        self.eyeUpLoCur = None
+        self.eyeDnLoCur = None        
         
         #grp
         self.upJointGrp = None
@@ -1124,6 +1126,7 @@ class LidClass(object):
         self.__createAimCnst()
         self.__createHiCurve()
         self.__locToCurve()
+        self.__createLoCurve()
     
     def loadUpVertex(self):
         
@@ -1278,55 +1281,71 @@ class LidClass(object):
         
     def __locToCurve(self):
         
-        for upLoc in self.upLocList:
-            pos = pm.xform(upLoc, q=1, ws=1, t=1)
-            print pos
-            print upLoc
-            print self.eyeUpHiCur.getShape()
-            u = self.__getUParam(pos, self.eyeUpHiCur.getShape())
+        #up curve
+        for num,upLoc in enumerate(self.upLocList):
+#             pos = pm.xform(upLoc, q=1, ws=1, t=1)
+            #u = self.__getUParam(pos, self.eyeUpHiCur.getShape())
             #create point on curve node. Make sure Locators have suffix of _LOX
             name= upLoc.replace('_loc', '_PCI')
             pci= pm.createNode('pointOnCurveInfo', n=name)
             pm.connectAttr(self.eyeUpHiCur +'.worldSpace', pci+'.inputCurve')
-            pm.setAttr(pci+'.parameter', u)
+#             pm.setAttr(pci+'.parameter', u)
+            pm.setAttr(pci+'.parameter', num)
             pm.connectAttr(pci+'.position', upLoc +'.t')
         
-    def __getUParam(self,pnt = [], crv = None):
-
-        point = OpenMaya.MPoint(pnt[0],pnt[1],pnt[2])
-        print pnt[0]
-        curveFn = OpenMaya.MFnNurbsCurve(self.__getDagPath(crv))
-        paramUtill=OpenMaya.MScriptUtil()
-        paramPtr=paramUtill.asDoublePtr()
-        isOnCurve = curveFn.isPointOnCurve(point)
-        if isOnCurve == True:
-            
-            curveFn.getParamAtPoint(point , paramPtr,0.001,OpenMaya.MSpace.kObject )
-        else :
-            point = curveFn.closestPoint(point,paramPtr,0.001,OpenMaya.MSpace.kObject)
-            curveFn.getParamAtPoint(point , paramPtr,0.001,OpenMaya.MSpace.kObject )
+        #down curve
+        for num,downLoc in enumerate(self.downLocList):
+#             pos = pm.xform(downLoc, q=1, ws=1, t=1)
+            #u = self.__getUParam(pos, self.eyeUpHiCur.getShape())
+            #create point on curve node. Make sure Locators have suffix of _LOX
+            name= downLoc.replace('_loc', '_PCI')
+            pci= pm.createNode('pointOnCurveInfo', n=name)
+            pm.connectAttr(self.eyeDnHiCur +'.worldSpace', pci+'.inputCurve')
+#             pm.setAttr(pci+'.parameter', u)
+            pm.setAttr(pci+'.parameter', num)
+            pm.connectAttr(pci+'.position', downLoc +'.t')
+     
+    def __createLoCurve(self):
         
-        param = paramUtill.getDouble(paramPtr)  
-        return param
-
-    def __getDagPath(self,objectName):
+        self.eyeUpLoCur = None
+        self.eyeDnLoCur = None  
         
-        if isinstance(objectName, list)==True:
-            oNodeList=[]
-            print objectName
-            for o in objectName:
-                selectionList = OpenMaya.MSelectionList()
-                selectionList.add(o)
-                oNode = OpenMaya.MDagPath()
-                selectionList.getDagPath(0, oNode)
-                oNodeList.append(oNode)
-            return oNodeList
-        else:
-            selectionList = OpenMaya.MSelectionList()
-            selectionList.add(objectName)
-            oNode = OpenMaya.MDagPath()
-            selectionList.getDagPath(0, oNode)
-            return oNode    
+#     def __getUParam(self,pnt = [], crv = None):
+# 
+#         point = OpenMaya.MPoint(pnt[0],pnt[1],pnt[2])
+#         print pnt[0]
+#         curveFn = OpenMaya.MFnNurbsCurve(self.__getDagPath(crv))
+#         paramUtill=OpenMaya.MScriptUtil()
+#         paramPtr=paramUtill.asDoublePtr()
+#         isOnCurve = curveFn.isPointOnCurve(point)
+#         if isOnCurve == True:
+#             
+#             curveFn.getParamAtPoint(point , paramPtr,0.001,OpenMaya.MSpace.kObject )
+#         else :
+#             point = curveFn.closestPoint(point,paramPtr,0.001,OpenMaya.MSpace.kObject)
+#             curveFn.getParamAtPoint(point , paramPtr,0.001,OpenMaya.MSpace.kObject )
+#         
+#         param = paramUtill.getDouble(paramPtr)  
+#         return param
+# 
+#     def __getDagPath(self,objectName):
+#         
+#         if isinstance(objectName, list)==True:
+#             oNodeList=[]
+#             print objectName
+#             for o in objectName:
+#                 selectionList = OpenMaya.MSelectionList()
+#                 selectionList.add(o)
+#                 oNode = OpenMaya.MDagPath()
+#                 selectionList.getDagPath(0, oNode)
+#                 oNodeList.append(oNode)
+#             return oNodeList
+#         else:
+#             selectionList = OpenMaya.MSelectionList()
+#             selectionList.add(objectName)
+#             oNode = OpenMaya.MDagPath()
+#             selectionList.getDagPath(0, oNode)
+#             return oNode    
         
 def getUi(parent,mainUi):
     
