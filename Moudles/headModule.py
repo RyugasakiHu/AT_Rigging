@@ -1096,10 +1096,10 @@ class LidClass(object):
         self.downLocList = None
         
         #curve
-        self.eyeUpHiCur = None
-        self.eyeDnHiCur = None
-        self.eyeUpLoCur = None
-        self.eyeDnLoCur = None        
+        self.lidUpHiCur = None
+        self.lidDnHiCur = None
+        self.lidUpLoCur = None
+        self.lidDnLoCur = None        
         
         #grp
         self.upJointGrp = None
@@ -1119,14 +1119,17 @@ class LidClass(object):
         elif lidSide == 2:
             self.lidSide =  'r'
 
-    def createLid(self,*arg):
+    def createLidCurve(self,*arg):
  
         self.__createLoc()
         self.__createJj()
         self.__createAimCnst()
-        self.__createHiCurve()
+        self.__createCurve()
         self.__locToCurve()
-        self.__createLoCurve()
+    
+    def finishLidSetting(self):
+        
+        self.__createWireDeformer()
     
     def loadUpVertex(self):
         
@@ -1250,20 +1253,24 @@ class LidClass(object):
             pm.aimConstraint(loc, downJj, mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0),
                             worldUpType='object', worldUpObject=self.aimLoc)            
 
-    def __createHiCurve(self):
+    def __createCurve(self):
         
-        tempUpPos = []
-        tempDownPos = []
+        tempUpHiPos = []
+        tempDownHiPos = []
+        tempUpLoPos = []
+        tempDownLoPos = []
+        upLoCurveInfo = [0,len(self.upLocList) / 4,len(self.upLocList) / 2,len(self.upLocList) * 3 / 4,len(self.upLocList) - 1]
+        downLoCurveInfo = [0,len(self.downLocList) / 4,len(self.downLocList) / 2,len(self.downLocList) * 3 / 4,len(self.downLocList) - 1]
         
+        #hiCurve
         #up
         #get pos        
         for loc in self.upLocList:
             pos = pm.xform(loc, q=1, ws=1, t=1)
-            tempUpPos.append(pos)
-#         print self.upLocList
+            tempUpHiPos.append(pos)
 
-        self.eyeUpHiCur = pm.curve(d = 1,p = [x for x in tempUpPos],
-                                   k = [n for n in range(0,len(tempUpPos))],
+        self.lidUpHiCur = pm.curve(d = 1,p = [x for x in tempUpHiPos],
+                                   k = [n for n in range(0,len(tempUpHiPos))],
                                    n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[2],'cur'))
         pm.select(cl = 1)
         
@@ -1271,12 +1278,32 @@ class LidClass(object):
         #get pos        
         for loc in self.downLocList:
             pos = pm.xform(loc, q=1, ws=1, t=1)
-            tempDownPos.append(pos)
-#         print self.downLocList
+            tempDownHiPos.append(pos)
         
-        self.eyeDnHiCur = pm.curve(d = 1,p = [x for x in tempDownPos],
-                                   k = [n for n in range(0,len(tempDownPos))],
+        self.lidDnHiCur = pm.curve(d = 1,p = [x for x in tempDownHiPos],
+                                   k = [n for n in range(0,len(tempUpLoPos))],
                                    n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[2],'cur'))
+        pm.select(cl = 1)
+        
+        #lo curve
+        #up
+        for loc in upLoCurveInfo:
+            pos = pm.xform(self.upLocList[loc], q=1, ws=1, t=1)
+            tempUpLoPos.append(pos)
+            
+        self.lidUpLoCur = pm.curve(d = 3,p = [x for x in tempUpLoPos],
+                                   k = [0,0,0,1,2,2,2],
+                                   n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3],'cur'))
+        pm.select(cl = 1)
+        
+        #down
+        for loc in downLoCurveInfo:
+            pos = pm.xform(self.downLocList[loc], q=1, ws=1, t=1)
+            tempDownLoPos.append(pos)
+        
+        self.lidDnLoCur = pm.curve(d = 3,p = [x for x in tempDownLoPos],
+                                   k = [0,0,0,1,2,2,2],
+                                   n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3],'cur'))
         pm.select(cl = 1)
         
     def __locToCurve(self):
@@ -1284,11 +1311,11 @@ class LidClass(object):
         #up curve
         for num,upLoc in enumerate(self.upLocList):
 #             pos = pm.xform(upLoc, q=1, ws=1, t=1)
-            #u = self.__getUParam(pos, self.eyeUpHiCur.getShape())
+            #u = self.__getUParam(pos, self.lidUpHiCur.getShape())
             #create point on curve node. Make sure Locators have suffix of _LOX
             name= upLoc.replace('_loc', '_PCI')
             pci= pm.createNode('pointOnCurveInfo', n=name)
-            pm.connectAttr(self.eyeUpHiCur +'.worldSpace', pci+'.inputCurve')
+            pm.connectAttr(self.lidUpHiCur +'.worldSpace', pci+'.inputCurve')
 #             pm.setAttr(pci+'.parameter', u)
             pm.setAttr(pci+'.parameter', num)
             pm.connectAttr(pci+'.position', upLoc +'.t')
@@ -1296,19 +1323,27 @@ class LidClass(object):
         #down curve
         for num,downLoc in enumerate(self.downLocList):
 #             pos = pm.xform(downLoc, q=1, ws=1, t=1)
-            #u = self.__getUParam(pos, self.eyeUpHiCur.getShape())
+            #u = self.__getUParam(pos, self.lidUpHiCur.getShape())
             #create point on curve node. Make sure Locators have suffix of _LOX
             name= downLoc.replace('_loc', '_PCI')
             pci= pm.createNode('pointOnCurveInfo', n=name)
-            pm.connectAttr(self.eyeDnHiCur +'.worldSpace', pci+'.inputCurve')
+            pm.connectAttr(self.lidDnHiCur +'.worldSpace', pci+'.inputCurve')
 #             pm.setAttr(pci+'.parameter', u)
             pm.setAttr(pci+'.parameter', num)
             pm.connectAttr(pci+'.position', downLoc +'.t')
-     
-    def __createLoCurve(self):
         
-        self.eyeUpLoCur = None
-        self.eyeDnLoCur = None  
+        pm.select(cl = 1)
+        
+    def __createWireDeformer(self):
+        
+        #up
+        wireUp = pm.wire(self.lidUpHiCur,wire = self.lidUpLoCur,gw = 0,en = 1,ce = 0,li = 0)
+        pm.rename(wireUp[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3],'wire'))
+        
+        #down
+        wireDn = pm.wire(n = self.lidDnHiCur,wire = self.lidDnLoCur,gw = 0,en = 1,ce = 0,li = 0)
+        pm.rename(wireDn[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3],'wire'))
+        print '__createWireDeformer'
         
 #     def __getUParam(self,pnt = [], crv = None):
 # 
@@ -1393,8 +1428,11 @@ class HeadModuleUi(object):
         self.vexDnSelB = pm.button(l = 'load Dn Vertex',c = self.__loadDnVertex)
         pm.columnLayout(adjustableColumn=True)
         
-        self.lidCreateB = pm.button(l = 'create Lid Setting',c = self.__createLid)
+        self.lidCreateB = pm.button(l = 'create Lid Setting',c = self.__createLidCurve)
         pm.columnLayout(adjustableColumn=True)
+        
+        self.lidCreateB = pm.button(l = 'finish Lid Setting',c = self.__finishLidSetting)
+        pm.columnLayout(adjustableColumn=True)        
         
         #erase button
         pm.separator(h = 10)
@@ -1440,9 +1478,13 @@ class HeadModuleUi(object):
         print 'Down Vertex loaded'        
         pm.selectPref(tso = 0)
         
-    def __createLid(self,*arg):
+    def __createLidCurve(self,*arg):
         
-        self.lidClass.createLid()
+        self.lidClass.createLidCurve()
+        
+    def __finishLidSetting(self,*arg):
+        
+        self.lidClass.finishLidSetting()        
         
         
 # from Modules import legModule,footModule
