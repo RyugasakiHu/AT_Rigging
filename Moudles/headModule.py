@@ -1287,6 +1287,7 @@ class LidClass(object):
         
         #lo curve
         #up
+        #get pos
         for loc in upLoCurveInfo:
             pos = pm.xform(self.upLocList[loc], q=1, ws=1, t=1)
             tempUpLoPos.append(pos)
@@ -1297,6 +1298,7 @@ class LidClass(object):
         pm.select(cl = 1)
         
         #down
+        #get pos
         for loc in downLoCurveInfo:
             pos = pm.xform(self.downLocList[loc], q=1, ws=1, t=1)
             tempDownLoPos.append(pos)
@@ -1341,46 +1343,10 @@ class LidClass(object):
         pm.rename(wireUp[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3],'wire'))
         
         #down
-        wireDn = pm.wire(n = self.lidDnHiCur,wire = self.lidDnLoCur,gw = 0,en = 1,ce = 0,li = 0)
+        wireDn = pm.wire(self.lidDnHiCur,wire = self.lidDnLoCur,gw = 0,en = 1,ce = 0,li = 0)
         pm.rename(wireDn[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3],'wire'))
-        print '__createWireDeformer'
         
-#     def __getUParam(self,pnt = [], crv = None):
-# 
-#         point = OpenMaya.MPoint(pnt[0],pnt[1],pnt[2])
-#         print pnt[0]
-#         curveFn = OpenMaya.MFnNurbsCurve(self.__getDagPath(crv))
-#         paramUtill=OpenMaya.MScriptUtil()
-#         paramPtr=paramUtill.asDoublePtr()
-#         isOnCurve = curveFn.isPointOnCurve(point)
-#         if isOnCurve == True:
-#             
-#             curveFn.getParamAtPoint(point , paramPtr,0.001,OpenMaya.MSpace.kObject )
-#         else :
-#             point = curveFn.closestPoint(point,paramPtr,0.001,OpenMaya.MSpace.kObject)
-#             curveFn.getParamAtPoint(point , paramPtr,0.001,OpenMaya.MSpace.kObject )
-#         
-#         param = paramUtill.getDouble(paramPtr)  
-#         return param
-# 
-#     def __getDagPath(self,objectName):
-#         
-#         if isinstance(objectName, list)==True:
-#             oNodeList=[]
-#             print objectName
-#             for o in objectName:
-#                 selectionList = OpenMaya.MSelectionList()
-#                 selectionList.add(o)
-#                 oNode = OpenMaya.MDagPath()
-#                 selectionList.getDagPath(0, oNode)
-#                 oNodeList.append(oNode)
-#             return oNodeList
-#         else:
-#             selectionList = OpenMaya.MSelectionList()
-#             selectionList.add(objectName)
-#             oNode = OpenMaya.MDagPath()
-#             selectionList.getDagPath(0, oNode)
-#             return oNode    
+    
         
 def getUi(parent,mainUi):
     
