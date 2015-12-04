@@ -42,7 +42,7 @@ class HeadModule(object):
     loLipMidPosArray = [0,15.318,1.464]
     loLipLeftPosArray = [0.221,15.318,1.389]
     
-    def __init__(self, baseName = 'head',size = 1.5,
+    def __init__(self, baseName = 'head',size = 3,
                  controlOrient = [0,0,0], metaMain = None,metaSpine = None):
         
         self.baseName = baseName
@@ -1080,12 +1080,12 @@ class HeadModule(object):
 
 class LidClass(object):
 
-    def __init__(self,eyeBall,lidSide):
+    def __init__(self,eyeBall,lidSide,ctrlSize):
         
         #initial
         self.eyeBall = eyeBall
+        self.ctrlSize = ctrlSize
         self.lidSide = None
-        self.lidPos = None
         
         #list
         self.upVertexes = None
@@ -1110,6 +1110,14 @@ class LidClass(object):
         #loc
         self.aimLoc = None
         
+        #cc
+        self.inLidCtrl = None
+        self.outLidCtrl = None
+        self.upLidCtrl = None
+        self.downLidCtrl = None
+        self.upTrv = None
+        self.downTrv = None
+        
         #name
         self.nameList = ['lid','Base','Hi','Lo','Blink','Up','Dn','Aim','Loc']
         
@@ -1129,7 +1137,8 @@ class LidClass(object):
     
     def finishLidSetting(self):
         
-        self.__createWireDeformer()
+#         self.__createWireDeformer()
+        self.__createCc()
     
     def loadUpVertex(self):
         
@@ -1259,8 +1268,8 @@ class LidClass(object):
         tempDownHiPos = []
         tempUpLoPos = []
         tempDownLoPos = []
-        upLoCurveInfo = [0,len(self.upLocList) / 4,len(self.upLocList) / 2,len(self.upLocList) * 3 / 4,len(self.upLocList) - 1]
-        downLoCurveInfo = [0,len(self.downLocList) / 4,len(self.downLocList) / 2,len(self.downLocList) * 3 / 4,len(self.downLocList) - 1]
+        upLoCurveInfo = [0,len(self.upLocList) / 4,len(self.upLocList) / 2,(len(self.upLocList) - 1)* 3 / 4,len(self.upLocList) - 1]
+        downLoCurveInfo = [0,len(self.downLocList) / 4,len(self.downLocList) / 2,(len(self.downLocList) - 1) * 3 / 4,len(self.downLocList) - 1]
         
         #hiCurve
         #up
@@ -1346,7 +1355,49 @@ class LidClass(object):
         wireDn = pm.wire(self.lidDnHiCur,wire = self.lidDnLoCur,gw = 0,en = 1,ce = 0,li = 0)
         pm.rename(wireDn[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3],'wire'))
         
-    
+    def __createCc(self):
+        
+        #main ctrl
+        self.inLidCtrl = control.Control(self.lidSide,'inLid',size = self.ctrlSize[0]) 
+        self.inLidCtrl.circleCtrl()
+        
+        self.outLidCtrl = control.Control(self.lidSide,'outLid',size = self.ctrlSize[0]) 
+        self.outLidCtrl.circleCtrl()
+         
+        self.upLidCtrl = control.Control(self.lidSide,'upLid',size = self.ctrlSize[0]) 
+        self.upLidCtrl.circleCtrl()
+         
+        self.downLidCtrl = control.Control(self.lidSide,'downLid',size = self.ctrlSize[0]) 
+        self.downLidCtrl.circleCtrl()
+        
+        #create up travel
+        self.upTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.lidSide,'upLid','trv'))
+        moPathName = nameUtils.getUniqueName(self.lidSide,'upLid','MOP')
+        moPathNode = pm.pathAnimation(self.lidUpLoCur,self.upTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
+                                      worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)        
+        pm.disconnectAttr(moPathNode + '_uValue.output',moPathNode + '.uValue')
+        
+        #set up Trv Loc:
+        tempTrvPos = [0.275,0.45,0.75]
+        self.trvPosList = []
+        
+        for pos in tempTrvPos:
+            pm.setAttr(moPathNode + '.uValue',0.4)
+            trvPos = self.guideTrv.getTranslation(space = 'world')
+            self.trvPosList.append(trvPos)
+            
+        for i,p in enumerate(self.trvPosList):
+            trvName = nameUtils.getUniqueName(self.lidSide,'Fk','gud')
+            loc = pm.spaceLocator(n = trvName)
+            loc.t.set(p)
+            self.fkGuides.append(loc)
+            loc.setParent(self.guideGrp)
+        
+        
+        
+        
+        
+        
         
 def getUi(parent,mainUi):
     
@@ -1377,28 +1428,20 @@ class HeadModuleUi(object):
 
         #lid part        
         self.lidTool = pm.text(l = '**** Lid Tool ****')
-        self.eyeBallT = pm.textFieldGrp('eyeBall',l='eyeBall :',cl2 = ['left','left'],
+        self.eyeBallT = pm.textFieldGrp(l='eyeBall :',cl2 = ['left','left'],
                                          ad2 = 1,text = 'eyeBall')
-        self.eyeBallR = pm.radioButtonGrp('lid_side',nrb = 2,label = 'eyeBall side :',
+        self.eyeBallSideR = pm.radioButtonGrp(label = 'eyeBall side :',nrb = 2,
                                           cal = [1,'left'],la2 = ['left','right'],sl = 1)
-#         self.eyeLidR = pm.radioButtonGrp('lid_pos',nrb = 2,label = 'eyeBall position :',
-#                                           cal = [1,'left'],la2 = ['up','dowm'],sl = 1)
+        self.lidCcSizeF = pm.floatFieldGrp(l='lid Ctrl Size :',cl2 = ['left','left'],
+                                           ad2 = 1,numberOfFields = 1,value1 = 1.5)
+
         pm.columnLayout(adjustableColumn = True)
         
         self.lidLoadB = pm.button(l = 'load Lid Class',c = self.getLidInstance)
-        pm.columnLayout(adjustableColumn=True)
-        
         self.vexUpSelB = pm.button(l = 'load Up Vertex',c = self.__loadUpVertex)
-        pm.columnLayout(adjustableColumn=True)
-        
         self.vexDnSelB = pm.button(l = 'load Dn Vertex',c = self.__loadDnVertex)
-        pm.columnLayout(adjustableColumn=True)
-        
         self.lidCreateB = pm.button(l = 'create Lid Setting',c = self.__createLidCurve)
-        pm.columnLayout(adjustableColumn=True)
-        
-        self.lidCreateB = pm.button(l = 'finish Lid Setting',c = self.__finishLidSetting)
-        pm.columnLayout(adjustableColumn=True)        
+        self.lidCreateB = pm.button(l = 'finish Lid Setting',c = self.__finishLidSetting)   
         
         #erase button
         pm.separator(h = 10)
@@ -1424,11 +1467,11 @@ class HeadModuleUi(object):
 
     def getLidInstance(self,*arg):
         
-        eyeBallR = pm.textFieldGrp('eyeBall',q = 1,text = 1)
-        eyeLidR = pm.radioButtonGrp('lid_side',q = 1,sl = 1)
-#         eyeLidP =  pm.radioButtonGrp('lid_pos',q = 1,sl = 1)
-        self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR)
-#         self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeLidR,lidPos = eyeLidP)
+        eyeBallR = pm.textFieldGrp(self.eyeBallT,q = 1,text = 1)
+        eyeBallSizeR = pm.radioButtonGrp(self.eyeBallSideR,q = 1,sl = 1)
+        lidCtrlF =  pm.floatFieldGrp(self.lidCcSizeF,q = 1,v = 1)
+        self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeBallSizeR,ctrlSize = lidCtrlF)
+
         pm.selectPref(tso = 1)
         print 'LidClass ready to roll'
         return self.lidClass
