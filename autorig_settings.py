@@ -1,5 +1,6 @@
 rootPath = 'C:/eclipse/test/OOP/AutoRig'
 modulesPath = rootPath + 'Modules/'
+subModules = modulesPath + 'subModules/'
 uiPath = rootPath + 'Ui/'
 utilsPath = rootPath + 'Utils/'
 customPath = utilsPath + 'blabla/'
@@ -18,7 +19,10 @@ suffix = ['jj',# joint joint
           'grp',# group
           'loc',# locator
           'fol',# follicle
+          'folShape',#follicle Shape
+          'HOOK',#HOOK
           'cc',# control curve
+          'cur',#curve
           'loc',# locator
           'dist',# distance
           'bdr',# micro boundary
@@ -28,6 +32,7 @@ suffix = ['jj',# joint joint
           'off',# offset
           'cls',# cluster
           'cog',# cog
+          'wire',# wire
           'surf',# surface
           'cube',# tempCube
           'cvINFO',# curveinfo
@@ -41,7 +46,9 @@ suffix = ['jj',# joint joint
           'PMA',# plus minus averageNode
           'RV',#remap valueNode
           'RC',#remap colorNode
+          'MDL',#multDoubleLinear NODE
           'CONFIG',# WTF
+          'ADJ',# ADJ
           'SDK',#SDK frp
           'ALL',#ALL grp
           'TRS',#TRS grp
@@ -56,4 +63,5 @@ suffix = ['jj',# joint joint
           'MAT',#materials
           'SG',#shader group
           'EXP',#expression
+          'META',#META Node
           ]
