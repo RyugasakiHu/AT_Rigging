@@ -5,12 +5,13 @@ from Utils import nameUtils,xformUtils
 
 class Control(object):
 
-    def __init__(self, side,baseName,size,aimAxis = 'x'):
+    def __init__(self, side,baseName,size,aimAxis = 'x',sub = 0):
     
         self.baseName = baseName
         self.side = side
         self.size = size
         self.aimAxis = aimAxis
+        self.sub = sub
      
         self.control = None
         self.controlGrp = None
@@ -55,7 +56,7 @@ class Control(object):
                 dic = [0,0,1] 
                 
             self.control = pm.circle(name = self.controlName,ch = 1,o = 1 ,nr = dic,r = self.size)[0]
-            self.control.s.set(self.size,self.size,self.size)
+#             self.control.s.set(self.size,self.size,self.size)
                  
         self.__finalizeCc()       
         self.__colorSet()     
@@ -327,7 +328,7 @@ class Control(object):
         self.__finalizeCc()       
         self.__colorSet() 
         
-    def poleCtrl(self):
+    def solidSphereCtrl(self):
         '''
         'charlie01_l_elbow01_pole_cc' 
         '''
@@ -335,7 +336,7 @@ class Control(object):
         
         if self.controlName :
             #que
-            self.control = pm.sphere(name = self.controlName,ch = 0,o = 1,po = 0 ,r = self.size / 2,ax = [0,1,0],nsp = 8)[0]
+            self.control = pm.sphere(name = self.controlName,ch = 0,o = 1,po = 0 ,r = float(self.size) / 4,ax = [0,1,0],nsp = 8)[0]
 
         for dag in self.control.getShape().instObjGroups:
             if pm.connectionInfo(dag, isSource=True):
@@ -439,12 +440,15 @@ class Control(object):
         for shape in self.control.getShapes():
             #open override
             shape.overrideEnabled.set(1)
-            if self.side == 'm':
-                shape.overrideColor.set(17) 
-            elif self.side == 'l':
-                shape.overrideColor.set(6) 
-            elif self.side == 'r':        
-                shape.overrideColor.set(13)        
+            if self.sub == 0:
+                if self.side == 'm':
+                    shape.overrideColor.set(17) 
+                elif self.side == 'l':
+                    shape.overrideColor.set(6) 
+                elif self.side == 'r':        
+                    shape.overrideColor.set(13)        
+            elif self.sub == 1:
+                shape.overrideColor.set(14) 
             
 def lockAndHideAttr(objName,attrs):
     '''
