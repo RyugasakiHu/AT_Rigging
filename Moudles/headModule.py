@@ -1111,10 +1111,16 @@ class LidClass(object):
         self.aimLoc = None
         
         #cc
+        self.lidCcGrp = None
         self.inLidCtrl = None
         self.outLidCtrl = None
         self.upLidCtrl = None
         self.downLidCtrl = None
+        self.upInLidCtrl = None
+        self.upOutLidCtrl = None
+        self.downInLidCtrl = None
+        self.downOutLidCtrl = None
+        
         self.upTrv = None
         self.downTrv = None
         
@@ -1357,47 +1363,99 @@ class LidClass(object):
         
     def __createCc(self):
         
-        #main ctrl
-        self.inLidCtrl = control.Control(self.lidSide,'inLid',size = self.ctrlSize[0]) 
+        #temp list
+        upLidCc = []
+        downLidCc = []
+        
+        #ctrl
+        self.lidCcGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Cc','grp'))
+        
+        #in & outs
+        self.inLidCtrl = control.Control(self.lidSide,'inLid',size = self.ctrlSize[0],aimAxis = 'z') 
         self.inLidCtrl.circleCtrl()
         
-        self.outLidCtrl = control.Control(self.lidSide,'outLid',size = self.ctrlSize[0]) 
+        self.outLidCtrl = control.Control(self.lidSide,'outLid',size = self.ctrlSize[0],aimAxis = 'z') 
         self.outLidCtrl.circleCtrl()
-         
-        self.upLidCtrl = control.Control(self.lidSide,'upLid',size = self.ctrlSize[0]) 
-        self.upLidCtrl.circleCtrl()
-         
-        self.downLidCtrl = control.Control(self.lidSide,'downLid',size = self.ctrlSize[0]) 
-        self.downLidCtrl.circleCtrl()
         
+        pm.xform(self.inLidCtrl.controlGrp,ws = 1,matrix = self.upJj[0].getChildren()[0].worldMatrix.get())
+        pm.xform(self.outLidCtrl.controlGrp,ws = 1,matrix = self.upJj[-1].getChildren()[0].worldMatrix.get())
+        
+        
+        
+        ###########################
+        #up ctrl
+        self.upLidCtrl = control.Control(self.lidSide,'upLid',size = self.ctrlSize[0],aimAxis = 'z') 
+        self.upLidCtrl.circleCtrl()
+        control.addFloatAttr(self.upLidCtrl.control,['blink_weight','sec_cc','blink'],0,1)
+        
+        self.upInLidCtrl = control.Control(self.lidSide,'upInLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
+        self.upInLidCtrl.circleCtrl()
+        
+        self.upOutLidCtrl = control.Control(self.lidSide,'upOutLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
+        self.upOutLidCtrl.circleCtrl()
+        
+        upLidCc.append(self.upInLidCtrl.controlGrp)
+        upLidCc.append(self.upLidCtrl.controlGrp)
+        upLidCc.append(self.upOutLidCtrl.controlGrp)
+
         #create up travel
+        tempTrvPos = [0.275,0.45,0.75]
         self.upTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.lidSide,'upLid','trv'))
-        moPathName = nameUtils.getUniqueName(self.lidSide,'upLid','MOP')
-        moPathNode = pm.pathAnimation(self.lidUpLoCur,self.upTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
-                                      worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)        
-        pm.disconnectAttr(moPathNode + '_uValue.output',moPathNode + '.uValue')
+        moPathUpName = nameUtils.getUniqueName(self.lidSide,'upLid','MOP')
+        moPathUpNode = pm.pathAnimation(self.lidUpLoCur,self.upTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
+                                        worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathUpName)
+        pm.delete(moPathUpNode + '.uValue')        
         
         #set up Trv Loc:
-        tempTrvPos = [0.275,0.45,0.75]
-        self.trvPosList = []
-        
+        upTrvPosList = []
+
+        #up cc pos set
         for pos in tempTrvPos:
-            pm.setAttr(moPathNode + '.uValue',0.4)
-            trvPos = self.guideTrv.getTranslation(space = 'world')
-            self.trvPosList.append(trvPos)
-            
-        for i,p in enumerate(self.trvPosList):
-            trvName = nameUtils.getUniqueName(self.lidSide,'Fk','gud')
-            loc = pm.spaceLocator(n = trvName)
-            loc.t.set(p)
-            self.fkGuides.append(loc)
-            loc.setParent(self.guideGrp)
+            pm.setAttr(moPathUpNode + '.uValue',pos)
+            trvPos = self.upTrv.getTranslation(space = 'world')
+            upTrvPosList.append(trvPos)    
         
+        for num,pos in enumerate(upTrvPosList):
+            upLidCc[num].t.set(pos)
+            upLidCc[num].tz.set(pos[2] + (self.upJj[0].getChildren()[0].tx.get() / 3))
+            upLidCc[num].setParent(self.lidCcGrp)
         
+        ###########################
+        #down ctrl
+        self.downLidCtrl = control.Control(self.lidSide,'downLid',size = self.ctrlSize[0],aimAxis = 'z') 
+        self.downLidCtrl.circleCtrl()
+        control.addFloatAttr(self.downLidCtrl.control,['blink_weight','sec_cc','blink'],0,1)
+ 
+        self.downInLidCtrl = control.Control(self.lidSide,'downInLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
+        self.downInLidCtrl.circleCtrl()
+         
+        self.downOutLidCtrl = control.Control(self.lidSide,'downOutLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
+        self.downOutLidCtrl.circleCtrl()
+         
+        downLidCc.append(self.downInLidCtrl.controlGrp)
+        downLidCc.append(self.downLidCtrl.controlGrp)
+        downLidCc.append(self.downOutLidCtrl.controlGrp)        
         
+        #create down travel
+        self.downTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.lidSide,'downLid','trv'))
+        moPathDnName = nameUtils.getUniqueName(self.lidSide,'downLid','MOP')
+        moPathDnNode = pm.pathAnimation(self.lidDnLoCur,self.downTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
+                                        worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathDnName)
+        pm.delete(moPathDnNode + '.uValue')        
         
+        #set up Trv Loc:
+        downTrvPosList = []
+
+        #down cc pos set
+        for pos in tempTrvPos:
+            pm.setAttr(moPathDnNode + '.uValue',pos)
+            trvPos = self.downTrv.getTranslation(space = 'world')
+            downTrvPosList.append(trvPos)    
         
-        
+        for num,pos in enumerate(downTrvPosList):
+            downLidCc[num].t.set(pos)
+            downLidCc[num].tz.set(pos[2] + (self.downJj[0].getChildren()[0].tx.get() / 3)) 
+            downLidCc[num].setParent(self.lidCcGrp)
         
 def getUi(parent,mainUi):
     
