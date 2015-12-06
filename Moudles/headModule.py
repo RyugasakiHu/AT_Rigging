@@ -1373,20 +1373,24 @@ class LidClass(object):
         #in & outs
         self.inLidCtrl = control.Control(self.lidSide,'inLid',size = self.ctrlSize[0],aimAxis = 'z') 
         self.inLidCtrl.circleCtrl()
+        self.inLidCtrl.controlGrp.setParent(self.lidCcGrp)
         
         self.outLidCtrl = control.Control(self.lidSide,'outLid',size = self.ctrlSize[0],aimAxis = 'z') 
         self.outLidCtrl.circleCtrl()
+        self.outLidCtrl.controlGrp.setParent(self.lidCcGrp)
         
-        pm.xform(self.inLidCtrl.controlGrp,ws = 1,matrix = self.upJj[0].getChildren()[0].worldMatrix.get())
-        pm.xform(self.outLidCtrl.controlGrp,ws = 1,matrix = self.upJj[-1].getChildren()[0].worldMatrix.get())
-        
-        
-        
+        inLidPos = self.upJj[0].getChildren()[0].getTranslation(space = 'world')
+        outLidPos = self.upJj[-1].getChildren()[0].getTranslation(space = 'world')
+              
+        self.inLidCtrl.controlGrp.t.set(inLidPos)
+        self.inLidCtrl.controlGrp.tz.set(inLidPos[2] + (self.upJj[0].getChildren()[0].tx.get() / 3))
+        self.outLidCtrl.controlGrp.t.set(outLidPos)
+        self.outLidCtrl.controlGrp.tz.set(inLidPos[2] + (self.downJj[0].getChildren()[0].tx.get() / 3))
+              
         ###########################
         #up ctrl
         self.upLidCtrl = control.Control(self.lidSide,'upLid',size = self.ctrlSize[0],aimAxis = 'z') 
         self.upLidCtrl.circleCtrl()
-        control.addFloatAttr(self.upLidCtrl.control,['blink_weight','sec_cc','blink'],0,1)
         
         self.upInLidCtrl = control.Control(self.lidSide,'upInLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
         self.upInLidCtrl.circleCtrl()
@@ -1424,7 +1428,6 @@ class LidClass(object):
         #down ctrl
         self.downLidCtrl = control.Control(self.lidSide,'downLid',size = self.ctrlSize[0],aimAxis = 'z') 
         self.downLidCtrl.circleCtrl()
-        control.addFloatAttr(self.downLidCtrl.control,['blink_weight','sec_cc','blink'],0,1)
  
         self.downInLidCtrl = control.Control(self.lidSide,'downInLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
         self.downInLidCtrl.circleCtrl()
@@ -1456,6 +1459,20 @@ class LidClass(object):
             downLidCc[num].t.set(pos)
             downLidCc[num].tz.set(pos[2] + (self.downJj[0].getChildren()[0].tx.get() / 3)) 
             downLidCc[num].setParent(self.lidCcGrp)
+        
+        ###########################
+        #connect cc vis
+        control.addFloatAttr(self.upLidCtrl.control,['blink_weight','sec_cc','blink'],0,1)
+        control.addFloatAttr(self.downLidCtrl.control,['sec_cc','blink'],0,1)
+        self.upLidCtrl.control.sec_cc.connect(self.upInLidCtrl.controlGrp.v)
+        self.upLidCtrl.control.sec_cc.connect(self.upOutLidCtrl.controlGrp.v)
+        self.downLidCtrl.control.sec_cc.connect(self.downInLidCtrl.controlGrp.v)
+        self.downLidCtrl.control.sec_cc.connect(self.downOutLidCtrl.controlGrp.v)
+        
+        control.lockAndHideAttr(self.upInLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
+        control.lockAndHideAttr(self.upOutLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
+        control.lockAndHideAttr(self.downInLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
+        control.lockAndHideAttr(self.downOutLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         
 def getUi(parent,mainUi):
     
