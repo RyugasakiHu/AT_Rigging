@@ -1090,10 +1090,15 @@ class LidClass(object):
         #list
         self.upVertexes = None
         self.downVertexes = None
+        
         self.upJj = None
         self.downJj = None
+        
         self.upLocList = None
         self.downLocList = None
+        
+        self.upLidJcList = None
+        self.downLidJcList = None
         
         #curve
         self.lidUpHiCur = None
@@ -1112,6 +1117,8 @@ class LidClass(object):
         
         #cc
         self.lidCcGrp = None
+        self.lidJcGrp = None
+        
         self.inLidCtrl = None
         self.outLidCtrl = None
         self.upLidCtrl = None
@@ -1143,7 +1150,7 @@ class LidClass(object):
     
     def finishLidSetting(self):
         
-#         self.__createWireDeformer()
+        self.__createWireDeformer()
         self.__createCc()
     
     def loadUpVertex(self):
@@ -1367,8 +1374,13 @@ class LidClass(object):
         upLidCc = []
         downLidCc = []
         
+        #global list
+        self.upLidJcList = []
+        self.downLidJcList = []
+        
         #ctrl
         self.lidCcGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Cc','grp'))
+        self.lidJcGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Jc','grp'))
         
         #in & outs
         self.inLidCtrl = control.Control(self.lidSide,'inLid',size = self.ctrlSize[0],aimAxis = 'z') 
@@ -1383,10 +1395,23 @@ class LidClass(object):
         outLidPos = self.upJj[-1].getChildren()[0].getTranslation(space = 'world')
               
         self.inLidCtrl.controlGrp.t.set(inLidPos)
-        self.inLidCtrl.controlGrp.tz.set(inLidPos[2] + (self.upJj[0].getChildren()[0].tx.get() / 3))
+        pm.move(0,0,(self.upJj[0].getChildren()[0].tx.get() / 3),
+                self.inLidCtrl.control.getShape().cv,r = 1)
+        inLidJc = pm.joint(p = inLidPos,n = nameUtils.getUniqueName(self.lidSide,'inLid','jc'))
+        
+        inLidJc.setParent(self.lidJcGrp)
+        self.upLidJcList.append(inLidJc)
+        self.downLidJcList.append(inLidJc)
+        
         self.outLidCtrl.controlGrp.t.set(outLidPos)
-        self.outLidCtrl.controlGrp.tz.set(inLidPos[2] + (self.downJj[0].getChildren()[0].tx.get() / 3))
-              
+        pm.move(0,0,(self.upJj[-1].getChildren()[0].tx.get() / 3),
+                self.outLidCtrl.control.getShape().cv,r = 1)
+        outLidJc = pm.joint(p = outLidPos,n = nameUtils.getUniqueName(self.lidSide,'outLid','jc'))
+               
+        outLidJc.setParent(self.lidJcGrp)
+        self.upLidJcList.append(outLidJc)
+        self.downLidJcList.append(outLidJc)
+        
         ###########################
         #up ctrl
         self.upLidCtrl = control.Control(self.lidSide,'upLid',size = self.ctrlSize[0],aimAxis = 'z') 
@@ -1401,9 +1426,11 @@ class LidClass(object):
         upLidCc.append(self.upInLidCtrl.controlGrp)
         upLidCc.append(self.upLidCtrl.controlGrp)
         upLidCc.append(self.upOutLidCtrl.controlGrp)
+        pm.select(cl = 1)
 
         #create up travel
-        tempTrvPos = [0.275,0.45,0.75]
+        tempTrvPos = [0,0.275,0.45,0.75,1]
+        pm.select(cl = 1)
         self.upTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.lidSide,'upLid','trv'))
         moPathUpName = nameUtils.getUniqueName(self.lidSide,'upLid','MOP')
         moPathUpNode = pm.pathAnimation(self.lidUpLoCur,self.upTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
@@ -1414,14 +1441,35 @@ class LidClass(object):
         upTrvPosList = []
 
         #up cc pos set
-        for pos in tempTrvPos:
-            pm.setAttr(moPathUpNode + '.uValue',pos)
-            trvPos = self.upTrv.getTranslation(space = 'world')
-            upTrvPosList.append(trvPos)    
+        for num,pos in enumerate(tempTrvPos):
+            if 1 <= num <= 3:
+                pm.setAttr(moPathUpNode + '.uValue',pos)
+                trvPos = self.upTrv.getTranslation(space = 'world')
+                upTrvPosList.append(trvPos)
+                
+                if num == 1:
+                    upInLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'upInLid','jc'))
+                    pm.select(cl = 1)
+                    upInLidJc.setParent(self.lidJcGrp)
+                    self.upLidJcList.append(upInLidJc)
+                    
+                if num == 2:
+                    upLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'upLid','jc'))
+                    pm.select(cl = 1)
+                    upLidJc.setParent(self.lidJcGrp)
+                    self.upLidJcList.append(upLidJc)
+                    
+                if num == 3:
+                    upOutLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'upOutLid','jc'))
+                    pm.select(cl = 1)
+                    upOutLidJc.setParent(self.lidJcGrp)
+                    self.upLidJcList.append(upOutLidJc)                    
+
         
         for num,pos in enumerate(upTrvPosList):
             upLidCc[num].t.set(pos)
-            upLidCc[num].tz.set(pos[2] + (self.upJj[0].getChildren()[0].tx.get() / 3))
+            pm.move(0,0,(self.upJj[0].getChildren()[0].tx.get() / 3),
+                    upLidCc[num].getChildren()[0].getShape().cv,r = 1)
             upLidCc[num].setParent(self.lidCcGrp)
         
         ###########################
@@ -1441,6 +1489,7 @@ class LidClass(object):
         
         #create down travel
         self.downTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.lidSide,'downLid','trv'))
+        pm.select(cl = 1)
         moPathDnName = nameUtils.getUniqueName(self.lidSide,'downLid','MOP')
         moPathDnNode = pm.pathAnimation(self.lidDnLoCur,self.downTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
                                         worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathDnName)
@@ -1450,14 +1499,34 @@ class LidClass(object):
         downTrvPosList = []
 
         #down cc pos set
-        for pos in tempTrvPos:
-            pm.setAttr(moPathDnNode + '.uValue',pos)
-            trvPos = self.downTrv.getTranslation(space = 'world')
-            downTrvPosList.append(trvPos)    
+        for num,pos in enumerate(tempTrvPos):
+            if 1 <= num <= 3:
+                pm.setAttr(moPathDnNode + '.uValue',pos)
+                trvPos = self.downTrv.getTranslation(space = 'world')
+                downTrvPosList.append(trvPos)
+                    
+                if num == 1:
+                    downInLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downInLid','jc'))
+                    pm.select(cl = 1)
+                    self.downLidJcList.append(downInLidJc)
+                    downInLidJc.setParent(self.lidJcGrp)                              
+                    
+                if num == 2:
+                    downLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downLid','jc'))
+                    pm.select(cl = 1)
+                    self.downLidJcList.append(downLidJc)
+                    downLidJc.setParent(self.lidJcGrp)                              
+                    
+                if num == 3:
+                    downOutLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downOutLid','jc'))
+                    pm.select(cl = 1)
+                    self.downLidJcList.append(downOutLidJc)
+                    downOutLidJc.setParent(self.lidJcGrp)                          
         
         for num,pos in enumerate(downTrvPosList):
             downLidCc[num].t.set(pos)
-            downLidCc[num].tz.set(pos[2] + (self.downJj[0].getChildren()[0].tx.get() / 3)) 
+            pm.move(0,0,(self.downJj[0].getChildren()[0].tx.get() / 3),
+                    downLidCc[num].getChildren()[0].getShape().cv,r = 1)            
             downLidCc[num].setParent(self.lidCcGrp)
         
         ###########################
