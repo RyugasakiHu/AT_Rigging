@@ -1,4 +1,5 @@
 import pymel.core as pm
+import maya.mel as mel
 from Modules.subModules import fkChain,ikChain,boneChain
 from Utils import nameUtils,metaUtils
 from Modules import control,hierarchy,legModule
@@ -1097,6 +1098,9 @@ class LidClass(object):
         self.upLocList = None
         self.downLocList = None
         
+        self.upLidCcList = None
+        self.downLidCcList = None
+                
         self.upLidJcList = None
         self.downLidJcList = None
         
@@ -1334,25 +1338,17 @@ class LidClass(object):
         
         #up curve
         for num,upLoc in enumerate(self.upLocList):
-#             pos = pm.xform(upLoc, q=1, ws=1, t=1)
-            #u = self.__getUParam(pos, self.lidUpHiCur.getShape())
-            #create point on curve node. Make sure Locators have suffix of _LOX
             name= upLoc.replace('_loc', '_PCI')
             pci= pm.createNode('pointOnCurveInfo', n=name)
             pm.connectAttr(self.lidUpHiCur +'.worldSpace', pci+'.inputCurve')
-#             pm.setAttr(pci+'.parameter', u)
             pm.setAttr(pci+'.parameter', num)
             pm.connectAttr(pci+'.position', upLoc +'.t')
         
         #down curve
         for num,downLoc in enumerate(self.downLocList):
-#             pos = pm.xform(downLoc, q=1, ws=1, t=1)
-            #u = self.__getUParam(pos, self.lidUpHiCur.getShape())
-            #create point on curve node. Make sure Locators have suffix of _LOX
             name= downLoc.replace('_loc', '_PCI')
             pci= pm.createNode('pointOnCurveInfo', n=name)
             pm.connectAttr(self.lidDnHiCur +'.worldSpace', pci+'.inputCurve')
-#             pm.setAttr(pci+'.parameter', u)
             pm.setAttr(pci+'.parameter', num)
             pm.connectAttr(pci+'.position', downLoc +'.t')
         
@@ -1377,6 +1373,8 @@ class LidClass(object):
         #global list
         self.upLidJcList = []
         self.downLidJcList = []
+        self.upLidCcList = []
+        self.downLidCcList = []
         
         #ctrl
         self.lidCcGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Cc','grp'))
@@ -1508,20 +1506,21 @@ class LidClass(object):
                 if num == 1:
                     downInLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downInLid','jc'))
                     pm.select(cl = 1)
-                    self.downLidJcList.append(downInLidJc)
-                    downInLidJc.setParent(self.lidJcGrp)                              
+                    downInLidJc.setParent(self.lidJcGrp)
+                    self.downLidJcList.append(downInLidJc)                              
                     
                 if num == 2:
                     downLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downLid','jc'))
                     pm.select(cl = 1)
-                    self.downLidJcList.append(downLidJc)
-                    downLidJc.setParent(self.lidJcGrp)                              
+                    downLidJc.setParent(self.lidJcGrp)
+                    self.downLidJcList.append(downLidJc)                   
                     
                 if num == 3:
                     downOutLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downOutLid','jc'))
                     pm.select(cl = 1)
+                    downOutLidJc.setParent(self.lidJcGrp)      
                     self.downLidJcList.append(downOutLidJc)
-                    downOutLidJc.setParent(self.lidJcGrp)                          
+                                        
         
         for num,pos in enumerate(downTrvPosList):
             downLidCc[num].t.set(pos)
@@ -1543,6 +1542,18 @@ class LidClass(object):
         control.lockAndHideAttr(self.downInLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         control.lockAndHideAttr(self.downOutLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         
+        ##########################
+#         for jj in self.
+        for upJc in self.upLidJcList:
+            pm.select(upJc,add = 1)
+            
+        pm.select(self.lidUpLoCur,add = 1)
+        mel.eval('newSkinCluster "-bindMethod 0 -normalizeWeights 1 -weightDistribution 0 -mi 5 -omi true -dr 4 -rui true"')
+        
+        for cc in self.u
+        
+        for downJc in self.downLidJcList:
+            pass
 def getUi(parent,mainUi):
     
     return HeadModuleUi(parent,mainUi)
