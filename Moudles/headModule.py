@@ -1098,8 +1098,8 @@ class LidClass(object):
         self.upLocList = None
         self.downLocList = None
         
-        self.upLidCcList = None
-        self.downLidCcList = None
+        self.upLidCc = None
+        self.downLidCc = None
                 
         self.upLidJcList = None
         self.downLidJcList = None
@@ -1365,22 +1365,18 @@ class LidClass(object):
         pm.rename(wireDn[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3],'wire'))
         
     def __createCc(self):
-        
-        #temp list
-        upLidCc = []
-        downLidCc = []
-        
+
         #global list
+        self.upLidCc = []
+        self.downLidCc = []             
         self.upLidJcList = []
         self.downLidJcList = []
-        self.upLidCcList = []
-        self.downLidCcList = []
         
         #ctrl
         self.lidCcGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Cc','grp'))
         self.lidJcGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Jc','grp'))
         
-        #in & outs
+        #in & outs cc
         self.inLidCtrl = control.Control(self.lidSide,'inLid',size = self.ctrlSize[0],aimAxis = 'z') 
         self.inLidCtrl.circleCtrl()
         self.inLidCtrl.controlGrp.setParent(self.lidCcGrp)
@@ -1389,9 +1385,11 @@ class LidClass(object):
         self.outLidCtrl.circleCtrl()
         self.outLidCtrl.controlGrp.setParent(self.lidCcGrp)
         
+        #in out jc
         inLidPos = self.upJj[0].getChildren()[0].getTranslation(space = 'world')
         outLidPos = self.upJj[-1].getChildren()[0].getTranslation(space = 'world')
-              
+        
+        #injc set pos
         self.inLidCtrl.controlGrp.t.set(inLidPos)
         pm.move(0,0,(self.upJj[0].getChildren()[0].tx.get() / 3),
                 self.inLidCtrl.control.getShape().cv,r = 1)
@@ -1400,7 +1398,9 @@ class LidClass(object):
         inLidJc.setParent(self.lidJcGrp)
         self.upLidJcList.append(inLidJc)
         self.downLidJcList.append(inLidJc)
+        pm.pointConstraint(self.inLidCtrl.control,inLidJc,mo = 1)
         
+        #outjc set pos
         self.outLidCtrl.controlGrp.t.set(outLidPos)
         pm.move(0,0,(self.upJj[-1].getChildren()[0].tx.get() / 3),
                 self.outLidCtrl.control.getShape().cv,r = 1)
@@ -1409,6 +1409,7 @@ class LidClass(object):
         outLidJc.setParent(self.lidJcGrp)
         self.upLidJcList.append(outLidJc)
         self.downLidJcList.append(outLidJc)
+        pm.pointConstraint(self.outLidCtrl.control,outLidJc,mo = 1)
         
         ###########################
         #up ctrl
@@ -1421,9 +1422,9 @@ class LidClass(object):
         self.upOutLidCtrl = control.Control(self.lidSide,'upOutLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
         self.upOutLidCtrl.circleCtrl()
         
-        upLidCc.append(self.upInLidCtrl.controlGrp)
-        upLidCc.append(self.upLidCtrl.controlGrp)
-        upLidCc.append(self.upOutLidCtrl.controlGrp)
+        self.upLidCc.append(self.upInLidCtrl.controlGrp)
+        self.upLidCc.append(self.upLidCtrl.controlGrp)
+        self.upLidCc.append(self.upOutLidCtrl.controlGrp)
         pm.select(cl = 1)
 
         #create up travel
@@ -1450,25 +1451,33 @@ class LidClass(object):
                     pm.select(cl = 1)
                     upInLidJc.setParent(self.lidJcGrp)
                     self.upLidJcList.append(upInLidJc)
+                    upInLidJc.jointOrientX.set(0)
+                    upInLidJc.jointOrientY.set(0)
+                    upInLidJc.jointOrientZ.set(0)
                     
                 if num == 2:
                     upLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'upLid','jc'))
                     pm.select(cl = 1)
                     upLidJc.setParent(self.lidJcGrp)
                     self.upLidJcList.append(upLidJc)
+                    upLidJc.jointOrientX.set(0)
+                    upLidJc.jointOrientY.set(0)
+                    upLidJc.jointOrientZ.set(0)                    
                     
                 if num == 3:
                     upOutLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'upOutLid','jc'))
                     pm.select(cl = 1)
                     upOutLidJc.setParent(self.lidJcGrp)
                     self.upLidJcList.append(upOutLidJc)                    
-
+                    upOutLidJc.jointOrientX.set(0)
+                    upOutLidJc.jointOrientY.set(0)
+                    upOutLidJc.jointOrientZ.set(0)   
         
         for num,pos in enumerate(upTrvPosList):
-            upLidCc[num].t.set(pos)
+            self.upLidCc[num].t.set(pos)
             pm.move(0,0,(self.upJj[0].getChildren()[0].tx.get() / 3),
-                    upLidCc[num].getChildren()[0].getShape().cv,r = 1)
-            upLidCc[num].setParent(self.lidCcGrp)
+                    self.upLidCc[num].getChildren()[0].getShape().cv,r = 1)
+            self.upLidCc[num].setParent(self.lidCcGrp)
         
         ###########################
         #down ctrl
@@ -1481,9 +1490,9 @@ class LidClass(object):
         self.downOutLidCtrl = control.Control(self.lidSide,'downOutLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
         self.downOutLidCtrl.circleCtrl()
          
-        downLidCc.append(self.downInLidCtrl.controlGrp)
-        downLidCc.append(self.downLidCtrl.controlGrp)
-        downLidCc.append(self.downOutLidCtrl.controlGrp)        
+        self.downLidCc.append(self.downInLidCtrl.controlGrp)
+        self.downLidCc.append(self.downLidCtrl.controlGrp)
+        self.downLidCc.append(self.downOutLidCtrl.controlGrp)        
         
         #create down travel
         self.downTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.lidSide,'downLid','trv'))
@@ -1507,26 +1516,34 @@ class LidClass(object):
                     downInLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downInLid','jc'))
                     pm.select(cl = 1)
                     downInLidJc.setParent(self.lidJcGrp)
-                    self.downLidJcList.append(downInLidJc)                              
+                    self.downLidJcList.append(downInLidJc)
+                    downInLidJc.jointOrientX.set(0)
+                    downInLidJc.jointOrientY.set(0)
+                    downInLidJc.jointOrientZ.set(0)                    
                     
                 if num == 2:
                     downLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downLid','jc'))
                     pm.select(cl = 1)
                     downLidJc.setParent(self.lidJcGrp)
-                    self.downLidJcList.append(downLidJc)                   
+                    self.downLidJcList.append(downLidJc)
+                    downLidJc.jointOrientX.set(0)
+                    downLidJc.jointOrientY.set(0)
+                    downLidJc.jointOrientZ.set(0)                                     
                     
                 if num == 3:
                     downOutLidJc = pm.joint(p = trvPos,n = nameUtils.getUniqueName(self.lidSide,'downOutLid','jc'))
                     pm.select(cl = 1)
                     downOutLidJc.setParent(self.lidJcGrp)      
                     self.downLidJcList.append(downOutLidJc)
+                    downOutLidJc.jointOrientX.set(0)
+                    downOutLidJc.jointOrientY.set(0)
+                    downOutLidJc.jointOrientZ.set(0)                       
                                         
-        
         for num,pos in enumerate(downTrvPosList):
-            downLidCc[num].t.set(pos)
+            self.downLidCc[num].t.set(pos)
             pm.move(0,0,(self.downJj[0].getChildren()[0].tx.get() / 3),
-                    downLidCc[num].getChildren()[0].getShape().cv,r = 1)            
-            downLidCc[num].setParent(self.lidCcGrp)
+                    self.downLidCc[num].getChildren()[0].getShape().cv,r = 1)            
+            self.downLidCc[num].setParent(self.lidCcGrp)
         
         ###########################
         #connect cc vis
@@ -1542,18 +1559,33 @@ class LidClass(object):
         control.lockAndHideAttr(self.downInLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         control.lockAndHideAttr(self.downOutLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         
+        pm.select(cl = 1)
         ##########################
-#         for jj in self.
+        #up lo cur bind skin
         for upJc in self.upLidJcList:
             pm.select(upJc,add = 1)
             
         pm.select(self.lidUpLoCur,add = 1)
         mel.eval('newSkinCluster "-bindMethod 0 -normalizeWeights 1 -weightDistribution 0 -mi 5 -omi true -dr 4 -rui true"')
         
-        for cc in self.u
+        for num,cc in enumerate(self.upLidCc):
+            pm.pointConstraint(cc.getChildren(),self.upLidJcList[num + 2],mo = 1)
         
+        pm.select(cl = 1)
+        
+        #down li cur bind skin 
         for downJc in self.downLidJcList:
-            pass
+            pm.select(downJc,add = 1)
+            
+        pm.select(self.lidDnLoCur,add = 1)
+        mel.eval('newSkinCluster "-bindMethod 0 -normalizeWeights 1 -weightDistribution 0 -mi 5 -omi true -dr 4 -rui true"')        
+        
+        
+        for num,cc in enumerate(self.downLidCc):
+            pm.pointConstraint(cc.getChildren(),self.downLidJcList[num + 2],mo = 1)
+        
+        pm.select(cl = 1)
+            
 def getUi(parent,mainUi):
     
     return HeadModuleUi(parent,mainUi)
