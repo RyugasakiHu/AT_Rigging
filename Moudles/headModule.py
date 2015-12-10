@@ -1414,7 +1414,7 @@ class LidClass(object):
         ###########################
         #up ctrl
         self.upLidCtrl = control.Control(self.lidSide,'upLid',size = self.ctrlSize[0],aimAxis = 'z') 
-        self.upLidCtrl.circleCtrl()
+        self.upLidCtrl.circleCtrl()  
         
         self.upInLidCtrl = control.Control(self.lidSide,'upInLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
         self.upInLidCtrl.circleCtrl()
@@ -1495,8 +1495,8 @@ class LidClass(object):
         self.downLidCc.append(self.downOutLidCtrl.controlGrp)        
         
         #create down travel
-        self.downTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.lidSide,'downLid','trv'))
         pm.select(cl = 1)
+        self.downTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.lidSide,'downLid','trv'))
         moPathDnName = nameUtils.getUniqueName(self.lidSide,'downLid','MOP')
         moPathDnNode = pm.pathAnimation(self.lidDnLoCur,self.downTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
                                         worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathDnName)
@@ -1569,6 +1569,7 @@ class LidClass(object):
         mel.eval('newSkinCluster "-bindMethod 0 -normalizeWeights 1 -weightDistribution 0 -mi 5 -omi true -dr 4 -rui true"')
         
         for num,cc in enumerate(self.upLidCc):
+            print cc
             pm.pointConstraint(cc.getChildren(),self.upLidJcList[num + 2],mo = 1)
         
         pm.select(cl = 1)
@@ -1580,12 +1581,40 @@ class LidClass(object):
         pm.select(self.lidDnLoCur,add = 1)
         mel.eval('newSkinCluster "-bindMethod 0 -normalizeWeights 1 -weightDistribution 0 -mi 5 -omi true -dr 4 -rui true"')        
         
-        
         for num,cc in enumerate(self.downLidCc):
             pm.pointConstraint(cc.getChildren(),self.downLidJcList[num + 2],mo = 1)
         
         pm.select(cl = 1)
-            
+        
+        #set adj grp for the lid up sub cc
+        upInLidAdjGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'upInLid','ADJ'))
+        pm.xform(upInLidAdjGrp,ws = 1,matrix = self.upInLidCtrl.controlGrp.worldMatrix.get())
+        upInLidAdjGrp.setParent(self.upInLidCtrl.controlGrp)
+        self.upInLidCtrl.control.setParent(upInLidAdjGrp)
+        pm.parentConstraint(self.upLidCtrl.control,self.inLidCtrl.control,upInLidAdjGrp,mo = 1)
+        
+        upOutLidAdjGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'upOutLid','ADJ'))
+        pm.xform(upOutLidAdjGrp,ws = 1,matrix = self.upOutLidCtrl.controlGrp.worldMatrix.get())
+        upOutLidAdjGrp.setParent(self.upOutLidCtrl.controlGrp)
+        self.upOutLidCtrl.control.setParent(upOutLidAdjGrp)
+        pm.parentConstraint(self.upLidCtrl.control,self.outLidCtrl.control,upOutLidAdjGrp,mo = 1)
+        
+        #set adj grp for the lid down sub cc
+        downInLidAdjGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'downInLid','ADJ'))
+        pm.xform(downInLidAdjGrp,ws = 1,matrix = self.downInLidCtrl.controlGrp.worldMatrix.get())
+        downInLidAdjGrp.setParent(self.downInLidCtrl.controlGrp)
+        self.downInLidCtrl.control.setParent(downInLidAdjGrp)
+        pm.parentConstraint(self.downLidCtrl.control,self.inLidCtrl.control,downInLidAdjGrp,mo = 1)
+        
+        downOutLidAdjGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'downOutLid','ADJ'))
+        pm.xform(downOutLidAdjGrp,ws = 1,matrix = self.downOutLidCtrl.controlGrp.worldMatrix.get())
+        downOutLidAdjGrp.setParent(self.downOutLidCtrl.controlGrp)
+        self.downOutLidCtrl.control.setParent(downOutLidAdjGrp)
+        pm.parentConstraint(self.downLidCtrl.control,self.outLidCtrl.control,downOutLidAdjGrp,mo = 1)        
+        
+        pm.delete(self.upTrv)
+        pm.delete(self.downTrv)
+        
 def getUi(parent,mainUi):
     
     return HeadModuleUi(parent,mainUi)
