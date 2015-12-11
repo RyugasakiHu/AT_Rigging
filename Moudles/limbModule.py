@@ -264,10 +264,6 @@ class LimbModule(object):
         pm.parentConstraint(self.limbBlendChain.chain[0],self.ribon.startLoc,mo = 1)
         #flip que fix
         pm.parentConstraint(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.ribon.epUploc,mo = 1)
-        
-        self.__subCtrlUpper()
-        
-    def __subCtrlUpper(self):
 
         #connect scale for ShoulderElbow jj2
         self.subMidCtrlShoulderElbow = self.ribon.subMidCtrl
@@ -291,10 +287,6 @@ class LimbModule(object):
         pm.parentConstraint(self.limbBlendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
         #flip que fix
         pm.parentConstraint(self.limbBlendChain.chain[1],self.limbBlendChain.chain[2],self.ribon45hp.epUploc,mo = 1)
-        
-        self.__subCtrlLower()
-          
-    def __subCtrlLower(self):
 
         #connect scale for mid jj
         self.subMidCtrlElbowWrist = self.ribon45hp.subMidCtrl
