@@ -29,7 +29,7 @@ class Ribbon(object):
         self.midLoc = None
         self.endLoc = None
         self.epUploc = None
-#         self.spLocAim = None
+        self.startUploc = None
         self.mpLocAim = None
 #         self.epLocAim = None
         
@@ -125,7 +125,7 @@ class Ribbon(object):
         #CREATE START POINT LOCATORS AND PARENT THEM PROPERLY---
         spLocPos = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnSp01_pos')
         spLocAim = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnSp01_aim')
-        spLocUp = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnSp01_up')
+        self.startUploc = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnSp01_up')
          
         #hide shape
 #         spLocPos.getShape().v.set(0)
@@ -135,7 +135,7 @@ class Ribbon(object):
         self.startLoc = spLocPos
          
         pm.parent(spLocAim,spLocPos)
-        pm.parent(spLocUp,spLocPos)
+        pm.parent(self.startUploc,spLocPos)
          
         #CREATE MID POINT LOCATORS AND PARENT THEM PROPERLY---
         mpLocPos = pm.spaceLocator(p = (0,0,0), n = self.side + '_' + self.RibbonName + '_RbbnMp01_pos')
@@ -175,11 +175,11 @@ class Ribbon(object):
         pm.delete(self.side + '_' + self.RibbonName + '_RbbnEp01_pos_pointConstraint1')
          
         pm.pointConstraint(spLocPos,epLocPos,mpLocPos,o = (0,0,0),w = 1)    
-        pm.pointConstraint(spLocUp,self.epUploc,mpLocUp,o = (0,0,0),w = 1)
+        pm.pointConstraint(self.startUploc,self.epUploc,mpLocUp,o = (0,0,0),w = 1)
      
         #OFFSET THE POSITION OF THE UP LOCATOR---
       
-        pm.setAttr(spLocUp.ty,min(self.Width,self.Length) * .5)
+        pm.setAttr(self.startUploc.ty,min(self.Width,self.Length) * .5)
         pm.setAttr(self.epUploc.ty,min(self.Width,self.Length) * .5)       
          
         #CREATE CTRL JOINTS
