@@ -261,9 +261,11 @@ class LimbModule(object):
         pm.xform(self.ribon.startLoc,ws = 1,matrix = self.limbBlendChain.chain[0].worldMatrix.get())
         pm.xform(self.ribon.endLoc,ws = 1,matrix = self.limbBlendChain.chain[1].worldMatrix.get())
         
-        pm.parentConstraint(self.limbBlendChain.chain[0],self.ribon.startLoc,mo = 1)
+        pm.parentConstraint(self.ikChain.chain[0],self.ribon.startLoc,mo = 1)
+        
         #flip que fix
-        pm.parentConstraint(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.ribon.epUploc,mo = 1)
+        parCnst = pm.parentConstraint(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.ribon.epUploc,mo = 1)
+        #print parCnst
 
         #connect scale for ShoulderElbow jj2
         self.subMidCtrlShoulderElbow = self.ribon.subMidCtrl
@@ -285,8 +287,10 @@ class LimbModule(object):
         pm.xform(self.ribon45hp.endLoc,ws = 1,matrix = self.limbBlendChain.chain[2].worldMatrix.get())
         
         pm.parentConstraint(self.limbBlendChain.chain[2],self.ribon45hp.endLoc,mo = 1)
+        
         #flip que fix
-        pm.parentConstraint(self.limbBlendChain.chain[1],self.limbBlendChain.chain[2],self.ribon45hp.epUploc,mo = 1)
+        pm.parentConstraint(self.limbBlendChain.chain[2],self.ribon45hp.epUploc,mo = 1)
+        pm.parentConstraint(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.ribon45hp.startUploc,mo = 1)
 
         #connect scale for mid jj
         self.subMidCtrlElbowWrist = self.ribon45hp.subMidCtrl
