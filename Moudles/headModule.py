@@ -1108,7 +1108,8 @@ class LidClass(object):
         self.lidUpHiCur = None
         self.lidDnHiCur = None
         self.lidUpLoCur = None
-        self.lidDnLoCur = None        
+        self.lidDnLoCur = None
+        self.blinkCur = None
         
         #grp
         self.upJointGrp = None
@@ -1156,6 +1157,7 @@ class LidClass(object):
         
         self.__createWireDeformer()
         self.__createCc()
+        self.__createBlinkCc()
     
     def loadUpVertex(self):
         
@@ -1165,7 +1167,6 @@ class LidClass(object):
         for upVertex in upVertexes:
             self.upVertexes.append(upVertex)
         
-        print self.upVertexes
         return self.upVertexes
         
     def loadDnVertex(self):
@@ -1569,7 +1570,6 @@ class LidClass(object):
         mel.eval('newSkinCluster "-bindMethod 0 -normalizeWeights 1 -weightDistribution 0 -mi 5 -omi true -dr 4 -rui true"')
         
         for num,cc in enumerate(self.upLidCc):
-            print cc
             pm.pointConstraint(cc.getChildren(),self.upLidJcList[num + 2],mo = 1)
         
         pm.select(cl = 1)
@@ -1614,6 +1614,22 @@ class LidClass(object):
         
         pm.delete(self.upTrv)
         pm.delete(self.downTrv)
+        
+    def __createBlinkCc(self):
+        
+        self.blinkCur = pm.duplicate(self.lidUpLoCur,rr = 1,n = nameUtils.getUniqueName(self.lidSide,'blink','cur'))
+        bs = pm.blendShape(self.lidUpLoCur,self.lidDnLoCur,self.blinkCur,n = nameUtils.getUniqueName(self.lidSide,'blinkWeight','BS'))
+
+        #node Name
+        reverseNodeName = nameUtils.getUniqueName(self.lidSide,'blink','REV')
+        
+        #create Node
+        reverseNode = pm.createNode('reverse',n = reverseNodeName)
+                
+        #connect Node
+        self.upLidCtrl.control.blink_weight.connect(bs[0].attr(self.lidDnLoCur))
+        self.upLidCtrl.control.blink_weight.connect(reverseNode.inputX)
+        reverseNode.outputX.connect(bs[0].attr(self.lidUpLoCur))
         
 def getUi(parent,mainUi):
     
