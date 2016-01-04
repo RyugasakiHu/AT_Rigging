@@ -1,25 +1,21 @@
 import pymel.core as pm
-from subModules import fkChain,ikChain,boneChain,ribbon
-from Utils import nameUtils
+from Modules.subModules import fkChain,ikChain,boneChain,ribbon
+from Utils import nameUtils,metaUtils
 from Modules import control,hierarchy
+from maya import OpenMaya
 
 class SpineModule(object):
 
     posSpineArray = [[],[],[]]
 
-    def __init__(self,side = 'm',baseName = 'spine',segment = 9):
+    def __init__(self,side = 'm',bodySize = 1,ikSize = 1,baseName = None,segment = 5,metaMain = None):
         
         #self para
         self.side = side
         self.baseName = baseName 
-        self.segment = segment
-        self.length  = None
-        self.size = None
-        self.spineFkBlendChain = None
-        self.spineIkBlendJoint = None
-        self.spineFkRevBlendChain = None 
-        self.spineFkGrp = None
-        self.spineIkGrp = None
+        self.segment = segment[0]
+        self.bodySize = bodySize
+        self.ikSize = ikSize
         
         #guide para
         self.trvPosList = None
@@ -32,8 +28,17 @@ class SpineModule(object):
         #ctrl
         self.ribbonJc = None
         self.spineCc = None
-        self.config_node = None
+        self.bodyCtrl = None
+        self.chestGrp = None
         self.folGrp = None
+        
+        #incoming value
+        self.length  = None
+        self.spineFkBlendChain = None
+        self.spineIkBlendJoint = None
+        self.spineFkRevBlendChain = None 
+        self.spineFkGrp = None
+        self.spineIkGrp = None        
         
         #stretch
         self.stretchLength = None
@@ -44,11 +49,11 @@ class SpineModule(object):
         #nameList
         self.nameList = ['Hip','Mid','Chest']
         
-    def buildGuides(self):
+        #meta
+        self.meta = metaUtils.createMeta(self.side,self.baseName,0)
+        self.metaMain = metaMain
         
-#         #set hi
-#         self.hi = hierarchy.Hierarchy(characterName = 'test')
-#         self.hi.build()        
+    def buildGuides(self):      
         
         #group
         self.fkGuides = []
@@ -67,12 +72,12 @@ class SpineModule(object):
         self.guideTrv = pm.joint(p = [0,0,0],n = nameUtils.getUniqueName(self.side,self.baseName,'trv'))
         moPathName = nameUtils.getUniqueName(self.side,self.baseName,'MOP')
         moPathNode = pm.pathAnimation(self.guideCc,self.guideTrv,fractionMode = 1,follow = 1,followAxis = 'x',upAxis = 'y',worldUpType = 'vector',
-                                      worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)        
-        pm.disconnectAttr(moPathNode + '_uValue.output',moPathNode + '.uValue')
+                                      worldUpVector = [0,1,0],inverseUp = 0,inverseFront = 0,bank = 0,startTimeU = 1,endTimeU = 24,n = moPathName)
+        pm.delete(moPathNode + '.uValue')        
+#         pm.disconnectAttr(moPathNode + '_uValue.output',moPathNode + '.uValue')
         
         #set Trv Loc:
         self.trvPosList = []
-
         for num in range(0,self.segment):
             trvDis = num * (1 / float(self.segment-1))
             pm.setAttr(moPathNode + '.uValue',trvDis)
@@ -108,52 +113,55 @@ class SpineModule(object):
         
     def __bodyCtrl(self):
          
-        self.config_node = control.Control(self.side,self.baseName + 'Cc',size = self.length / 2) 
-        self.config_node.bodyCtrl()
-        
-        midPos = pm.xform(self.fkGuides[(self.segment - 1) / 2],query=1,ws=1,rp=1)
+        self.bodyCtrl = control.Control(self.side,self.baseName + 'Cc',size = self.bodySize * 1.25,aimAxis = 'y') 
+        self.bodyCtrl.circleCtrl()
         
         #move the target object
-        pm.move(midPos[0],midPos[1],midPos[2] - self.length / 1.5,self.config_node.controlGrp,a=True)
-        pm.setAttr(self.config_node.controlGrp + '.ry',90)
-#         self.config_node.controlGrp.setParent(self.hi.CC)
+#         midPos = self.fkGuides[(self.segment - 1) / 2].getTranslation(space = 'world')
+#         pm.move(midPos[0],midPos[1],midPos[2] - self.length / 1.5,self.bodyCtrl.controlGrp,a=True)
+        
+        endPos = self.fkGuides[0].getTranslation(space = 'world')
+        pm.move(endPos[0],endPos[1],endPos[2],self.bodyCtrl.controlGrp,a=True)
         
         #lock and hide
-        control.lockAndHideAttr(self.config_node.control,['sx','sy','sz','v'])
+        control.lockAndHideAttr(self.bodyCtrl.control,['sx','sy','sz','v'])
         
         #add attr
-        control.addFloatAttr(self.config_node.control,['volume'],0,1)
+        control.addFloatAttr(self.bodyCtrl.control,['volume'],0,1)
+        control.addFloatAttr(self.bodyCtrl.control,['ik_vis'],0,1)
+        self.bodyCtrl.control.ik_vis.set(1)
+        
         #bend
-        pm.addAttr(self.config_node.control,ln = '______',at = 'enum',en = '0')
-        pm.setAttr(self.config_node.control + '.______',e = 1,channelBox = 1)
-        control.addFloatAttr(self.config_node.control,
+        pm.addAttr(self.bodyCtrl.control,ln = '______',at = 'enum',en = '0')
+        pm.setAttr(self.bodyCtrl.control + '.______',e = 1,channelBox = 1)
+        control.addFloatAttr(self.bodyCtrl.control,
                              ['bend_up','bend_mid','bend_lo'],-3600,3600)
 
-        pm.addAttr(self.config_node.control,ln = '_______',at = 'enum',en = '0')
-        pm.setAttr(self.config_node.control + '._______',e = 1,channelBox = 1)
-        control.addFloatAttr(self.config_node.control,
+        pm.addAttr(self.bodyCtrl.control,ln = '_______',at = 'enum',en = '0')
+        pm.setAttr(self.bodyCtrl.control + '._______',e = 1,channelBox = 1)
+        control.addFloatAttr(self.bodyCtrl.control,
                              ['bend_up_rev','bend_mid_rev','bend_lo_rev'],-3600,3600)
         
         #side
-        pm.addAttr(self.config_node.control,ln = '__________',at = 'enum',en = '0')
-        pm.setAttr(self.config_node.control + '.__________',e = 1,channelBox = 1)
-        control.addFloatAttr(self.config_node.control,
+        pm.addAttr(self.bodyCtrl.control,ln = '__________',at = 'enum',en = '0')
+        pm.setAttr(self.bodyCtrl.control + '.__________',e = 1,channelBox = 1)
+        control.addFloatAttr(self.bodyCtrl.control,
                              ['side_up','side_mid','side_lo'],-3600,3600)
 
-        pm.addAttr(self.config_node.control,ln = '___________',at = 'enum',en = '0')
-        pm.setAttr(self.config_node.control + '.___________',e = 1,channelBox = 1)
-        control.addFloatAttr(self.config_node.control,
+        pm.addAttr(self.bodyCtrl.control,ln = '___________',at = 'enum',en = '0')
+        pm.setAttr(self.bodyCtrl.control + '.___________',e = 1,channelBox = 1)
+        control.addFloatAttr(self.bodyCtrl.control,
                              ['side_up_rev','side_mid_rev','side_lo_rev'],-3600,3600)               
         
         #twist
-        pm.addAttr(self.config_node.control,ln = '________',at = 'enum',en = '0')
-        pm.setAttr(self.config_node.control + '.________',e = 1,channelBox = 1)
-        control.addFloatAttr(self.config_node.control,
+        pm.addAttr(self.bodyCtrl.control,ln = '________',at = 'enum',en = '0')
+        pm.setAttr(self.bodyCtrl.control + '.________',e = 1,channelBox = 1)
+        control.addFloatAttr(self.bodyCtrl.control,
                              ['twist_up','twist_mid','twist_lo'],-3600,3600)
 
-        pm.addAttr(self.config_node.control,ln = '_________',at = 'enum',en = '0')
-        pm.setAttr(self.config_node.control + '._________',e = 1,channelBox = 1)
-        control.addFloatAttr(self.config_node.control,
+        pm.addAttr(self.bodyCtrl.control,ln = '_________',at = 'enum',en = '0')
+        pm.setAttr(self.bodyCtrl.control + '._________',e = 1,channelBox = 1)
+        control.addFloatAttr(self.bodyCtrl.control,
                              ['twist_up_rev','twist_mid_rev','twist_lo_rev'],-3600,3600)                 
         
     def __fkJj(self):
@@ -195,7 +203,7 @@ class SpineModule(object):
         self.spineFkGrp = pm.group(self.spineFkBlendChain.chain[0],
                                    n = nameUtils.getUniqueName(self.side,self.baseName + 'Fk','grp'))
         
-        self.spineFkGrp.setParent(self.config_node.control)
+        self.spineFkGrp.setParent(self.bodyCtrl.control)
         
         #create revFk
         self.guideSpineRevFkPos = [x.getTranslation(space = 'world') for x in self.fkGuides]
@@ -228,12 +236,12 @@ class SpineModule(object):
          
         #connect
         #bend
-        self.config_node.control.bend_lo.connect(multiplefkBendNode.input1X)
-        self.config_node.control.bend_mid.connect(multiplefkBendNode.input1Y)
-        self.config_node.control.bend_up.connect(multiplefkBendNode.input1Z)
-        self.config_node.control.bend_lo_rev.connect(multiplefkRevBendNode.input1X)
-        self.config_node.control.bend_mid_rev.connect(multiplefkRevBendNode.input1Y)
-        self.config_node.control.bend_up_rev.connect(multiplefkRevBendNode.input1Z)
+        self.bodyCtrl.control.bend_lo.connect(multiplefkBendNode.input1X)
+        self.bodyCtrl.control.bend_mid.connect(multiplefkBendNode.input1Y)
+        self.bodyCtrl.control.bend_up.connect(multiplefkBendNode.input1Z)
+        self.bodyCtrl.control.bend_lo_rev.connect(multiplefkRevBendNode.input1X)
+        self.bodyCtrl.control.bend_mid_rev.connect(multiplefkRevBendNode.input1Y)
+        self.bodyCtrl.control.bend_up_rev.connect(multiplefkRevBendNode.input1Z)
          
         multiplefkBendNode.input2X.set(-1)
         multiplefkBendNode.input2Y.set(-1)
@@ -246,12 +254,12 @@ class SpineModule(object):
         multiplefkRevBendNode.operation.set(1)        
          
         #twist
-        self.config_node.control.twist_lo.connect(multiplefkTwistNode.input1X)
-        self.config_node.control.twist_mid.connect(multiplefkTwistNode.input1Y)
-        self.config_node.control.twist_up.connect(multiplefkTwistNode.input1Z)
-        self.config_node.control.twist_lo_rev.connect(multiplefkRevTwistNode.input1X)
-        self.config_node.control.twist_mid_rev.connect(multiplefkRevTwistNode.input1Y)
-        self.config_node.control.twist_up_rev.connect(multiplefkRevTwistNode.input1Z)
+        self.bodyCtrl.control.twist_lo.connect(multiplefkTwistNode.input1X)
+        self.bodyCtrl.control.twist_mid.connect(multiplefkTwistNode.input1Y)
+        self.bodyCtrl.control.twist_up.connect(multiplefkTwistNode.input1Z)
+        self.bodyCtrl.control.twist_lo_rev.connect(multiplefkRevTwistNode.input1X)
+        self.bodyCtrl.control.twist_mid_rev.connect(multiplefkRevTwistNode.input1Y)
+        self.bodyCtrl.control.twist_up_rev.connect(multiplefkRevTwistNode.input1Z)
          
         multiplefkTwistNode.input2X.set(-1)
         multiplefkTwistNode.input2Y.set(-1)
@@ -264,12 +272,12 @@ class SpineModule(object):
         multiplefkRevTwistNode.operation.set(1)        
          
         #side
-        self.config_node.control.side_lo.connect(multiplefkSideNode.input1X)
-        self.config_node.control.side_mid.connect(multiplefkSideNode.input1Y)
-        self.config_node.control.side_up.connect(multiplefkSideNode.input1Z)
-        self.config_node.control.side_lo_rev.connect(multiplefkRevSideNode.input1X)
-        self.config_node.control.side_mid_rev.connect(multiplefkRevSideNode.input1Y)
-        self.config_node.control.side_up_rev.connect(multiplefkRevSideNode.input1Z)
+        self.bodyCtrl.control.side_lo.connect(multiplefkSideNode.input1X)
+        self.bodyCtrl.control.side_mid.connect(multiplefkSideNode.input1Y)
+        self.bodyCtrl.control.side_up.connect(multiplefkSideNode.input1Z)
+        self.bodyCtrl.control.side_lo_rev.connect(multiplefkRevSideNode.input1X)
+        self.bodyCtrl.control.side_mid_rev.connect(multiplefkRevSideNode.input1Y)
+        self.bodyCtrl.control.side_up_rev.connect(multiplefkRevSideNode.input1Z)
          
         multiplefkSideNode.input2X.set(-1)
         multiplefkSideNode.input2Y.set(-1)
@@ -348,11 +356,7 @@ class SpineModule(object):
             ribbonCurve.append(ribonJjPos)
         
         #set ribbon offset
-        offset = 0.0
-        if self.length / self.segment <= 1:
-            offset = 0.5
-        else :
-            offset = self.length / ((self.segment - 1) / 2)
+        offset = float(self.length * 0.05)
         
         #set ribbon cur
         ribbonCurveL = pm.curve(d = 3,p = [ribbonCurve[0],ribbonCurve[1],ribbonCurve[2],ribbonCurve[3],ribbonCurve[4]],
@@ -393,12 +397,12 @@ class SpineModule(object):
             pm.select(cl = 1)
             pm.delete(ribbonClusList[num])
             pm.select(cl = 1)
-            cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.length / 3)
-            print self.length / 2 
+            cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.ikSize,aimAxis = 'y')
             cc.circleCtrl()
+            self.bodyCtrl.control.ik_vis.connect(cc.controlGrp.v)
             self.spineCc.append(cc.control)
+            control.lockAndHideAttr(cc.control,['sx','sy','sz','v'])
             pm.xform(cc.controlGrp,ws = 1,matrix = jc.worldMatrix.get())
-            pm.setAttr(cc.controlGrp + '.rz',90)
         
         #skin Jc
         for num,jc in enumerate(self.ribbonJc):
@@ -424,7 +428,6 @@ class SpineModule(object):
             follicleTrans = pm.rename(follicleTrans, follicleTransName)
             
             # connect the surface to the follicle
-            
             if ribbonGeo[0].getShape().nodeType() == 'nurbsSurface':
                 pm.connectAttr((ribbonGeo[0] + '.local'), (follicleShape + '.inputSurface'))
                 
@@ -471,7 +474,7 @@ class SpineModule(object):
         self.folGrp.inheritsTransform.set(0)
         
         #clean
-        self.spineIkGrp.setParent(self.config_node.control)
+        self.spineIkGrp.setParent(self.bodyCtrl.control)
         
         #temp
         self.spineIkGrp.v.set(1)
@@ -510,7 +513,9 @@ class SpineModule(object):
         
         #set command
         self.stretchStartLoc = pm.spaceLocator(n = startLocName)
+        self.stretchStartLoc.v.set(0)
         self.stretchEndLoc = pm.spaceLocator(n = endLocName)
+        self.stretchEndLoc.v.set(0)
         
         #align loc
         startPos = self.ribbonJc[0].worldMatrix.get()
@@ -525,7 +530,7 @@ class SpineModule(object):
         self.stretchStartLoc.worldPosition[0].connect(distBetweenNode.point1) 
         self.stretchEndLoc.worldPosition[0].connect(distBetweenNode.point2) 
         self.stretchLength = distBetweenNode.distance.get()
-        self.config_node.control.volume.connect(stretchSwitchNode.blender)
+        self.bodyCtrl.control.volume.connect(stretchSwitchNode.blender)
         stretchSwitchNode.color1R.set(1)
         multipleNode.outputX.connect(stretchSwitchNode.color2R)
         
@@ -600,6 +605,7 @@ class SpineModule(object):
 
     def __combine(self):
         
+        #spine cc
         hip = self.spineCc[0].getParent()
         mid = self.spineCc[1].getParent()
         chest = self.spineCc[2].getParent()
@@ -607,6 +613,113 @@ class SpineModule(object):
         chest.setParent(self.spineFkRevBlendChain.chain[-1])
         hip.setParent(self.spineFkRevBlendChain.chain[0])
         mid.setParent(self.spineFkRevBlendChain.chain[(self.segment - 1) / 2])
+        hipPos = self.spineCc[0].getTranslation(space = 'world')
+
+        pm.move(hipPos[0],hipPos[1],hipPos[2],self.bodyCtrl.control + '.rotatePivot')
+        pm.move(hipPos[0],hipPos[1],hipPos[2],self.bodyCtrl.control + '.scalePivot')
+        
+        #create chestGRP
+        self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
+        self.chestGrp.setParent(self.spineCc[2])
+               
+    def buildConnections(self):
+        
+        #reveice info from incoming package
+        if pm.objExists(self.metaMain) == 1:
+            
+            print ''
+            print 'Package from (' + self.metaMain + ') has been received'
+            
+            pm.select(self.metaMain) 
+            headQuarter = pm.selected()[0]
+            destinations = []
+            
+            moduleGrp = pm.connectionInfo(headQuarter.moduleGrp, destinationFromSource=True)
+            
+            for tempDestination in moduleGrp:
+                destination = tempDestination.split('.')
+                destinations.append(destination[0])
+                
+# [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
+
+            self.bodyCtrl.controlGrp.setParent(destinations[0])
+            self.guideGrp.setParent(destinations[5])
+            
+            print ''
+            print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
+            print ''
+            
+        else:
+            OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
+        
+        #create package send for next part
+        #template:
+        #metaUtils.addToMeta(self.meta,'attr', objs)
+        metaUtils.addToMeta(self.meta,'controls',[self.bodyCtrl.control] + [spineCc for spineCc in self.spineCc])
+        metaUtils.addToMeta(self.meta,'transGrp',[self.chestGrp])
+
+#         controls = [u'm_spineHip_0_cc', u'm_spineCc_0_cc', u'm_spineMid_0_cc', u'm_spineChest_0_cc']
+
+#         destinations = []
+#         cc = pm.connectionInfo(self.meta.controls, destinationFromSource=True)
+#         for tempDestination in cc:
+#                 destination = tempDestination.split('.')
+#                 destinations.append(destination[0])
+#         
+#         print destinations
+        
+def getUi(parent,mainUi):
+    
+    return SpineModuleUi(parent,mainUi)
+
+class SpineModuleUi(object):
+    
+    def __init__(self,parent,mainUi):
+        
+        self.mainUi = mainUi
+        self.__popuItems = []
+        
+        pm.setParent(parent)
+        self.mainL = pm.columnLayout(adj = 1)
+        pm.separator(h = 10)
+        
+        #(self,baseName = 'arm',side = 'l',size = 1.5,
+        self.name = pm.text(l = '**** Spine Module ****')       
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'spine')
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'm')
+        self.cntSizeBody = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
+                                        ad2 = 1,numberOfFields = 1,value1 = 2)
+        
+        self.cntSizeIk = pm.floatFieldGrp(l = 'ik Size : ',cl2 = ['left','left'],
+                                        ad2 = 1,numberOfFields = 1,value1 = 1.8)
+        
+        self.segment = pm.intFieldGrp(l = 'segment Number : ',cl2 = ['left','left'],
+                                        ad2 = 1,numberOfFields = 1,value1 = 9)
+        
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
+        
+        self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
+        pm.separator(h = 10)
+        
+        self.__pointerClass = None
+        
+    def __removeInstance(self,*arg):
+        
+        pm.deleteUI(self.mainL)
+        self.mainUi.modulesUi.remove(self)
+        
+    def getModuleInstance(self):
+        
+        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
+        sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        cntSizeBodyV = pm.floatFieldGrp(self.cntSizeBody,q = 1,value1 = 1)
+        cntSizeIkV = pm.floatFieldGrp(self.cntSizeIk,q = 1,value1 = 1)
+        segmentN = pm.intFieldGrp(self.segment,q = 1,v = 1)
+        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
+        
+        self.__pointerClass = SpineModule(baseName = baseNameT,side = sideT,bodySize = cntSizeBodyV,
+                                          ikSize = cntSizeIkV,segment = segmentN,metaMain = mainMetaNode)
+        return self.__pointerClass
         
 # import maya.cmds as mc
 # from see import see
