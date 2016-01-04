@@ -67,7 +67,8 @@ class LimbModule(object):
         #AT
         self.ikAtHandle = None
         self.ikAtEffector  = None
-        self.poseReadorGrp = None
+        self.shoulderAtGrp = None
+        self.poseReadorGrp = None        
         
         #Hook
         self.__tempSpaceSwitch = None
@@ -186,7 +187,7 @@ class LimbModule(object):
             pm.setAttr(chain + '.rotateOrder',cb = True)
         
         #then ik
-        self.ikChain = ikChain.IkChain(self.baseName,self.side,self.size,self.solver,type = 'ikRP')
+        self.ikChain = ikChain.IkChain(self.baseName,self.side,self.size,self.solver)
         self.ikChain.fromList(self.limbGuidePos,self.limbGuideRot)
         
         #ik cc connect ori
@@ -447,6 +448,9 @@ class LimbModule(object):
         #create AT joint 
         self.shoulderAtChain = boneChain.BoneChain(self.baseName + 'AtSd',self.side,type = 'jc')
         self.shoulderAtChain.fromList(self.limbGuidePos,self.limbGuideRot)
+        self.shoulderAtGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','grp'))
+        pm.xform(self.shoulderAtGrp,ws = 1,matrix = posArraySp)
+        self.shoulderAtChain.chain[0].setParent(self.shoulderAtGrp)
           
         #create ikHandle:
         atIkName = nameUtils.getUniqueName(self.side,self.baseName + 'AtSd','iks')
@@ -520,9 +524,11 @@ class LimbModule(object):
         #shoulderBlade
         #initial
         pm.select(cl = 1)
+        
         self.shoulderBladeGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','grp'))
         pm.xform(self.shoulderBladeGrp,ws = 1,matrix = posArraySp)
         pm.select(cl = 1)
+        
         self.shoulderBladeBriGrp = pm.group(n = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade_Bri','grp'))
         pm.xform(self.shoulderBladeBriGrp,ws = 1,matrix = posArraySp)
         self.shoulderBladeBriGrp.setParent(self.shoulderBladeGrp)
@@ -683,8 +689,8 @@ class LimbModule(object):
            
         poseMain.ry.connect(prMultipleNode.input1Y)
         poseMain.rz.connect(prMultipleNode.input1Z)
-        prMultipleNode.input2Y.set(-2)
-        prMultipleNode.input2Z.set(-2)
+        prMultipleNode.input2Y.set(1.5)
+        prMultipleNode.input2Z.set(1.5)
         prMultipleNode.outputY.connect(poseTwistGrp.ry)
         prMultipleNode.outputZ.connect(poseTwistGrp.rz)
            
@@ -835,12 +841,9 @@ class LimbModule(object):
 #             print spineDestinations
 #             [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
 
-#             self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
-#             self.chestGrp.setParent(self.hi.SKL)
-            
             #to the chest
             self.shoulderBladeGrp.setParent(spineDestinations[0])
-            self.shoulderAtChain.chain[0].setParent(spineDestinations[0])
+            self.shoulderAtGrp.setParent(spineDestinations[0])
             self.shoulderCtrl.controlGrp.setParent(spineDestinations[0])
             self.poseReadorGrp.setParent(spineDestinations[0])
             
