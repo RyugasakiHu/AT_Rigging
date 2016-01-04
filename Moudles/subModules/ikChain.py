@@ -7,7 +7,7 @@ from Utils import nameUtils
 class IkChain(boneChain.BoneChain):
 
     def __init__(self, baseName = 'arm',side = 'm',size = 1,solver = 'ikSCsolver',
-                 controlOrient = [0,0,0],type = 'ikSC'):    
+                 controlOrient = [0,0,0]):    
         '''
         Constructor
         '''
@@ -17,7 +17,6 @@ class IkChain(boneChain.BoneChain):
         self.size = size
         self.solver = solver
         self.controlOrient = controlOrient
-        self.type = type
         self.__acceptedSolvers = ['ikSCsolver','ikRPsolver']
         
         #cc
@@ -40,7 +39,12 @@ class IkChain(boneChain.BoneChain):
         self.legLockData = ['thighKnee','kneeAnkle','KNlock']
         self.lockUpStartLoc = None
         self.lockUpEndLoc = None
-  
+        
+        if self.solver == 'ikSCsolver':
+            self.type = 'ikSC'
+        else:
+            self.type = 'ikRP'
+        
         boneChain.BoneChain.__init__(self,baseName,side,type = self.type)
         
     def fromList(self,posList = [],orientList = [],autoOrient = 1):
@@ -65,7 +69,7 @@ class IkChain(boneChain.BoneChain):
         pm.pointConstraint(self.ikCtrl.control,self.ikHandle,w = 1)
         
         #create PV 
-        if self.type == 'ikRP':
+        if self.solver == 'ikRPsolver':
             self.poleVectorCnst = pm.poleVectorConstraint(self.poleVectorCtrl.control,ikName,w = 1)
                          
             #lock and hide
@@ -74,7 +78,7 @@ class IkChain(boneChain.BoneChain):
         #add stretch    
         self.__stretchIk()
         
-        if self.type == 'ikRP':
+        if self.solver == 'ikRPsolver':
             self.__elbowKneeLock()
         
     def __addControls(self):
@@ -160,33 +164,52 @@ class IkChain(boneChain.BoneChain):
         #name setting
         startLocName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_StretchStart','loc')
         endLocName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_StretchEnd','loc')
+        distanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_Stretch','dist')
+                
         ratioMultipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_Ratio','MDN')
         multipleNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_Stretch','MDN')
         conditionNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_Stretch','COND')
         blendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_Stretch','BCN')
-        distanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.type + '_Stretch','dist')
         
-        #set command
-        self.stretchStartLoc = pm.spaceLocator(n = startLocName)
-        self.stretchEndLoc = pm.spaceLocator(n = endLocName)
+        #create node        
         ratioMultipleNode = pm.createNode('multiplyDivide',n = ratioMultipleNodeName)
         multipleNode = pm.createNode('multiplyDivide',n = multipleNodeName)
         conditionNode = pm.createNode('condition',n = conditionNodeName)
         self.stretchBlendcolorNode = pm.createNode('blendColors',n = blendcolorNodeName)
-        distBetweenNode = pm.createNode('distanceBetween',n = distanceBetweenNodeName)
         
-        #align loc
-        startPos = self.chain[0].worldMatrix.get()
-        endPos = self.chain[2].worldMatrix.get()
-        pm.xform(self.stretchStartLoc,matrix = startPos)
-        pm.xform(self.stretchEndLoc,matrix = endPos)
+        #create loc 
+        startPos = self.chain[0].worldMatrix.get()[-1][0:3]
+        endPos = self.chain[2].worldMatrix.get()[-1][0:3]
+
+        distShapeNode = pm.distanceDimension( sp = startPos, ep = endPos)
+        distTransNode = pm.ls(sl = 1)[1]
+        pm.rename(distTransNode,distanceBetweenNodeName)
+        
+        startLocCon = distTransNode.getShapes()[0].startPoint
+        endLocCon = distTransNode.getShapes()[0].endPoint
+        
+        #get start loc
+        if pm.connectionInfo(startLocCon,id = 1):
+            startLocInfo = pm.connectionInfo(startLocCon,sourceFromDestination=True)
+            oriStartLocName = startLocInfo.split('.')[0]
+            pm.select(oriStartLocName)
+            startLocShape = pm.selected()[0]
+            self.stretchStartLoc = startLocShape.getParent()
+            pm.rename(self.stretchStartLoc,startLocName)
+        
+        #get end loc
+        if pm.connectionInfo(endLocCon,id = 1):
+            endLocInfo = pm.connectionInfo(endLocCon,sourceFromDestination=True)
+            oriEndLocName = endLocInfo.split('.')[0]
+            pm.select(oriEndLocName)
+            endLocShape = pm.selected()[0]
+            self.stretchEndLoc = endLocShape.getParent()
+            pm.rename(self.stretchEndLoc,endLocName)
         
         #connect to the dist
         #base on trans
-        self.stretchStartLoc.worldPosition[0].connect(distBetweenNode.point1) 
-        self.stretchEndLoc.worldPosition[0].connect(distBetweenNode.point2) 
-        self.length = distBetweenNode.distance.get()
-        distBetweenNode.distance.connect(ratioMultipleNode.input1X)
+        self.length = distTransNode.distance.get()
+        distTransNode.distance.connect(ratioMultipleNode.input1X)
         ratioMultipleNode.input2X.set(self.chain[1].tx.get() + self.chain[2].tx.get())
         ratioMultipleNode.operation.set(2)
         
@@ -218,7 +241,7 @@ class IkChain(boneChain.BoneChain):
         self.stretchData["endLoc"] = self.stretchEndLoc
         self.stretchData["stretchMulti"] = multipleNode
         self.stretchData["stretchCondition"] = conditionNode
-        self.stretchData["stretchDist"]  = distBetweenNode
+        self.stretchData["stretchDist"]  = distTransNode
         self.stretchData["stretchBlendcolorNode"]  = self.stretchBlendcolorNode
     
         if self.type != 'ikRP':
@@ -226,7 +249,7 @@ class IkChain(boneChain.BoneChain):
             self.stretchBlendcolorNode.outputG.connect(self.chain[2].tx)
     
     def __elbowKneeLock(self):
-        
+    
         #name setting
         if self.baseName == 'arm':
             upStartLocName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2] + 'Start','loc')
@@ -236,6 +259,7 @@ class IkChain(boneChain.BoneChain):
             lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_' + self.armLockData[2],'BCN')
             upperDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2],'dist')
             lowertDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2],'dist')
+            
         elif self.baseName == 'leg':
             upStartLocName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2] + 'Start','loc')
             upEndLocName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2] + 'End','loc')
@@ -243,8 +267,7 @@ class IkChain(boneChain.BoneChain):
             downEndLocName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2] + 'End','loc')
             lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.legLockData[2],'BCN')
             upperDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2],'dist')
-            lowertDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2],'dist')
-                
+            lowertDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2],'dist')            
         
         #set command
         self.lockUpStartLoc = pm.spaceLocator(n = upStartLocName)
@@ -308,7 +331,7 @@ class IkChain(boneChain.BoneChain):
         return True
 
 # from Modules.subModules import ikChain
-# bc = ikChain.IkChain(solver = 'ikRPsolver',skipLast = 0)
+# bc = ikChain.IkChain(solver = 'ikRPsolver')
 # bc.fromList([[0,0,0],[4,2,2],[8,0,0]],autoOrient = 1) 
                
             
