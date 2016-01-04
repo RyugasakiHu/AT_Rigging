@@ -39,6 +39,8 @@ class IkChain(boneChain.BoneChain):
         self.legLockData = ['thighKnee','kneeAnkle','KNlock']
         self.lockUpStartLoc = None
         self.lockUpEndLoc = None
+        self.lockDownStartLoc = None
+        self.lockDownEndLoc = None        
         
         if self.solver == 'ikSCsolver':
             self.type = 'ikSC'
@@ -134,7 +136,7 @@ class IkChain(boneChain.BoneChain):
             startEndN = startEnd.normal()
             projV = startEndN * proj
             arrowV = startMid - projV
-            arrowV *= 50
+            arrowV *= 5
             finalV = arrowV + midV
             
             #place pole vector
@@ -236,6 +238,7 @@ class IkChain(boneChain.BoneChain):
 #         stretchBlendcolorNode.outputG.connect(self.chain[2].tx)
         
         #clean the scene
+        distTransNode.v.set(0)
         self.stretchEndLoc.setParent(self.ikCtrl.control)
         self.stretchData["startLoc"] = self.stretchStartLoc
         self.stretchData["endLoc"] = self.stretchEndLoc
@@ -256,67 +259,115 @@ class IkChain(boneChain.BoneChain):
             upEndLocName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2] + 'End','loc')
             downStartLocName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2] + 'Start','loc')
             downEndLocName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2] + 'End','loc')
-            lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_' + self.armLockData[2],'BCN')
-            upperDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2],'dist')
+            upDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2],'dist')
             lowertDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2],'dist')
+                        
+            lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_' + self.armLockData[2],'BCN')
             
         elif self.baseName == 'leg':
             upStartLocName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2] + 'Start','loc')
             upEndLocName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2] + 'End','loc')
             downStartLocName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2] + 'Start','loc')
             downEndLocName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2] + 'End','loc')
-            lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.legLockData[2],'BCN')
-            upperDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2],'dist')
-            lowertDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2],'dist')            
+            upDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2],'dist')
+            lowertDistanceBetweenNodeName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2],'dist')
+            
+            lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + self.legLockData[2],'BCN')            
         
         #set command
-        self.lockUpStartLoc = pm.spaceLocator(n = upStartLocName)
-        self.lockUpEndLoc = pm.spaceLocator(n = upEndLocName)
-        lockDownStartLoc = pm.spaceLocator(n = downStartLocName)
-        lockDownEndLoc = pm.spaceLocator(n = downEndLocName)
         lockBlendcolorNode = pm.createNode('blendColors',n = lockBlendcolorNodeName)
-        upperDistBetweenNode = pm.createNode('distanceBetween',n = upperDistanceBetweenNodeName)
-        lowerDistBetweenNode = pm.createNode('distanceBetween',n = lowertDistanceBetweenNodeName)    
         
-        #align loc and parent
-        startPos = self.chain[0].worldMatrix.get()
-        midPos = self.poleVectorCtrl.control.worldMatrix.get()
-        endPos = self.chain[2].worldMatrix.get()
+        #create loc
+        #get info
+        upStartPos = self.chain[0].worldMatrix.get()[-1][0:3]
+        midPos = self.poleVectorCtrl.control.worldMatrix.get()[-1][0:3]
+        downEndPos = self.chain[2].worldMatrix.get()[-1][0:3]                
         
-        pm.xform(self.lockUpStartLoc,matrix = startPos)
-        pm.xform(self.lockUpEndLoc,matrix = midPos)
-        pm.xform(lockDownStartLoc,matrix = midPos)
-        pm.xform(lockDownEndLoc,matrix = endPos)
+        #armEblow node create 
+        upDistShapeNode = pm.distanceDimension( sp = upStartPos, ep = midPos)
+        upDistTransNode = pm.ls(sl = 1)[1]
+        pm.rename(upDistTransNode,upDistanceBetweenNodeName)
         
+        upStartLocCon = upDistTransNode.getShapes()[0].startPoint
+        upEndLocCon = upDistTransNode.getShapes()[0].endPoint        
+        
+        #get start loc
+        if pm.connectionInfo(upStartLocCon,id = 1):
+            upStartLocInfo = pm.connectionInfo(upStartLocCon,sourceFromDestination=True)
+            oriUpStartLocName = upStartLocInfo.split('.')[0]
+            pm.select(oriUpStartLocName)
+            upStartLocShape = pm.selected()[0]
+            self.lockUpStartLoc = upStartLocShape.getParent()
+            pm.rename(self.lockUpStartLoc,upStartLocName)
+        
+        #get end loc
+        if pm.connectionInfo(upEndLocCon,id = 1):
+            upEndLocInfo = pm.connectionInfo(upEndLocCon,sourceFromDestination=True)
+            oriUpEndLocName = upEndLocInfo.split('.')[0]
+            pm.select(oriUpEndLocName)
+            endUpLocShape = pm.selected()[0]
+            self.lockUpEndLoc = endUpLocShape.getParent()
+            pm.rename(self.lockUpEndLoc,upEndLocName)
+            
+        #elbowWrist node create 
+        
+        downDistShapeNode = pm.distanceDimension( sp = midPos, ep = downEndPos)
+        downDistTransNode = pm.ls(sl = 1)[1]
+        pm.rename(downDistTransNode,lowertDistanceBetweenNodeName)
+         
+        downStartLocCon = downDistTransNode.getShapes()[0].startPoint
+        downEndLocCon = downDistTransNode.getShapes()[0].endPoint        
+         
+        #get start loc
+        if pm.connectionInfo(downStartLocCon,id = 1):
+            downStartLocInfo = pm.connectionInfo(downStartLocCon,sourceFromDestination=True)
+            oriUpStartLocName = downStartLocInfo.split('.')[0]
+            pm.select(oriUpStartLocName)
+            downStartLocShape = pm.selected()[0]
+            self.lockDownStartLoc = downStartLocShape.getParent()
+            pm.rename(self.lockDownStartLoc ,downStartLocName)
+         
+        #get end loc
+        if pm.connectionInfo(downEndLocCon,id = 1):
+            downEndLocInfo = pm.connectionInfo(downEndLocCon,sourceFromDestination=True)
+            oriDownEndLocName = downEndLocInfo.split('.')[0]
+            pm.select(oriDownEndLocName)
+            endDownLocShape = pm.selected()[0]
+            self.lockDownEndLoc = endDownLocShape.getParent()
+            pm.rename(self.lockDownEndLoc,downEndLocName)            
+         
+        ######
         pm.parent(self.lockUpEndLoc,self.poleVectorCtrl.control)
-        pm.parent(lockDownStartLoc,self.poleVectorCtrl.control)
-        lockDownEndLoc.setParent(self.ikCtrl.control)
-        
-        #connect loc to the dist
-        #arm elbow dist
-        self.lockUpStartLoc.worldPosition[0].connect(upperDistBetweenNode.point1) 
-        self.lockUpEndLoc.worldPosition[0].connect(upperDistBetweenNode.point2) 
-        upperDistBetweenNode.distance.connect(lockBlendcolorNode.color1R)
-        
-        #elbow wrist dist
-        lockDownStartLoc.worldPosition[0].connect(lowerDistBetweenNode.point1) 
-        lockDownEndLoc.worldPosition[0].connect(lowerDistBetweenNode.point2) 
-        lowerDistBetweenNode.distance.connect(lockBlendcolorNode.color1G)
-        
+        pm.parent(self.lockDownStartLoc,self.poleVectorCtrl.control)
+        self.lockDownEndLoc.setParent(self.ikCtrl.control)
+         
+#         #connect loc to the dist
+#         #arm elbow dist
+#         self.lockUpStartLoc.worldPosition[0].connect(upDistBetweenNode.point1) 
+#         self.lockUpEndLoc.worldPosition[0].connect(upDistBetweenNode.point2) 
+        upDistTransNode.distance.connect(lockBlendcolorNode.color1R)
+#         
+#         #elbow wrist dist
+#         lockDownStartLoc.worldPosition[0].connect(lowerDistBetweenNode.point1) 
+#         lockDownEndLoc.worldPosition[0].connect(lowerDistBetweenNode.point2) 
+        downDistTransNode.distance.connect(lockBlendcolorNode.color1G)
+
         self.stretchData["stretchBlendcolorNode"].outputR.connect(lockBlendcolorNode.color2R)
         self.stretchData["stretchBlendcolorNode"].outputG.connect(lockBlendcolorNode.color2G)
-        
+         
         #set BCN switch
         self.poleVectorCtrl.control.elbow_lock.connect(lockBlendcolorNode.blender)
         lockBlendcolorNode.outputR.connect(self.chain[1].tx)
         lockBlendcolorNode.outputG.connect(self.chain[2].tx)
         
         #clean the scene
+#         upDistTransNode.v.set(0)
+#         downDistTransNode.v.set(0)
         self.lockUpStartLoc.v.set(0)
         self.lockUpEndLoc.v.set(0)
         self.stretchEndLoc.v.set(0)
-        lockDownStartLoc.v.set(0)
-        lockDownEndLoc.v.set(0)
+        self.lockDownStartLoc.v.set(0)
+        self.lockDownEndLoc.v.set(0)
         self.ikHandle.v.set(0)
         
     def __checkSolver(self):
@@ -334,4 +385,3 @@ class IkChain(boneChain.BoneChain):
 # bc = ikChain.IkChain(solver = 'ikRPsolver')
 # bc.fromList([[0,0,0],[4,2,2],[8,0,0]],autoOrient = 1) 
                
-            
