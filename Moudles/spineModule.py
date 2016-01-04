@@ -413,7 +413,6 @@ class SpineModule(object):
         
         #set fol
         #create / rename fol
-        
         self.folGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')) 
         
         for fol in range(self.segment):
@@ -620,7 +619,8 @@ class SpineModule(object):
         
         #create chestGRP
         self.chestGrp = pm.group(em = 1,n = nameUtils.getUniqueName('m','chest','grp'))
-        self.chestGrp.setParent(self.spineCc[2])
+        self.chestGrp.setParent(self.spineFkRevBlendChain.chain[-1])
+        pm.parentConstraint(self.spineCc[2],self.chestGrp, mo = True)
                
     def buildConnections(self):
         
