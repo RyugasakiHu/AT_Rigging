@@ -1100,7 +1100,7 @@ class LidClass(object):
         
         self.upLidCc = None
         self.downLidCc = None
-                
+
         self.upLidJcList = None
         self.downLidJcList = None
         
@@ -1110,12 +1110,18 @@ class LidClass(object):
         self.lidUpLoCur = None
         self.lidDnLoCur = None
         self.blinkCur = None
+        self.lidWireDn = None
+        self.lidWireDnBlink = None
+        self.lidWireUp = None
+        self.lidWireUpBlink = None
         
         #grp
         self.upJointGrp = None
         self.downJointGrp = None
         self.upLocGrp = None
         self.downLocGrp = None
+        self.blinkGrp = None
+        self.lidCrvGrp = None
         
         #loc
         self.aimLoc = None
@@ -1147,7 +1153,7 @@ class LidClass(object):
 
     def createLidCurve(self,*arg):
  
-        self.__createLoc()
+#         self.__createLoc()
         self.__createJj()
         self.__createAimCnst()
         self.__createCurve()
@@ -1158,6 +1164,7 @@ class LidClass(object):
         self.__createWireDeformer()
         self.__createCc()
         self.__createBlinkCc()
+        self.__cleanUp()
     
     def loadUpVertex(self):
         
@@ -1179,15 +1186,15 @@ class LidClass(object):
 
         return self.downVertexes
     
-    def __createLoc(self):
+#     def __createLoc(self):
         
         #create base loc make center
-        pm.select(self.eyeBall)
-        self.eyeBall = pm.selected()
-        self.baseLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[1],'loc'))
-        alginLoc = pm.pointConstraint(self.eyeBall[0],self.baseLoc,mo = 0)
-        pm.delete(alginLoc)
-        pm.select(cl = 1)
+#         pm.select(self.eyeBall)
+#         self.eyeBall = pm.selected()
+#         self.baseLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[1],'loc'))
+#         alginLoc = pm.pointConstraint(self.eyeBall[0],self.baseLoc,mo = 0)
+#         pm.delete(alginLoc)
+#         pm.select(cl = 1)
         
     def __createJj(self):
         
@@ -1196,6 +1203,9 @@ class LidClass(object):
         
         self.upJointGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'grp'))
         self.downJointGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'grp'))
+        
+        pm.select(self.eyeBall)
+        self.eyeBall = pm.selected()
         
         #up 
         for upVertex in self.upVertexes:
@@ -1358,12 +1368,12 @@ class LidClass(object):
     def __createWireDeformer(self):
         
         #up
-        wireUp = pm.wire(self.lidUpHiCur,wire = self.lidUpLoCur,gw = 0,en = 1,ce = 0,li = 0)
-        pm.rename(wireUp[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3],'wire'))
+        self.lidWireUp = pm.wire(self.lidUpHiCur,wire = self.lidUpLoCur,gw = 0,en = 1,ce = 0,li = 0)
+        pm.rename(self.lidWireUp[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3],'wire'))
         
         #down
-        wireDn = pm.wire(self.lidDnHiCur,wire = self.lidDnLoCur,gw = 0,en = 1,ce = 0,li = 0)
-        pm.rename(wireDn[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3],'wire'))
+        self.lidWireDn = pm.wire(self.lidDnHiCur,wire = self.lidDnLoCur,gw = 0,en = 1,ce = 0,li = 0)
+        pm.rename(self.lidWireDn[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3],'wire'))
         
     def __createCc(self):
 
@@ -1559,10 +1569,10 @@ class LidClass(object):
         control.lockAndHideAttr(self.upOutLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         control.lockAndHideAttr(self.downInLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         control.lockAndHideAttr(self.downOutLidCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
-        control.lockAndHideAttr(self.inLidCtrl.control,['v'])
-        control.lockAndHideAttr(self.outLidCtrl.control,['v'])
-        control.lockAndHideAttr(self.upLidCtrl.control,['v'])
-        control.lockAndHideAttr(self.downLidCtrl.control,['v'])
+        control.lockAndHideAttr(self.inLidCtrl.control,['sx','sy','sz','v'])
+        control.lockAndHideAttr(self.outLidCtrl.control,['sx','sy','sz','v'])
+        control.lockAndHideAttr(self.upLidCtrl.control,['sx','sy','sz','v'])
+        control.lockAndHideAttr(self.downLidCtrl.control,['sx','sy','sz','v'])
         
         pm.select(cl = 1)
         ##########################
@@ -1640,17 +1650,13 @@ class LidClass(object):
         self.lidDnBlinkCur = pm.duplicate(self.lidDnHiCur,rr = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[2] + self.nameList[4],'cur')) 
         
         #create wire up
-        wireUpBlink = pm.wire(self.lidUpBlinkCur ,wire = self.blinkCur,gw = 0,en = 1,ce = 0,li = 0,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3] + self.nameList[4],'wire'))
-#         pm.rename(wireUpBlink[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3] + self.nameList[4],'wire'))
-                
-        wireUpBlink[0].scale[0].set(0)        
+        self.lidWireUpBlink = pm.wire(self.lidUpBlinkCur ,wire = self.blinkCur,gw = 0,en = 1,ce = 0,li = 0,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3] + self.nameList[4],'wire'))
+        self.lidWireUpBlink[0].scale[0].set(0)        
         self.upLidCtrl.control.blink_weight.set(1)
         
         #create wire dn
-        wireDnBlink = pm.wire(self.lidDnBlinkCur ,wire = self.blinkCur,gw = 0,en = 1,ce = 0,li = 0,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3] + self.nameList[4],'wire'))
-#         pm.rename(wireDnBlink[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3] + self.nameList[4],'wire'))
-                
-        wireDnBlink[0].scale[0].set(0)
+        self.lidWireDnBlink = pm.wire(self.lidDnBlinkCur ,wire = self.blinkCur,gw = 0,en = 1,ce = 0,li = 0,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[3] + self.nameList[4],'wire'))
+        self.lidWireDnBlink[0].scale[0].set(0)
         self.upLidCtrl.control.blink_weight.set(0)
         
         #create blink bs
@@ -1664,6 +1670,27 @@ class LidClass(object):
         downBlinkBS = pm.blendShape(self.lidDnBlinkCur,self.lidDnHiCur,n = nameUtils.getUniqueName(self.lidSide,self.nameList[6] + self.nameList[4],'BS'))        
         self.downLidCtrl.control.blink.connect(downBlinkBS[0].attr(self.lidDnBlinkCur[0]))
         
+        
+    def __cleanUp(self):
+        #lid curve
+        self.lidCrvGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Crv','grp'))
+        
+        self.lidUpHiCur.setParent(self.lidCrvGrp)
+        self.lidUpLoCur.setParent(self.lidCrvGrp)
+        self.lidDnLoCur.setParent(self.lidCrvGrp)
+        self.lidDnHiCur.setParent(self.lidCrvGrp)
+#         print self.lidWireUp
+#         self.lidWireUp[0].setParent(self.lidCrvGrp)
+#         self.lidWireDn[0].setParent(self.lidCrvGrp)
+        
+        #blink curve
+        self.blinkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[4] + 'Crv','grp'))
+        
+        self.blinkCur.setParent(self.blinkGrp)
+        self.lidUpBlinkCur.setParent(self.blinkGrp)
+        self.lidDnBlinkCur.setParent(self.blinkGrp)
+#         self.lidWireUpBlink[0].setParent(self.blinkGrp)
+#         self.lidWireDnBlink[0].setParent(self.blinkGrp)
         
         
 def getUi(parent,mainUi):
