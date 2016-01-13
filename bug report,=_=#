@@ -1,0 +1,30 @@
+hand: 
+    loc wrong!(buildConnextion)
+
+cc:
+    ik cc size
+
+arm:
+    fk cc arm 0 degree set
+    arm shoulder devide
+    rib dis wrong
+    rib name wrong
+    ik follow world body    
+
+shoulder:
+    cc size wrong
+
+lid:
+    blind method and reverse research
+
+all:
+    mirror snap
+
+facial:
+    facial loc shape
+    facial gud cc
+    head cc size 
+
+hip follow leg
+foot ik follow
+blender pos
