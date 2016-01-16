@@ -78,7 +78,11 @@ class Control(object):
                 
             self.control = pm.circle(name = self.controlName,ch = 1,o = 1 ,nr = dic,r = self.size)[0]
             line = pm.curve(d = 1,p = [(-dic[1],-dic[2],-dic[0]),(dic[1],dic[2],dic[0])], k = [0,1],n = nameUtils.getUniqueName(self.side,'circleV','cc'))
+            line.s.set(self.size,self.size,self.size)
+            pm.makeIdentity(line,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
+            
             pm.parent(line.getShape(),self.control,shape = 1,add = 1)
+            
             self.control.s.set(self.size,self.size,self.size)
             pm.delete(line)
                  
@@ -261,6 +265,8 @@ class Control(object):
             pm.move(self.textObj[0],-1,0.6,0)
             pm.move(self.textObj[1],-0.6,0.6,0)
             pm.move(self.textObj[2],0,0.6,0)
+            
+            self.control.s.set(self.size,self.size,self.size)
 
             pm.makeIdentity(self.textObj[0],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
             pm.makeIdentity(self.textObj[1],apply = 1,t = 1,r = 0,s = 0,n = 0,pn = 1)
