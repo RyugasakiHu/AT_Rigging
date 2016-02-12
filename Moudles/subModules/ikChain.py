@@ -26,6 +26,7 @@ class IkChain(boneChain.BoneChain):
         self.ikCnst = None
         self.poleVectorCnst = None
         self.ikEffector = None
+        self.ikBeamCurve = None
         
         #stretch data
         self.stretchStartLoc = None
@@ -42,9 +43,14 @@ class IkChain(boneChain.BoneChain):
         self.lockDownStartLoc = None
         self.lockDownEndLoc = None        
         
+        #dist data
+        self.distTransNode = None
+        self.upDistTransNode = None
+        self.downDistTransNode = None
+        
         if self.solver == 'ikSCsolver':
             self.type = 'ikSC'
-        else:
+        elif self.solver == 'ikRPsolver':
             self.type = 'ikRP'
         
         boneChain.BoneChain.__init__(self,baseName,side,type = self.type)
@@ -100,10 +106,9 @@ class IkChain(boneChain.BoneChain):
         
         if self.type == 'ikRP':
             #create control      
-            self.poleVectorCtrl = control.Control(self.side,self.baseName + 'pv',self.size) 
+            self.poleVectorCtrl = control.Control(self.side,self.baseName + 'pv',self.size / 4.0) 
             self.poleVectorCtrl.cubeCtrl()
             self.poleVectorCtrl.controlGrp.rotate.set(self.controlOrient)
-            self.poleVectorCtrl.control.s.set(self.size / 4,self.size / 4,self.size / 4)
             pm.makeIdentity(self.poleVectorCtrl.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
             control.addFloatAttr(self.poleVectorCtrl.control,['elbow_lock'],0,1)
             
@@ -143,19 +148,19 @@ class IkChain(boneChain.BoneChain):
             pm.xform(self.poleVectorCtrl.controlGrp,ws = 1,t= (finalV.x , finalV.y ,finalV.z))
             
             #aim curve
-            ikBeamCurve = pm.curve(d = 1,p = [self.poleVectorCtrl.control.getTranslation(space = 'world'),
+            self.ikBeamCurve = pm.curve(d = 1,p = [self.poleVectorCtrl.control.getTranslation(space = 'world'),
                                               self.chain[1].getTranslation(space = 'world')],k = [0,1],
                                     n = nameUtils.getUniqueName(self.side,'beam','cc'))
-            ikBeamCurve.overrideEnabled.set(1)
-            ikBeamCurve.overrideDisplayType.set(1)
+            self.ikBeamCurve.overrideEnabled.set(1)
+            self.ikBeamCurve.overrideDisplayType.set(2)
             
             #cls
-            beamClusterStart = pm.cluster(ikBeamCurve.cv[0])
+            beamClusterStart = pm.cluster(self.ikBeamCurve.cv[0])
             pm.rename(beamClusterStart[1].name(),nameUtils.getUniqueName(self.side,'beam' + 'Start','cls'))
             beamClusterStart[1].setParent(self.poleVectorCtrl.control)
             beamClusterStart[1].v.set(0)
             
-            beamClusterEnd = pm.cluster(ikBeamCurve.cv[1])
+            beamClusterEnd = pm.cluster(self.ikBeamCurve.cv[1])
             pm.rename(beamClusterEnd[1].name(),nameUtils.getUniqueName(self.side,'beam' + 'End','cls'))
             beamClusterEnd[1].setParent(self.chain[1])
             beamClusterEnd[1].v.set(0)
@@ -184,11 +189,11 @@ class IkChain(boneChain.BoneChain):
         endPos = self.chain[2].worldMatrix.get()[-1][0:3]
 
         distShapeNode = pm.distanceDimension( sp = startPos, ep = endPos)
-        distTransNode = pm.ls(sl = 1)[1]
-        pm.rename(distTransNode,distanceBetweenNodeName)
+        self.distTransNode = pm.ls(sl = 1)[1]
+        pm.rename(self.distTransNode,distanceBetweenNodeName)
         
-        startLocCon = distTransNode.getShapes()[0].startPoint
-        endLocCon = distTransNode.getShapes()[0].endPoint
+        startLocCon = self.distTransNode.getShapes()[0].startPoint
+        endLocCon = self.distTransNode.getShapes()[0].endPoint
         
         #get start loc
         if pm.connectionInfo(startLocCon,id = 1):
@@ -210,8 +215,8 @@ class IkChain(boneChain.BoneChain):
         
         #connect to the dist
         #base on trans
-        self.length = distTransNode.distance.get()
-        distTransNode.distance.connect(ratioMultipleNode.input1X)
+        self.length = self.distTransNode.distance.get()
+        self.distTransNode.distance.connect(ratioMultipleNode.input1X)
         ratioMultipleNode.input2X.set(self.chain[1].tx.get() + self.chain[2].tx.get())
         ratioMultipleNode.operation.set(2)
         
@@ -238,13 +243,13 @@ class IkChain(boneChain.BoneChain):
 #         stretchBlendcolorNode.outputG.connect(self.chain[2].tx)
         
         #clean the scene
-        distTransNode.v.set(0)
+        self.distTransNode.v.set(0)
         self.stretchEndLoc.setParent(self.ikCtrl.control)
         self.stretchData["startLoc"] = self.stretchStartLoc
         self.stretchData["endLoc"] = self.stretchEndLoc
         self.stretchData["stretchMulti"] = multipleNode
         self.stretchData["stretchCondition"] = conditionNode
-        self.stretchData["stretchDist"]  = distTransNode
+        self.stretchData["stretchDist"]  = self.distTransNode
         self.stretchData["stretchBlendcolorNode"]  = self.stretchBlendcolorNode
     
         if self.type != 'ikRP':
@@ -285,11 +290,11 @@ class IkChain(boneChain.BoneChain):
         
         #armEblow node create 
         upDistShapeNode = pm.distanceDimension( sp = upStartPos, ep = midPos)
-        upDistTransNode = pm.ls(sl = 1)[1]
-        pm.rename(upDistTransNode,upDistanceBetweenNodeName)
+        self.upDistTransNode = pm.ls(sl = 1)[1]
+        pm.rename(self.upDistTransNode,upDistanceBetweenNodeName)
         
-        upStartLocCon = upDistTransNode.getShapes()[0].startPoint
-        upEndLocCon = upDistTransNode.getShapes()[0].endPoint        
+        upStartLocCon = self.upDistTransNode.getShapes()[0].startPoint
+        upEndLocCon = self.upDistTransNode.getShapes()[0].endPoint        
         
         #get start loc
         if pm.connectionInfo(upStartLocCon,id = 1):
@@ -312,11 +317,11 @@ class IkChain(boneChain.BoneChain):
         #elbowWrist node create 
         
         downDistShapeNode = pm.distanceDimension( sp = midPos, ep = downEndPos)
-        downDistTransNode = pm.ls(sl = 1)[1]
-        pm.rename(downDistTransNode,lowertDistanceBetweenNodeName)
+        self.downDistTransNode = pm.ls(sl = 1)[1]
+        pm.rename(self.downDistTransNode,lowertDistanceBetweenNodeName)
          
-        downStartLocCon = downDistTransNode.getShapes()[0].startPoint
-        downEndLocCon = downDistTransNode.getShapes()[0].endPoint        
+        downStartLocCon = self.downDistTransNode.getShapes()[0].startPoint
+        downEndLocCon = self.downDistTransNode.getShapes()[0].endPoint        
          
         #get start loc
         if pm.connectionInfo(downStartLocCon,id = 1):
@@ -336,21 +341,13 @@ class IkChain(boneChain.BoneChain):
             self.lockDownEndLoc = endDownLocShape.getParent()
             pm.rename(self.lockDownEndLoc,downEndLocName)            
          
-        ######
+        #clean up
         pm.parent(self.lockUpEndLoc,self.poleVectorCtrl.control)
         pm.parent(self.lockDownStartLoc,self.poleVectorCtrl.control)
         self.lockDownEndLoc.setParent(self.ikCtrl.control)
          
-#         #connect loc to the dist
-#         #arm elbow dist
-#         self.lockUpStartLoc.worldPosition[0].connect(upDistBetweenNode.point1) 
-#         self.lockUpEndLoc.worldPosition[0].connect(upDistBetweenNode.point2) 
-        upDistTransNode.distance.connect(lockBlendcolorNode.color1R)
-#         
-#         #elbow wrist dist
-#         lockDownStartLoc.worldPosition[0].connect(lowerDistBetweenNode.point1) 
-#         lockDownEndLoc.worldPosition[0].connect(lowerDistBetweenNode.point2) 
-        downDistTransNode.distance.connect(lockBlendcolorNode.color1G)
+        self.upDistTransNode.distance.connect(lockBlendcolorNode.color1R)
+        self.downDistTransNode.distance.connect(lockBlendcolorNode.color1G)
 
         self.stretchData["stretchBlendcolorNode"].outputR.connect(lockBlendcolorNode.color2R)
         self.stretchData["stretchBlendcolorNode"].outputG.connect(lockBlendcolorNode.color2G)
@@ -361,8 +358,8 @@ class IkChain(boneChain.BoneChain):
         lockBlendcolorNode.outputG.connect(self.chain[2].tx)
         
         #clean the scene
-#         upDistTransNode.v.set(0)
-#         downDistTransNode.v.set(0)
+        self.upDistTransNode.v.set(0)
+        self.downDistTransNode.v.set(0)
         self.lockUpStartLoc.v.set(0)
         self.lockUpEndLoc.v.set(0)
         self.stretchEndLoc.v.set(0)
@@ -385,3 +382,4 @@ class IkChain(boneChain.BoneChain):
 # bc = ikChain.IkChain(solver = 'ikRPsolver')
 # bc.fromList([[0,0,0],[4,2,2],[8,0,0]],autoOrient = 1) 
                
+            
