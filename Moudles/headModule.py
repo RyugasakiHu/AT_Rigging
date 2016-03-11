@@ -1077,7 +1077,10 @@ class HeadModule(object):
         metaUtils.addToMeta(self.meta,'controls', self.microCtrlList + self.mainCtrl)
 
     def buildConnections(self):
+        
         pass
+    
+        #beam mouth side to ETR
 
 class LidClass(object):
 
@@ -1116,6 +1119,10 @@ class LidClass(object):
         self.lidWireUpBlink = None
         
         #grp
+        self.lidGrp = None
+        self.lidJcGrp = None
+#         self.upFollow = None
+#         self.downFollow = None
         self.upJointGrp = None
         self.downJointGrp = None
         self.upLocGrp = None
@@ -1128,8 +1135,6 @@ class LidClass(object):
         
         #cc
         self.lidCcGrp = None
-        self.lidJcGrp = None
-        
         self.inLidCtrl = None
         self.outLidCtrl = None
         self.upLidCtrl = None
@@ -1143,7 +1148,7 @@ class LidClass(object):
         self.downTrv = None
         
         #name
-        self.nameList = ['lid','Base','Hi','Lo','Blink','Up','Dn','Aim','Loc']
+        self.nameList = ['lid','Base','Hi','Lo','Blink','Up','Dn','UpVec','Loc']
         
         if lidSide == 1:
             self.lidSide = 'l'
@@ -1367,6 +1372,14 @@ class LidClass(object):
         
     def __createWireDeformer(self):
         
+        #lid curve
+        self.lidCrvGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Crv','grp'))
+        
+        self.lidUpHiCur.setParent(self.lidCrvGrp)
+        self.lidUpLoCur.setParent(self.lidCrvGrp)
+        self.lidDnLoCur.setParent(self.lidCrvGrp)
+        self.lidDnHiCur.setParent(self.lidCrvGrp)        
+        
         #up
         self.lidWireUp = pm.wire(self.lidUpHiCur,wire = self.lidUpLoCur,gw = 0,en = 1,ce = 0,li = 0)
         pm.rename(self.lidWireUp[0],nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3],'wire'))
@@ -1425,7 +1438,7 @@ class LidClass(object):
         ###########################
         #up ctrl
         self.upLidCtrl = control.Control(self.lidSide,'upLid',size = self.ctrlSize[0],aimAxis = 'z') 
-        self.upLidCtrl.circleCtrl()  
+        self.upLidCtrl.circleCtrl()
         
         self.upInLidCtrl = control.Control(self.lidSide,'upInLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
         self.upInLidCtrl.circleCtrl()
@@ -1494,7 +1507,7 @@ class LidClass(object):
         #down ctrl
         self.downLidCtrl = control.Control(self.lidSide,'downLid',size = self.ctrlSize[0],aimAxis = 'z') 
         self.downLidCtrl.circleCtrl()
- 
+         
         self.downInLidCtrl = control.Control(self.lidSide,'downInLid',size = float(self.ctrlSize[0] * 0.75),sub = 1,aimAxis = 'z') 
         self.downInLidCtrl.circleCtrl()
          
@@ -1633,7 +1646,11 @@ class LidClass(object):
         
         self.blinkCur = pm.duplicate(self.lidUpLoCur,rr = 1,n = nameUtils.getUniqueName(self.lidSide,'blink','cur'))
         bs = pm.blendShape(self.lidUpLoCur,self.lidDnLoCur,self.blinkCur,n = nameUtils.getUniqueName(self.lidSide,'blinkWeight','BS'))
-
+        
+        #blinkGrp
+        self.blinkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[4] + 'Crv','grp'))
+        self.blinkCur[0].setParent(self.blinkGrp)    
+        
         #node Name
         reverseNodeName = nameUtils.getUniqueName(self.lidSide,'blink','REV')
         
@@ -1648,6 +1665,8 @@ class LidClass(object):
         #create blink curve
         self.lidUpBlinkCur = pm.duplicate(self.lidUpHiCur,rr = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[2] + self.nameList[4],'cur')) 
         self.lidDnBlinkCur = pm.duplicate(self.lidDnHiCur,rr = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6] + self.nameList[2] + self.nameList[4],'cur')) 
+        self.lidUpBlinkCur[0].setParent(self.blinkGrp)
+        self.lidDnBlinkCur[0].setParent(self.blinkGrp)        
         
         #create wire up
         self.lidWireUpBlink = pm.wire(self.lidUpBlinkCur ,wire = self.blinkCur,gw = 0,en = 1,ce = 0,li = 0,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5] + self.nameList[3] + self.nameList[4],'wire'))
@@ -1661,38 +1680,66 @@ class LidClass(object):
         
         #create blink bs
         #up
-        self.lidUpBlinkCur
+        #self.lidUpBlinkCur
         upBlinkBS = pm.blendShape(self.lidUpBlinkCur,self.lidUpHiCur,n = nameUtils.getUniqueName(self.lidSide,self.nameList[5] + self.nameList[4],'BS'))
         self.upLidCtrl.control.blink.connect(upBlinkBS[0].attr(self.lidUpBlinkCur[0]))
         
         #down
-        self.lidDnBlinkCur
+        #self.lidDnBlinkCur
         downBlinkBS = pm.blendShape(self.lidDnBlinkCur,self.lidDnHiCur,n = nameUtils.getUniqueName(self.lidSide,self.nameList[6] + self.nameList[4],'BS'))        
         self.downLidCtrl.control.blink.connect(downBlinkBS[0].attr(self.lidDnBlinkCur[0]))
         
-        
     def __cleanUp(self):
+        
         #lid curve
-        self.lidCrvGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + 'Crv','grp'))
+        self.lidCcGrp.setParent()
+        self.lidGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'lid','grp'))
+        self.upLocGrp.setParent(self.lidGrp)
+        self.downLocGrp.setParent(self.lidGrp)
+        self.blinkGrp.setParent(self.lidGrp)
+        self.lidCrvGrp.setParent(self.lidGrp)
+        self.lidJcGrp.setParent(self.lidGrp)
         
-        self.lidUpHiCur.setParent(self.lidCrvGrp)
-        self.lidUpLoCur.setParent(self.lidCrvGrp)
-        self.lidDnLoCur.setParent(self.lidCrvGrp)
-        self.lidDnHiCur.setParent(self.lidCrvGrp)
-#         print self.lidWireUp
-#         self.lidWireUp[0].setParent(self.lidCrvGrp)
-#         self.lidWireDn[0].setParent(self.lidCrvGrp)
+    def __buildConnection(self):
         
-        #blink curve
-        self.blinkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[4] + 'Crv','grp'))
+        MCgud 1st
+        headMetaSSec
         
-        self.blinkCur.setParent(self.blinkGrp)
-        self.lidUpBlinkCur.setParent(self.blinkGrp)
-        self.lidDnBlinkCur.setParent(self.blinkGrp)
-#         self.lidWireUpBlink[0].setParent(self.blinkGrp)
-#         self.lidWireDnBlink[0].setParent(self.blinkGrp)
+        #up follow grp
+        upFollow = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'upLidFollow','grp'))
+        upFollow.setParent(self.upLidCtrl.controlGrp)
+        upFollow.t.set(0,0,0)
+        upFollow.r.set(0,0,0)
+        self.upLidCtrl.control.setParent(self.upFollow)
+        
+        upFollowNodeName = nameUtils.getUniqueName(self.lidSide,'upLid','CLA')
+        upFollowNode = pm.createNode('clamp',n = upFollowNodeName)
+        
+        upFollowNodeName.minR.set(-10)
+        upFollowNodeName.minG.set(-10)
         
         
+        
+        #down follow grp
+        downFollow = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'downLidFollow','grp'))
+        downFollow.setParent(self.downLidCtrl.controlGrp)
+        downFollow.t.set(0,0,0)
+        downFollow.r.set(0,0,0)
+        self.downLidCtrl.control.setParent(self.downFollow)                
+        
+#         .rotateX.connect(upFollowNode.input.inputR)
+#         .rotateY.connect(upFollowNode.input.inputG)
+
+#         up low jnt grp setParent to the head jj
+#         self.upJointGrp.setParent()
+#         self.downJointGrp.setParent()    
+
+#         self.lidGrp to ETR main
+
+#         headCtrl
+#         self.lidJcGrp to headCtrl ctrl
+#         self.aimLoc to headCtrl
+
 def getUi(parent,mainUi):
     
     return HeadModuleUi(parent,mainUi)
