@@ -57,6 +57,8 @@ class HeadModule(object):
         
         #guides 
         #single guides
+        
+        self.jointGuideGrp = None
         self.neckGuides = None
         self.jawGuides = None
         self.muzzleGuides = None
@@ -119,6 +121,7 @@ class HeadModule(object):
         self.mainCtrl = None             
         self.leftAimCurve = None
         self.rightAimCurve = None
+        self.eyeBeamGrp = None
         
         #micro cc
         self.browCtrl = None
@@ -140,8 +143,8 @@ class HeadModule(object):
         self.microCtrlNameList = ['brow','inBrow','outBrow','upCheek','cheek','mouthCorner','upLip','loLip']
         
         #metanode
-        self.metaMain = None
-        self.metaSpine = None
+        self.metaMain = metaMain
+        self.metaSpine = metaSpine
         self.meta = metaUtils.createMeta(self.side[1],self.baseName,0)
         
     def buildGuides(self):
@@ -712,6 +715,7 @@ class HeadModule(object):
         self.__addMainCtrl()
         self.__addMicroCtrl()
         self.__cleanUp()
+        self.buildConnections()
         
     def __mirrorMicroGuides(self):        
         
@@ -767,7 +771,7 @@ class HeadModule(object):
         self.eyeRad = float(self.eyePosArray[1][-1] - self.eyePosArray[0][-1])
         self.eyeLeftCtrl = control.Control(self.side[0],self.nameList[3],size = self.eyeRad * 0.25) 
         self.eyeLeftCtrl.sphereCtrl()
-        control.lockAndHideAttr(self.eyeLeftCtrl.control,['sx','sy','sz','v'])
+        control.lockAndHideAttr(self.eyeLeftCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         pm.xform(self.eyeLeftCtrl.controlGrp,ws = 1,matrix = self.eyeLeftChain.chain[0].worldMatrix.get())
         pm.orientConstraint(self.eyeLeftCtrl.control,self.eyeLeftChain.chain[0],mo = 0)
         pm.pointConstraint(self.eyeLeftCtrl.control,self.eyeLeftChain.chain[0],mo = 0)
@@ -775,7 +779,7 @@ class HeadModule(object):
         
         self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 0.25) 
         self.eyeRightCtrl.sphereCtrl()
-        control.lockAndHideAttr(self.eyeRightCtrl.control,['sx','sy','sz','v'])     
+        control.lockAndHideAttr(self.eyeRightCtrl.control,['rx','ry','rz','sx','sy','sz','v'])     
         pm.xform(self.eyeRightCtrl.controlGrp,ws = 1,matrix = self.eyeRightChain.chain[0].worldMatrix.get())
         pm.orientConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
         pm.pointConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
@@ -866,7 +870,7 @@ class HeadModule(object):
         self.tongueCtrls[-1].setParent(self.loTeethCtrl.control)
              
         #create earCrl
-        self.earLeftCtrl = control.Control(self.side[0],self.nameList[10],size = float(self.tongueDis * 1.5)) 
+        self.earLeftCtrl = control.Control(self.side[0],self.nameList[10],size = self.tongueDis) 
         self.earLeftCtrl.circleCtrl()
         control.lockAndHideAttr(self.earLeftCtrl.control,['sx','sy','sz','v'])
         pm.xform(self.earLeftCtrl.controlGrp,ws = 1,matrix = self.earLeftChain.chain[0].worldMatrix.get())
@@ -874,7 +878,7 @@ class HeadModule(object):
         pm.pointConstraint(self.earLeftCtrl.control,self.earLeftChain.chain[0],mo = 0)
         self.earLeftCtrl.controlGrp.setParent(self.headCtrl.control)
                
-        self.earRightCtrl = control.Control(self.side[2],self.nameList[10],size = float(self.tongueDis * 1.5)) 
+        self.earRightCtrl = control.Control(self.side[2],self.nameList[10],size = self.tongueDis) 
         self.earRightCtrl.circleCtrl()
         control.lockAndHideAttr(self.earRightCtrl.control,['sx','sy','sz','v'])
         pm.xform(self.earRightCtrl.controlGrp,ws = 1,matrix = self.earRightChain.chain[0].worldMatrix.get())
@@ -981,9 +985,9 @@ class HeadModule(object):
         
         #clean up
         #beam
-        eyeBeamGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'Beam','grp'))
-        self.leftAimCurve.setParent(eyeBeamGrp)
-        self.rightAimCurve.setParent(eyeBeamGrp)
+        self.eyeBeamGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'Beam','grp'))
+        self.leftAimCurve.setParent(self.eyeBeamGrp)
+        self.rightAimCurve.setParent(self.eyeBeamGrp)
         #Beam UNDER EXTRA GRP
         
         #aim grp under IK grp
@@ -1126,15 +1130,86 @@ class HeadModule(object):
 #         metaUtils.addToMeta(self.meta,, objs)
 #         metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL])  
         metaUtils.addToMeta(self.meta,'controls', self.microCtrlList + self.mainCtrl)
-        print 'self.microCtrlList : ' + str(self.microCtrlList)
-        print 'self.mainCtrl : ' + str(self.mainCtrl)
-        print 'self.headJoint' + str(self.headJoint)
-#         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
-        
 
     def buildConnections(self):
         
-        pass
+        #reveice info from incoming package
+        if pm.objExists(self.metaMain) and pm.objExists(self.metaSpine) == 1:
+            
+            print ''
+            print 'Package from (' + self.metaMain + ') has been received'
+            
+            pm.select(self.metaMain) 
+            main = pm.selected()[0]
+            
+            pm.select(self.metaSpine)
+            spine = pm.selected()[0]
+            
+            #meta main
+            mainDestinations = []
+            moduleGrp = pm.connectionInfo(main.moduleGrp, destinationFromSource=True)
+            
+            #meta spine
+            spineDestinations = []
+            ctrlGrp = pm.connectionInfo(spine.controls, destinationFromSource=True)
+            
+            #get linked
+            for tempMainDestination in moduleGrp:
+                splitTempMainDestination = tempMainDestination.split('.')
+                mainDestinations.append(splitTempMainDestination[0])
+                
+            for tempSpineDestination in ctrlGrp:
+                splitTempSpineDestination = tempSpineDestination.split('.')
+                spineDestinations.append(splitTempSpineDestination[0])
+                
+            print 'spineDestinations' + str(spineDestinations)
+            print 'mainDestinations' + str(mainDestinations)
+            
+            #to the chest
+            for ctrl in spineDestinations :
+                if 'Chest' in ctrl :
+                    chestCtrl = ctrl
+                                
+            #to the main hierachy
+            for grp in mainDestinations:
+                destnation = grp.split('_')
+                if destnation[1] == 'CC':
+                    CC = grp                
+                elif destnation[1] == 'SKL':
+                    SKL = grp                    
+                elif destnation[1] == 'IK':
+                    IK = grp                    
+                elif destnation[1] == 'LOC':
+                    LOC = grp                            
+                elif destnation[1] == 'XTR':
+                    XTR = grp                             
+                elif destnation[1] == 'GUD':
+                    GUD = grp                          
+                elif destnation[1] == 'GEO':
+                    GEO = grp                      
+                elif destnation[1] == 'ALL':
+                    ALL = grp                      
+                elif destnation[1] == 'XTR':
+                    XTR = grp                      
+                elif destnation[1] == 'TRS':
+                    TRS = grp                      
+                elif destnation[1] == 'PP':
+                    PP = grp
+                          
+            self.jointGuideGrp.setParent(GUD)
+            self.microCtrlTotalGuideGrp.setParent(GUD)
+            self.eyeBeamGrp.setParent(XTR)            
+            self.neckFkChain.controlsArray[0].controlGrp.setParent(chestCtrl)
+            self.eyeWorldGrp.setParent(IK)
+            self.eyeAimCtrl.controlGrp.setParent(IK)
+            self.neckFkChain.chain[0].setParent(SKL)
+            
+            print ''
+            print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
+            print ''
+            
+        else:
+            OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
     
         #beam mouth side to ETR
 
