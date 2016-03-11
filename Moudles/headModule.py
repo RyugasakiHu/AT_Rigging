@@ -117,6 +117,8 @@ class HeadModule(object):
         self.eyeHeadGrp = None
         self.eyeCnstGrp = None   
         self.mainCtrl = None             
+        self.leftAimCurve = None
+        self.rightAimCurve = None
         
         #micro cc
         self.browCtrl = None
@@ -503,7 +505,7 @@ class HeadModule(object):
         #create distance node:
         neckDistanceBetweenNodeName = nameUtils.getUniqueName(self.side[1],self.baseName + 'neck','dist')
         tongueDistanceBetweenNodeName = nameUtils.getUniqueName(self.side[1],self.baseName + 'tongue','dist')
-        
+
         #create Node
         neckDistBetweenNode = pm.createNode('distanceBetween',n = neckDistanceBetweenNodeName)
         tongueDistBetweenNode = pm.createNode('distanceBetween',n = tongueDistanceBetweenNodeName)
@@ -531,7 +533,7 @@ class HeadModule(object):
         #neck jj set
         self.neckFkChain = fkChain.FkChain(self.nameList[0],self.side[1],size = self.size[0],
                                            fkCcType = 'cc',type = 'jj',pointCnst = 1)
-        self.neckFkChain.fromList(self.neckGuidePos,self.neckGuideRot,skipLast = 1)
+        self.neckFkChain.fromList(self.neckGuidePos,self.neckGuideRot,skipLast = 1,fallOff = 1)
         self.headJoint.append(self.neckFkChain.chain)
         
         for num,joint in enumerate(self.neckFkChain.chain):
@@ -763,7 +765,7 @@ class HeadModule(object):
         
         #create eyeCtrl
         self.eyeRad = float(self.eyePosArray[1][-1] - self.eyePosArray[0][-1])
-        self.eyeLeftCtrl = control.Control(self.side[0],self.nameList[3],size = self.eyeRad * 0.65) 
+        self.eyeLeftCtrl = control.Control(self.side[0],self.nameList[3],size = self.eyeRad * 0.25) 
         self.eyeLeftCtrl.sphereCtrl()
         control.lockAndHideAttr(self.eyeLeftCtrl.control,['sx','sy','sz','v'])
         pm.xform(self.eyeLeftCtrl.controlGrp,ws = 1,matrix = self.eyeLeftChain.chain[0].worldMatrix.get())
@@ -771,7 +773,7 @@ class HeadModule(object):
         pm.pointConstraint(self.eyeLeftCtrl.control,self.eyeLeftChain.chain[0],mo = 0)
         self.eyeLeftCtrl.controlGrp.setParent(self.headCtrl.control)
         
-        self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 0.65) 
+        self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 0.25) 
         self.eyeRightCtrl.sphereCtrl()
         control.lockAndHideAttr(self.eyeRightCtrl.control,['sx','sy','sz','v'])     
         pm.xform(self.eyeRightCtrl.controlGrp,ws = 1,matrix = self.eyeRightChain.chain[0].worldMatrix.get())
@@ -821,7 +823,7 @@ class HeadModule(object):
         self.mainCtrl.append(self.nostrilLeftCtrl.control)    
         
         #create upTeethCtrl
-        self.upTeethCtrl = control.Control(self.side[1],self.nameList[7],size = float(self.tongueDis * 1.5),aimAxis = 'y') 
+        self.upTeethCtrl = control.Control(self.side[1],self.nameList[7],size = float(self.tongueDis * 0.5),aimAxis = 'y') 
         self.upTeethCtrl.circleCtrl()
         pm.delete(self.upTeethCtrl.control,ch = 1)
         control.lockAndHideAttr(self.upTeethCtrl.control,['sx','sy','sz','v'])
@@ -832,7 +834,7 @@ class HeadModule(object):
         self.mainCtrl.append(self.upTeethCtrl.control)            
         
         #create loTeethCtrl
-        self.loTeethCtrl = control.Control(self.side[1],self.nameList[8],size = float(self.tongueDis * 1.5),aimAxis = 'y') 
+        self.loTeethCtrl = control.Control(self.side[1],self.nameList[8],size = float(self.tongueDis * 0.5),aimAxis = 'y') 
         self.loTeethCtrl.circleCtrl()
         pm.delete(self.loTeethCtrl.control,ch = 1)
         control.lockAndHideAttr(self.loTeethCtrl.control,['sx','sy','sz','v'])
@@ -895,7 +897,7 @@ class HeadModule(object):
         self.mainCtrl.append(self.eyeAimCtrl.control)
         
         #left ctrl set and pos
-        self.eyeLeftAimCtrl = control.Control(self.side[0],self.nameList[3] + 'Aim',size = float(self.tongueDis * 1)) 
+        self.eyeLeftAimCtrl = control.Control(self.side[0],self.nameList[3] + 'Aim',size = float(self.tongueDis * 0.5)) 
         self.eyeLeftAimCtrl.circleCtrl()
         pm.delete(self.eyeLeftAimCtrl.control,ch = 1)
         pm.xform(self.eyeLeftAimCtrl.controlGrp,ws = 1,matrix = self.eyeLeftChain.chain[0].worldMatrix.get())
@@ -906,19 +908,19 @@ class HeadModule(object):
         self.mainCtrl.append(self.eyeLeftAimCtrl.control)
         
         #aim curve
-        leftAimCurve = pm.curve(d = 1,p = [self.eyeLeftChain.chain[0].getTranslation(space = 'world'),
+        self.leftAimCurve = pm.curve(d = 1,p = [self.eyeLeftChain.chain[0].getTranslation(space = 'world'),
                                            self.eyeLeftAimCtrl.controlGrp.getTranslation(space = 'world')],k = [0,1],
                                 n = nameUtils.getUniqueName(self.side[0],self.nameList[11],'cc'))
-        leftAimCurve.overrideEnabled.set(1)
-        leftAimCurve.overrideDisplayType.set(2)
+        self.leftAimCurve.overrideEnabled.set(1)
+        self.leftAimCurve.overrideDisplayType.set(2)
         
         #cls
-        leftClusterStart = pm.cluster(leftAimCurve.cv[0])
+        leftClusterStart = pm.cluster(self.leftAimCurve.cv[0])
         pm.rename(leftClusterStart[1].name(),nameUtils.getUniqueName(self.side[0],self.nameList[11] + 'Start','cls'))
         leftClusterStart[1].setParent(self.eyeLeftCtrl.control)
         leftClusterStart[1].v.set(0)
         
-        leftClusterEnd = pm.cluster(leftAimCurve.cv[1])
+        leftClusterEnd = pm.cluster(self.leftAimCurve.cv[1])
         pm.rename(leftClusterEnd[1].name(),nameUtils.getUniqueName(self.side[0],self.nameList[11] + 'End','cls'))
         leftClusterEnd[1].setParent(self.eyeLeftAimCtrl.control)
         leftClusterEnd[1].v.set(0)
@@ -936,7 +938,7 @@ class HeadModule(object):
         pm.pointConstraint(self.eyeLeftCtrl.control,self.eyeLeftChain.chain[0],mo = 0)
     
         #right ctrl set and pos
-        self.eyeRightAimCtrl = control.Control(self.side[2],self.nameList[3] + 'Aim',size = float(self.tongueDis * 1)) 
+        self.eyeRightAimCtrl = control.Control(self.side[2],self.nameList[3] + 'Aim',size = float(self.tongueDis * 0.55)) 
         self.eyeRightAimCtrl.circleCtrl()
         pm.delete(self.eyeRightAimCtrl.control,ch = 1)
         
@@ -948,19 +950,19 @@ class HeadModule(object):
         self.mainCtrl.append(self.eyeRightAimCtrl.control)
             
         #aim curve    
-        rightAimCurve = pm.curve(d = 1,p = [self.eyeRightChain.chain[0].getTranslation(space = 'world'),
+        self.rightAimCurve = pm.curve(d = 1,p = [self.eyeRightChain.chain[0].getTranslation(space = 'world'),
                                             self.eyeRightAimCtrl.controlGrp.getTranslation(space = 'world')],k = [0,1],
                                 n = nameUtils.getUniqueName(self.side[2],self.nameList[11],'cc'))
-        rightAimCurve.overrideEnabled.set(1)
-        rightAimCurve.overrideDisplayType.set(2)
+        self.rightAimCurve.overrideEnabled.set(1)
+        self.rightAimCurve.overrideDisplayType.set(2)
         
         #cls
-        rightClusterStart = pm.cluster(rightAimCurve.cv[0])
+        rightClusterStart = pm.cluster(self.rightAimCurve.cv[0])
         pm.rename(rightClusterStart[1].name(),nameUtils.getUniqueName(self.side[2],self.nameList[11] + 'Start','cls'))
         rightClusterStart[1].setParent(self.eyeRightCtrl.control)
         rightClusterStart[1].v.set(0)
         
-        rightClusterEnd = pm.cluster(rightAimCurve.cv[1])
+        rightClusterEnd = pm.cluster(self.rightAimCurve.cv[1])
         pm.rename(rightClusterEnd[1].name(),nameUtils.getUniqueName(self.side[2],self.nameList[11] + 'End','cls'))
         rightClusterEnd[1].setParent(self.eyeRightAimCtrl.control)   
         rightClusterEnd[1].v.set(0)   
@@ -980,8 +982,8 @@ class HeadModule(object):
         #clean up
         #beam
         eyeBeamGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'Beam','grp'))
-        leftAimCurve.setParent(eyeBeamGrp)
-        rightAimCurve.setParent(eyeBeamGrp)
+        self.leftAimCurve.setParent(eyeBeamGrp)
+        self.rightAimCurve.setParent(eyeBeamGrp)
         #Beam UNDER EXTRA GRP
         
         #aim grp under IK grp
