@@ -5,7 +5,7 @@ from Modules import control
 
 class FkChain(boneChain.BoneChain):
 
-    def __init__(self, baseName = 'fk',side = 'm',size = 1.5,fkCcType = 'shape',type = 'fk',pointCnst = 0):
+    def __init__(self, baseName = 'fk',side = 'm',size = 1.5,fkCcType = 'shape',type = 'fk',pointCnst = 1):
         '''
         Constructor
         '''
@@ -16,6 +16,7 @@ class FkChain(boneChain.BoneChain):
         self.fkCcType = fkCcType
         self.controlsArray = []
         self.pointCnst = pointCnst
+#         self.fallOff = fallOff
         self.__acceptedCcTypes = ['shape','cc']
         self.__acceptedFkTypes = ['fk','jj']
                 
@@ -27,7 +28,7 @@ class FkChain(boneChain.BoneChain):
         else :    
             boneChain.BoneChain.__init__(self, baseName, side,type = 'jj')
             
-    def fromList(self,posList = [],orientList = [],autoOrient = 1,skipLast = 1):
+    def fromList(self,posList = [],orientList = [],autoOrient = 1,skipLast = 1,fallOff = 0):
         '''
         posList position
         orientList orient
@@ -41,7 +42,7 @@ class FkChain(boneChain.BoneChain):
         
         boneChain.BoneChain.fromList(self, posList, orientList, autoOrient)
         
-        self.__addControls(skipLast)        
+        self.__addControls(skipLast,fallOff)        
         
         if self.fkCcType == self.__acceptedCcTypes[0]:        
             self.__finalizeFkChainShape()
@@ -49,22 +50,27 @@ class FkChain(boneChain.BoneChain):
         else:
             self.__finalizeFkChainOriCnst() 
         
-    def __addControls(self,skipLast = 1):
+    def __addControls(self,skipLast = 1,fallOff = 0):
         
-        for i in range(self.chainLength()):
+        for num in range(self.chainLength()):
             
             #the last loop condition
             if skipLast == 1:
-                if i ==(self.chainLength() - 1):
+                if num ==(self.chainLength() - 1):
                     return
-                
+            
             #create control for each one    
             cntClass = control.Control(self.side,self.baseName,self.size) 
-            cntClass.circleCtrl()
+            cntClass.circleCtrl()            
             
+            if fallOff == 1:
+                cntClass.control.s.set(float(1 - float((num + 1.0) / 5)),float(1 - float((num + 1.0) / 5)),float(1 - float((num + 1.0) / 5)))
+                pm.makeIdentity(cntClass.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
+                   
+            pm.delete(cntClass.control,ch=1)
             #snap to the control
             #que xform
-            pm.xform(cntClass.controlGrp,ws = 1,matrix = self.chain[i].worldMatrix.get())
+            pm.xform(cntClass.controlGrp,ws = 1,matrix = self.chain[num].worldMatrix.get())
             self.controlsArray.append(cntClass)                                
             
     def __finalizeFkChainOriCnst(self):        
