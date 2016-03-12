@@ -37,7 +37,9 @@ class HeadModule(object):
     outBrowLeftPosArray = [0.69,16.556,1.229]
     upCheekLeftPosArray = [0.614,15.913,1.214]
     cheekLeftPosArray = [0.79,15.482,0.869]
+    cheekLeftRotArray = [20,45,0]
     mouthCornerLeftPosArray = [0.423,15.389,1.233]
+    mouthCornerLeftRotArray = [0,40,0]
     upLipMidPosArray = [0,15.474,1.464]
     upLipLeftPosArray = [0.221,15.474,1.464]
     loLipMidPosArray = [0,15.318,1.464]
@@ -220,8 +222,14 @@ class HeadModule(object):
             loc.localScale.set(0.3,0.3,0.3)
             self.eyeLeftGuides.append(loc)
 
-        for eyeLeftGuide in self.eyeLeftGuides:
-            eyeLeftGuide.setParent(self.jointLeftGuideGrp)
+        tempLeftEyeGuides = list(self.eyeLeftGuides)
+        tempLeftEyeGuides.reverse()
+         
+        for i in range(len(tempLeftEyeGuides)):
+            if i != (len(tempLeftEyeGuides) - 1):
+                pm.parent(tempLeftEyeGuides[i],tempLeftEyeGuides[i + 1])
+                
+        self.eyeLeftGuides[0].setParent(self.jointLeftGuideGrp)          
           
         #build muzzle structure
         #build muzzle guide
@@ -303,8 +311,14 @@ class HeadModule(object):
             loc.localScale.set(0.3,0.3,0.3)
             self.earLeftGuides.append(loc)        
      
-        for earLeftGuide in self.earLeftGuides:
-            earLeftGuide.setParent(self.jointLeftGuideGrp)
+        tempEarLeftGuides = list(self.earLeftGuides)
+        tempEarLeftGuides.reverse()
+         
+        for i in range(len(tempEarLeftGuides)):
+            if i != (len(tempEarLeftGuides) - 1):
+                pm.parent(tempEarLeftGuides[i],tempEarLeftGuides[i + 1])
+                
+        self.earLeftGuides[0].setParent(self.jointLeftGuideGrp)      
      
         self.__buildMicroCtrlGuides()
         
@@ -363,6 +377,7 @@ class HeadModule(object):
         cheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[4],'gud')
         cheekLeftLoc = pm.spaceLocator(n = cheekLeftLocName)
         cheekLeftLoc.t.set(self.cheekLeftPosArray)
+        cheekLeftLoc.r.set(self.cheekLeftRotArray)
         cheekLeftLoc.localScale.set(0.3,0.3,0.3)
 #         cheekLoc.r.set(self.browRotArray)
         self.cheekCtrlLeftGuides.append(cheekLeftLoc)
@@ -372,6 +387,7 @@ class HeadModule(object):
         mouthCornerLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[5],'gud')
         mouthCornerLeftLoc = pm.spaceLocator(n = mouthCornerLeftLocName)
         mouthCornerLeftLoc.t.set(self.mouthCornerLeftPosArray)
+        mouthCornerLeftLoc.r.set(self.mouthCornerLeftRotArray)
         mouthCornerLeftLoc.localScale.set(0.3,0.3,0.3)
 #         cheekLoc.r.set(self.browRotArray)
         self.mouthCornerLeftCtrlGuides.append(mouthCornerLeftLoc)    
@@ -712,10 +728,9 @@ class HeadModule(object):
         self.nostrilRightChain.jointOrientZ.set(0)
 
         self.__mirrorMicroGuides()
-        self.__addMainCtrl()
-        self.__addMicroCtrl()
-        self.__cleanUp()
-        self.buildConnections()
+#         self.__addMainCtrl()
+#         self.__addMicroCtrl()
+#         self.__cleanUp()
         
     def __mirrorMicroGuides(self):        
         
@@ -1162,8 +1177,8 @@ class HeadModule(object):
                 splitTempSpineDestination = tempSpineDestination.split('.')
                 spineDestinations.append(splitTempSpineDestination[0])
                 
-            print 'spineDestinations' + str(spineDestinations)
-            print 'mainDestinations' + str(mainDestinations)
+#             print 'spineDestinations' + str(spineDestinations)
+#             print 'mainDestinations' + str(mainDestinations)
             
             #to the chest
             for ctrl in spineDestinations :
@@ -1196,13 +1211,13 @@ class HeadModule(object):
                 elif destnation[1] == 'PP':
                     PP = grp
                           
-            self.jointGuideGrp.setParent(GUD)
-            self.microCtrlTotalGuideGrp.setParent(GUD)
-            self.eyeBeamGrp.setParent(XTR)            
-            self.neckFkChain.controlsArray[0].controlGrp.setParent(chestCtrl)
-            self.eyeWorldGrp.setParent(IK)
-            self.eyeAimCtrl.controlGrp.setParent(IK)
-            self.neckFkChain.chain[0].setParent(SKL)
+#             self.jointGuideGrp.setParent(GUD)
+#             self.microCtrlTotalGuideGrp.setParent(GUD)
+#             self.eyeBeamGrp.setParent(XTR)            
+#             self.neckFkChain.controlsArray[0].controlGrp.setParent(chestCtrl)
+#             self.eyeWorldGrp.setParent(IK)
+#             self.eyeAimCtrl.controlGrp.setParent(IK)
+#             self.neckFkChain.chain[0].setParent(SKL)
             
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
