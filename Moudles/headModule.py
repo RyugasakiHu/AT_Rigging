@@ -551,6 +551,7 @@ class HeadModule(object):
         neckDistShapeNode = pm.distanceDimension(sp = neckStartPos, ep = neckEndPos)
         
         self.neckTrsNode = pm.ls(sl = 1)[1]
+        self.neckTrsNode.v.set(0)
         pm.rename(self.neckTrsNode,neckDistanceBetweenNodeName)
         self.neckDis = self.neckTrsNode.distance.get()
         
@@ -802,8 +803,8 @@ class HeadModule(object):
         self.mainCtrl.append(self.jawCtrl.control)        
         
         #create eyeCtrl
-        self.eyeRad = float(self.eyePosArray[1][-1] - self.eyePosArray[0][-1])
-        self.eyeLeftCtrl = control.Control(self.side[0],self.nameList[3],size = self.eyeRad * 0.25) 
+        self.eyeRad = float(self.eyeLeftGuides[-1].getTranslation(space = 'object')[2])
+        self.eyeLeftCtrl = control.Control(self.side[0],self.nameList[3],size = self.eyeRad * 2.5) 
         self.eyeLeftCtrl.sphereCtrl()
         control.lockAndHideAttr(self.eyeLeftCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
         pm.xform(self.eyeLeftCtrl.controlGrp,ws = 1,matrix = self.eyeLeftChain.chain[0].worldMatrix.get())
@@ -811,7 +812,7 @@ class HeadModule(object):
         pm.pointConstraint(self.eyeLeftCtrl.control,self.eyeLeftChain.chain[0],mo = 0)
         self.eyeLeftCtrl.controlGrp.setParent(self.headCtrl.control)
         
-        self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 0.25) 
+        self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 2.5) 
         self.eyeRightCtrl.sphereCtrl()
         control.lockAndHideAttr(self.eyeRightCtrl.control,['rx','ry','rz','sx','sy','sz','v'])     
         pm.xform(self.eyeRightCtrl.controlGrp,ws = 1,matrix = self.eyeRightChain.chain[0].worldMatrix.get())
@@ -868,7 +869,7 @@ class HeadModule(object):
         pm.xform(self.upTeethCtrl.controlGrp,ws = 1,matrix = self.upTeethChain.worldMatrix.get())
         pm.orientConstraint(self.upTeethCtrl.control,self.upTeethChain,mo = 0)
         pm.pointConstraint(self.upTeethCtrl.control,self.upTeethChain,mo = 0)
-        self.upTeethCtrl.controlGrp.setParent(self.noseCtrl.control)
+        self.upTeethCtrl.controlGrp.setParent(self.headCtrl.control)
         self.mainCtrl.append(self.upTeethCtrl.control)            
         
         #create loTeethCtrl
@@ -929,7 +930,7 @@ class HeadModule(object):
         
         #create eyeCtrl
         #create eye aim create
-        self.eyeAimCtrl = control.Control(self.side[1],self.nameList[3] + 'Aim',size = self.eyeRad) 
+        self.eyeAimCtrl = control.Control(self.side[1],self.nameList[3] + 'Aim',size = self.neckDis) 
         self.eyeAimCtrl.plusCtrl()
         pcn = pm.pointConstraint(self.eyeLeftChain.chain[0],self.eyeRightChain.chain[0],
                                  self.eyeAimCtrl.controlGrp,mo = 0)
@@ -1887,8 +1888,6 @@ class LidClass(object):
         
         upFollowNodeName.minR.set(-10)
         upFollowNodeName.minG.set(-10)
-        
-        
         
         #down follow grp
         downFollow = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'downLidFollow','grp'))
