@@ -31,20 +31,6 @@ class HeadModule(object):
     nostrilPosArray = [0.166,15.749,1.354]
     nostrilRotArray = [0,0,0]
     
-    #array for the micro ctrl
-    browPosArray = [0,16.556,1.334]
-    inBrowLeftPosArray = [0.298,16.556,1.334]
-    outBrowLeftPosArray = [0.69,16.556,1.229]
-    upCheekLeftPosArray = [0.614,15.913,1.214]
-    cheekLeftPosArray = [0.79,15.482,0.869]
-    cheekLeftRotArray = [20,45,0]
-    mouthCornerLeftPosArray = [0.423,15.389,1.233]
-    mouthCornerLeftRotArray = [0,40,0]
-    upLipMidPosArray = [0,15.474,1.464]
-    upLipLeftPosArray = [0.221,15.474,1.464]
-    loLipMidPosArray = [0,15.318,1.464]
-    loLipLeftPosArray = [0.221,15.318,1.389]
-    
     def __init__(self, baseName = 'head',size = 3,
                  controlOrient = [0,0,0], metaMain = None,metaSpine = None):
         
@@ -80,23 +66,7 @@ class HeadModule(object):
         
         self.jointRightGuideGrp = None
         self.jointLeftGuideGrp = None
-        self.jointGuideGrp = None
-
-        #Micro Guides
-        self.browCtrlGuides = None
-        self.inBrowLeftCtrlGuides = None
-        self.outBrowLeftCtrlGuides = None
-        self.upCheekCtrlLeftGuides = None
-        self.cheekCtrlLeftGuides = None
-        self.mouthCornerLeftCtrlGuides = None
-        self.upLipMidCtrlGuides = None
-        self.loLipMidCtrlGuides = None    
-        
-        self.microCtrlLeftGuideGrp = None           
-        self.tempMirrorMicroGuides = None            
-        self.mirrorMicroGuides = None
-        self.mirrorMicroCtrlList = None
-        self.microCtrlTotalGuideGrp = None        
+        self.jointGuideGrp = None 
         
         #control
         #main cc 
@@ -124,21 +94,6 @@ class HeadModule(object):
         self.leftAimCurve = None
         self.rightAimCurve = None
         self.eyeBeamGrp = None
-        
-        #micro cc
-        self.browCtrl = None
-        self.inBrowLeftCtrl = None
-        self.outBrowLeftCtrl = None
-        self.upCheekLeftCtrl = None
-        self.cheekLeftCtrl = None
-        self.mouthCornerLeftCtrl = None      
-        self.upLipLeftCtrl = None
-        self.loLipLeftCtrl = None
-        
-        self.upLipMidCtrl = None
-        self.loLipMidCtrl = None     
-        self.microCtrlGrp = None  
-        self.microCtrlList = None
         
         #namelist
         self.nameList = ['neck','head','jaw','eye','muzzle','nose','nostril','upTeeth','loTeeth','tongue','ear','beam']
@@ -173,6 +128,7 @@ class HeadModule(object):
         self.jointMidGuideGrp.setParent(self.jointGuideGrp)
         self.jointLeftGuideGrp.setParent(self.jointGuideGrp)
         self.jointRightGuideGrp.setParent(self.jointGuideGrp)
+        
         #build neck guides
         #set loc pos
         for num,pos in enumerate(self.neckPosArray):
@@ -320,132 +276,132 @@ class HeadModule(object):
                 
         self.earLeftGuides[0].setParent(self.jointLeftGuideGrp)      
      
-        self.__buildMicroCtrlGuides()
+#         self.__buildMicroCtrlGuides()
         
-    def __buildMicroCtrlGuides(self):
-        
-        self.browCtrlGuides = []
-        self.inBrowLeftCtrlGuides = []
-        self.outBrowLeftCtrlGuides = []
-        self.upCheekCtrlLeftGuides = []
-        self.cheekCtrlLeftGuides = []
-        self.mouthCornerLeftCtrlGuides = []
-        self.upLipMidCtrlGuides = []
-        self.upLipLeftCtrlGuides = []
-        self.loLipMidCtrlGuides = []
-        self.loLipLeftCtrlGuides = []
-        
-        self.tempMirrorMicroGuides = []
-        self.mirrorMicroGuides = []
-        
-        #brow
-        browLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[0],'gud')
-        browLoc = pm.spaceLocator(n = browLocName)
-        browLoc.t.set(self.browPosArray)
-        browLoc.localScale.set(0.3,0.3,0.3)
-#         browLoc.r.set(self.browRotArray)
-        self.browCtrlGuides.append(browLoc)
-        
-        #inBrow left
-        inBrowLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[1],'gud')
-        inBrowLeftLoc = pm.spaceLocator(n = inBrowLeftLocName)
-        inBrowLeftLoc.t.set(self.inBrowLeftPosArray)
-        inBrowLeftLoc.localScale.set(0.3,0.3,0.3)
-#         inBrowLoc.r.set(self.inBrowRotArray)
-        self.inBrowLeftCtrlGuides.append(inBrowLeftLoc)
-        self.tempMirrorMicroGuides.append(inBrowLeftLoc)
-        
-        #outBrow left
-        outBrowLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[2],'gud')
-        outBrowLeftLoc = pm.spaceLocator(n = outBrowLeftLocName)
-        outBrowLeftLoc.t.set(self.outBrowLeftPosArray)
-        outBrowLeftLoc.localScale.set(0.3,0.3,0.3)
-#         outBrowLoc.r.set(self.outBrowRotArray)
-        self.outBrowLeftCtrlGuides.append(outBrowLeftLoc)
-        self.tempMirrorMicroGuides.append(outBrowLeftLoc)          
-            
-        #upCheek left 
-        upCheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[3],'gud')
-        upCheekLeftLoc = pm.spaceLocator(n = upCheekLeftLocName)
-        upCheekLeftLoc.t.set(self.upCheekLeftPosArray)
-        upCheekLeftLoc.localScale.set(0.3,0.3,0.3)
-#         upCheekLoc.r.set(self.upCheekRotArray)
-        self.upCheekCtrlLeftGuides.append(upCheekLeftLoc)    
-        self.tempMirrorMicroGuides.append(upCheekLeftLoc)
-        
-        #cheek left
-        cheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[4],'gud')
-        cheekLeftLoc = pm.spaceLocator(n = cheekLeftLocName)
-        cheekLeftLoc.t.set(self.cheekLeftPosArray)
-        cheekLeftLoc.r.set(self.cheekLeftRotArray)
-        cheekLeftLoc.localScale.set(0.3,0.3,0.3)
-#         cheekLoc.r.set(self.browRotArray)
-        self.cheekCtrlLeftGuides.append(cheekLeftLoc)
-        self.tempMirrorMicroGuides.append(cheekLeftLoc)        
-        
-        #mouthCorner left
-        mouthCornerLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[5],'gud')
-        mouthCornerLeftLoc = pm.spaceLocator(n = mouthCornerLeftLocName)
-        mouthCornerLeftLoc.t.set(self.mouthCornerLeftPosArray)
-        mouthCornerLeftLoc.r.set(self.mouthCornerLeftRotArray)
-        mouthCornerLeftLoc.localScale.set(0.3,0.3,0.3)
-#         cheekLoc.r.set(self.browRotArray)
-        self.mouthCornerLeftCtrlGuides.append(mouthCornerLeftLoc)    
-        self.tempMirrorMicroGuides.append(mouthCornerLeftLoc)
-        
-        #upLip
-        #mid
-        upLipMidLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[6],'gud')
-        upLipMidLoc = pm.spaceLocator(n = upLipMidLocName)
-        upLipMidLoc.t.set(self.upLipMidPosArray)
-        upLipMidLoc.localScale.set(0.3,0.3,0.3)
-#         cheekLoc.r.set(self.browRotArray)
-        self.upLipMidCtrlGuides.append(upLipMidLoc)    
-        
-        #left
-        upLipLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[6],'gud')
-        upLipLeftLoc = pm.spaceLocator(n = upLipLeftLocName)
-        upLipLeftLoc.t.set(self.upLipLeftPosArray)
-        upLipLeftLoc.localScale.set(0.3,0.3,0.3)
-#         cheekLoc.r.set(self.browRotArray)
-        self.upLipLeftCtrlGuides.append(upLipLeftLoc)       
-        self.tempMirrorMicroGuides.append(upLipLeftLoc)     
-        
-        #loLip
-        #mid
-        loLipMidLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[7],'gud')
-        loLipMidLoc = pm.spaceLocator(n = loLipMidLocName)
-        loLipMidLoc.t.set(self.loLipMidPosArray)
-        loLipMidLoc.localScale.set(0.3,0.3,0.3)
-#         cheekLoc.r.set(self.browRotArray)
-        self.loLipMidCtrlGuides.append(loLipMidLoc)
-        
-        #left
-        loLipLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[7],'gud')
-        loLipLeftLoc = pm.spaceLocator(n = loLipLeftLocName)
-        loLipLeftLoc.t.set(self.loLipLeftPosArray)
-        loLipLeftLoc.localScale.set(0.3,0.3,0.3)
-#         cheekLoc.r.set(self.browRotArray)
-        self.loLipLeftCtrlGuides.append(loLipLeftLoc)
-        self.tempMirrorMicroGuides.append(loLipLeftLoc)
-                
-        #left grp        
-        self.microCtrlLeftGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[0],self.baseName + 'McGud','grp'))
-        self.inBrowLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
-        self.outBrowLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
-        self.upCheekCtrlLeftGuides[0].setParent(self.microCtrlLeftGuideGrp)
-        self.cheekCtrlLeftGuides[0].setParent(self.microCtrlLeftGuideGrp)
-        self.loLipLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
-        self.upLipLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
-        self.mouthCornerLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
-        
-        #total grp
-        self.microCtrlTotalGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.baseName + 'McGud','grp'))        
-                         
-        self.browCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
-        self.loLipMidCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
-        self.upLipMidCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
-        self.microCtrlLeftGuideGrp.setParent(self.microCtrlTotalGuideGrp)
+#     def __buildMicroCtrlGuides(self):
+#         
+#         self.browCtrlGuides = []
+#         self.inBrowLeftCtrlGuides = []
+#         self.outBrowLeftCtrlGuides = []
+#         self.upCheekCtrlLeftGuides = []
+#         self.cheekCtrlLeftGuides = []
+#         self.mouthCornerLeftCtrlGuides = []
+#         self.upLipMidCtrlGuides = []
+#         self.upLipLeftCtrlGuides = []
+#         self.loLipMidCtrlGuides = []
+#         self.loLipLeftCtrlGuides = []
+#         
+#         self.tempMirrorMicroGuides = []
+#         self.mirrorMicroGuides = []
+#         
+#         #brow
+#         browLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[0],'gud')
+#         browLoc = pm.spaceLocator(n = browLocName)
+#         browLoc.t.set(self.browPosArray)
+#         browLoc.localScale.set(0.3,0.3,0.3)
+# #         browLoc.r.set(self.browRotArray)
+#         self.browCtrlGuides.append(browLoc)
+#         
+#         #inBrow left
+#         inBrowLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[1],'gud')
+#         inBrowLeftLoc = pm.spaceLocator(n = inBrowLeftLocName)
+#         inBrowLeftLoc.t.set(self.inBrowLeftPosArray)
+#         inBrowLeftLoc.localScale.set(0.3,0.3,0.3)
+# #         inBrowLoc.r.set(self.inBrowRotArray)
+#         self.inBrowLeftCtrlGuides.append(inBrowLeftLoc)
+#         self.tempMirrorMicroGuides.append(inBrowLeftLoc)
+#         
+#         #outBrow left
+#         outBrowLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[2],'gud')
+#         outBrowLeftLoc = pm.spaceLocator(n = outBrowLeftLocName)
+#         outBrowLeftLoc.t.set(self.outBrowLeftPosArray)
+#         outBrowLeftLoc.localScale.set(0.3,0.3,0.3)
+# #         outBrowLoc.r.set(self.outBrowRotArray)
+#         self.outBrowLeftCtrlGuides.append(outBrowLeftLoc)
+#         self.tempMirrorMicroGuides.append(outBrowLeftLoc)          
+#             
+#         #upCheek left 
+#         upCheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[3],'gud')
+#         upCheekLeftLoc = pm.spaceLocator(n = upCheekLeftLocName)
+#         upCheekLeftLoc.t.set(self.upCheekLeftPosArray)
+#         upCheekLeftLoc.localScale.set(0.3,0.3,0.3)
+# #         upCheekLoc.r.set(self.upCheekRotArray)
+#         self.upCheekCtrlLeftGuides.append(upCheekLeftLoc)    
+#         self.tempMirrorMicroGuides.append(upCheekLeftLoc)
+#         
+#         #cheek left
+#         cheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[4],'gud')
+#         cheekLeftLoc = pm.spaceLocator(n = cheekLeftLocName)
+#         cheekLeftLoc.t.set(self.cheekLeftPosArray)
+#         cheekLeftLoc.r.set(self.cheekLeftRotArray)
+#         cheekLeftLoc.localScale.set(0.3,0.3,0.3)
+# #         cheekLoc.r.set(self.browRotArray)
+#         self.cheekCtrlLeftGuides.append(cheekLeftLoc)
+#         self.tempMirrorMicroGuides.append(cheekLeftLoc)        
+#         
+#         #mouthCorner left
+#         mouthCornerLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[5],'gud')
+#         mouthCornerLeftLoc = pm.spaceLocator(n = mouthCornerLeftLocName)
+#         mouthCornerLeftLoc.t.set(self.mouthCornerLeftPosArray)
+#         mouthCornerLeftLoc.r.set(self.mouthCornerLeftRotArray)
+#         mouthCornerLeftLoc.localScale.set(0.3,0.3,0.3)
+# #         cheekLoc.r.set(self.browRotArray)
+#         self.mouthCornerLeftCtrlGuides.append(mouthCornerLeftLoc)    
+#         self.tempMirrorMicroGuides.append(mouthCornerLeftLoc)
+#         
+#         #upLip
+#         #mid
+#         upLipMidLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[6],'gud')
+#         upLipMidLoc = pm.spaceLocator(n = upLipMidLocName)
+#         upLipMidLoc.t.set(self.upLipMidPosArray)
+#         upLipMidLoc.localScale.set(0.3,0.3,0.3)
+# #         cheekLoc.r.set(self.browRotArray)
+#         self.upLipMidCtrlGuides.append(upLipMidLoc)    
+#         
+#         #left
+#         upLipLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[6],'gud')
+#         upLipLeftLoc = pm.spaceLocator(n = upLipLeftLocName)
+#         upLipLeftLoc.t.set(self.upLipLeftPosArray)
+#         upLipLeftLoc.localScale.set(0.3,0.3,0.3)
+# #         cheekLoc.r.set(self.browRotArray)
+#         self.upLipLeftCtrlGuides.append(upLipLeftLoc)       
+#         self.tempMirrorMicroGuides.append(upLipLeftLoc)     
+#         
+#         #loLip
+#         #mid
+#         loLipMidLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[7],'gud')
+#         loLipMidLoc = pm.spaceLocator(n = loLipMidLocName)
+#         loLipMidLoc.t.set(self.loLipMidPosArray)
+#         loLipMidLoc.localScale.set(0.3,0.3,0.3)
+# #         cheekLoc.r.set(self.browRotArray)
+#         self.loLipMidCtrlGuides.append(loLipMidLoc)
+#         
+#         #left
+#         loLipLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[7],'gud')
+#         loLipLeftLoc = pm.spaceLocator(n = loLipLeftLocName)
+#         loLipLeftLoc.t.set(self.loLipLeftPosArray)
+#         loLipLeftLoc.localScale.set(0.3,0.3,0.3)
+# #         cheekLoc.r.set(self.browRotArray)
+#         self.loLipLeftCtrlGuides.append(loLipLeftLoc)
+#         self.tempMirrorMicroGuides.append(loLipLeftLoc)
+#                 
+#         #left grp        
+#         self.microCtrlLeftGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[0],self.baseName + 'McGud','grp'))
+#         self.inBrowLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+#         self.outBrowLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+#         self.upCheekCtrlLeftGuides[0].setParent(self.microCtrlLeftGuideGrp)
+#         self.cheekCtrlLeftGuides[0].setParent(self.microCtrlLeftGuideGrp)
+#         self.loLipLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+#         self.upLipLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+#         self.mouthCornerLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+#         
+#         #total grp
+#         self.microCtrlTotalGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.baseName + 'McGud','grp'))        
+#                          
+#         self.browCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
+#         self.loLipMidCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
+#         self.upLipMidCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
+#         self.microCtrlLeftGuideGrp.setParent(self.microCtrlTotalGuideGrp)
                          
     def __mirrorJointGuide(self):  
         
@@ -679,8 +635,8 @@ class HeadModule(object):
         self.earRightGuidePos = [x.getTranslation(space = 'world') for x in self.earRightGuides]
         self.earRightGuideRot = [x.getRotation(space = 'world') for x in self.earRightGuides]
 
-        #left ear jj set and clean
-        self.earRightChain = boneChain.BoneChain(self.nameList[10],self.side[0],type = 'jj')
+        #right ear jj set and clean
+        self.earRightChain = boneChain.BoneChain(self.nameList[10],self.side[1],type = 'jj')
         self.earRightChain.fromList(self.earRightGuidePos,self.earRightGuideRot)
         self.earRightChain.chain[0].setParent(self.neckFkChain.chain[-1])
         self.headJoint.append(self.earRightChain.chain)
@@ -747,45 +703,8 @@ class HeadModule(object):
         self.nostrilRightChain.jointOrientY.set(0)
         self.nostrilRightChain.jointOrientZ.set(0)
 
-        self.__mirrorMicroGuides()
         self.__addMainCtrl()
-        self.__addMicroCtrl()
         self.__cleanUp()
-         
-    def __mirrorMicroGuides(self):        
-        
-        #mirror to right
-        for gud in self.tempMirrorMicroGuides:
-            #duplicate and set pos
-            mirror = pm.duplicate(gud)
-            mirrorValueTx = gud.tx.get()
-            mirror[0].tx.set(-mirrorValueTx)
-            
-            mirrorValueRx = gud.rx.get()
-            mirror[0].rx.set(mirrorValueRx)
-            
-            mirrorValueRy = gud.ry.get()
-            mirror[0].ry.set(-mirrorValueRy)
-            
-            mirrorValueRz = gud.rz.get()
-            mirror[0].rz.set(-mirrorValueRz)
-                
-            #rename
-            oriName = mirror[0].name()
-            temp = oriName.split('_')
-            mirrorName = nameUtils.getUniqueName(self.side[-1], temp[1], 'gud')
-            pm.rename(oriName,mirrorName)
-            self.mirrorMicroGuides.append(mirror)             
-        
-        self.microCtrlRightGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[-1],self.baseName + 'McGud','grp')) 
-        
-        for loc in self.mirrorMicroGuides:
-            loc[0].setParent(self.microCtrlRightGuideGrp)
-            
-        #clean
-
-        self.microCtrlRightGuideGrp.setParent(self.microCtrlTotalGuideGrp)
-        self.microCtrlTotalGuideGrp.v.set(0)
 
     def __addMainCtrl(self):
 
@@ -1022,116 +941,6 @@ class HeadModule(object):
         pm.orientConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
         pm.pointConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)  
         
-        #clean up
-        #beam
-        self.eyeBeamGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'Beam','grp'))
-        self.leftAimCurve.setParent(self.eyeBeamGrp)
-        self.rightAimCurve.setParent(self.eyeBeamGrp)
-        #Beam UNDER EXTRA GRP
-        
-        #aim grp under IK grp
-        
-    def __addMicroCtrl(self):
-        
-        self.microCtrlGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],'microCtrl','grp'))
-        self.mirrorMicroCtrlList = []
-        self.microCtrlList = []
-        
-        #brow
-        self.browCtrl = control.Control(self.side[1],self.microCtrlNameList[0],self.size) 
-        self.browCtrl.microCtrl()
-        pm.xform(self.browCtrl.controlGrp,ws = 1,matrix = self.browCtrlGuides[0].worldMatrix.get())
-        self.browCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.browCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.browCtrl.control)
-        
-        #inBrowLeft
-        self.inBrowLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[1],self.size) 
-        self.inBrowLeftCtrl.microCtrl()
-        pm.xform(self.inBrowLeftCtrl.controlGrp,ws = 1,matrix = self.inBrowLeftCtrlGuides[0].worldMatrix.get())
-        self.inBrowLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.inBrowLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.inBrowLeftCtrl.control)
-        
-        #outBrowLeft
-        self.outBrowLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[2],self.size) 
-        self.outBrowLeftCtrl.microCtrl()
-        pm.xform(self.outBrowLeftCtrl.controlGrp,ws = 1,matrix = self.outBrowLeftCtrlGuides[0].worldMatrix.get())
-        self.outBrowLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.outBrowLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.outBrowLeftCtrl.control)
-        
-        #upCheekLeft
-        self.upCheekLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[3],self.size) 
-        self.upCheekLeftCtrl.microCtrl()
-        pm.xform(self.upCheekLeftCtrl.controlGrp,ws = 1,matrix = self.upCheekCtrlLeftGuides[0].worldMatrix.get())
-        self.upCheekLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.upCheekLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.upCheekLeftCtrl.control)
-        
-        #cheekLeft
-        self.cheekLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[4],self.size) 
-        self.cheekLeftCtrl.microCtrl()
-        pm.xform(self.cheekLeftCtrl.controlGrp,ws = 1,matrix = self.cheekCtrlLeftGuides[0].worldMatrix.get())
-        self.cheekLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.cheekLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.cheekLeftCtrl.control)
-        
-        #mouthCornerLeft
-        self.mouthCornerLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[5],self.size) 
-        self.mouthCornerLeftCtrl.microCtrl()
-        pm.xform(self.mouthCornerLeftCtrl.controlGrp,ws = 1,matrix = self.mouthCornerLeftCtrlGuides[0].worldMatrix.get())
-        self.mouthCornerLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.mouthCornerLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.mouthCornerLeftCtrl.control)
-        
-        #upLipLeft        
-        self.upLipLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[6],self.size) 
-        self.upLipLeftCtrl.microCtrl()
-        pm.xform(self.upLipLeftCtrl.controlGrp,ws = 1,matrix = self.upLipLeftCtrlGuides[0].worldMatrix.get())
-        self.upLipLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.upLipLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.upLipLeftCtrl.control)
-        
-        #loLipLeft
-        self.loLipLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[7],self.size) 
-        self.loLipLeftCtrl.microCtrl()
-        pm.xform(self.loLipLeftCtrl.controlGrp,ws = 1,matrix = self.loLipLeftCtrlGuides[0].worldMatrix.get())
-        self.loLipLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.loLipLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.loLipLeftCtrl.control)          
-        
-        #upLipMid
-        self.upLipMidCtrl = control.Control(self.side[1],self.microCtrlNameList[6],self.size) 
-        self.upLipMidCtrl.microCtrl()
-        pm.xform(self.upLipMidCtrl.controlGrp,ws = 1,matrix = self.upLipMidCtrlGuides[0].worldMatrix.get())
-        self.upLipMidCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.upLipMidCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.upLipMidCtrl.control)              
-        
-        #loLipMid
-        self.loLipMidCtrl = control.Control(self.side[1],self.microCtrlNameList[7],self.size) 
-        self.loLipMidCtrl.microCtrl()
-        pm.xform(self.loLipMidCtrl.controlGrp,ws = 1,matrix = self.loLipMidCtrlGuides[0].worldMatrix.get())
-        self.loLipMidCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-        self.loLipMidCtrl.controlGrp.setParent(self.microCtrlGrp)
-        self.microCtrlList.append(self.loLipMidCtrl.control)
-        
-        #add mirror microList
-        for num,loc in enumerate(self.mirrorMicroGuides):
-            self.mirrorMicroCtrl = control.Control(self.side[2],self.microCtrlNameList[num + 1],self.size) 
-            self.mirrorMicroCtrl.microCtrl()
-             
-            pm.xform(self.mirrorMicroCtrl.controlGrp,ws = 1,matrix = self.mirrorMicroGuides[num][0].worldMatrix.get())
-            self.mirrorMicroCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
-            self.mirrorMicroCtrl.controlGrp.setParent(self.microCtrlGrp)            
-            
-            self.mirrorMicroCtrlList.append(self.mirrorMicroCtrl.controlGrp)
-            self.mirrorMicroCtrl.controlGrp.setParent(self.microCtrlGrp)
-            self.microCtrlList.append(self.mirrorMicroCtrl.control)   
-            
-        self.microCtrlGrp.setParent(self.headCtrl.control)
-        
         #aim follow world and head
         self.eyeWorldGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'MoveParent2World','grp')) 
         pm.xform(self.eyeWorldGrp,ws = 1,matrix = self.eyeAimCtrl.controlGrp.worldMatrix.get())
@@ -1164,11 +973,22 @@ class HeadModule(object):
         pm.connectAttr(reverseNode.outputX,pntCnst + '.' + self.eyeWorldGrp.name() + 'W0')
         pm.connectAttr(reverseNode.outputX,oriCnst + '.' + self.eyeWorldGrp.name() + 'W0')
         
+        #clean up
+        #beam
+        self.eyeBeamGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.nameList[3] + 'Beam','grp'))
+        self.leftAimCurve.setParent(self.eyeBeamGrp)
+        self.rightAimCurve.setParent(self.eyeBeamGrp)
+        
+        #Beam UNDER EXTRA GRP
+        
+        #aim grp under IK grp
+    
     def __cleanUp(self):
         
 #         metaUtils.addToMeta(self.meta,, objs)
 #         metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL])  
-        metaUtils.addToMeta(self.meta,'controls', self.microCtrlList + self.mainCtrl)
+#         metaUtils.addToMeta(self.meta,'controls', self.microCtrlList + self.mainCtrl)
+        metaUtils.addToMeta(self.meta,'controls',self.mainCtrl)
 
     def buildConnections(self):
         
@@ -1236,7 +1056,7 @@ class HeadModule(object):
                     PP = grp
                           
             self.jointGuideGrp.setParent(GUD)
-            self.microCtrlTotalGuideGrp.setParent(GUD)
+#             self.microCtrlTotalGuideGrp.setParent(GUD)
             self.eyeBeamGrp.setParent(XTR)            
             self.neckFkChain.controlsArray[0].controlGrp.setParent(chestCtrl)
             self.eyeWorldGrp.setParent(IK)
@@ -1253,6 +1073,453 @@ class HeadModule(object):
     
         #beam mouth side to ETR
 
+class DeceiverMoudle(object):
+    
+    #array for the micro ctrl
+    browPosArray = [0,16.556,1.334]
+    inBrowLeftPosArray = [0.298,16.556,1.334]
+    outBrowLeftPosArray = [0.69,16.556,1.229]
+    upCheekLeftPosArray = [0.614,15.913,1.214]
+    cheekLeftPosArray = [0.79,15.482,0.869]
+    cheekLeftRotArray = [20,45,0]
+    mouthCornerLeftPosArray = [0.423,15.389,1.233]
+    mouthCornerLeftRotArray = [0,40,0]
+    upLipMidPosArray = [0,15.474,1.464]
+    upLipLeftPosArray = [0.221,15.474,1.464]
+    loLipMidPosArray = [0,15.318,1.464]
+    loLipLeftPosArray = [0.221,15.318,1.389]
+    
+    def __init__(self,baseName = 'head',size = 2,metaMain = None,metaSpine = None):
+        
+        self.baseName = baseName
+        self.side = ['l','m','r']
+        self.size = size
+        
+        #Micro Guides
+        self.browCtrlGuides = None
+        self.inBrowLeftCtrlGuides = None
+        self.outBrowLeftCtrlGuides = None
+        self.upCheekCtrlLeftGuides = None
+        self.cheekCtrlLeftGuides = None
+        self.mouthCornerLeftCtrlGuides = None
+        self.upLipLeftCtrlGuides = None
+        self.loLipLeftCtrlGuides = None
+        
+        self.upLipMidCtrlGuides = None
+        self.loLipMidCtrlGuides = None
+        
+        self.inBrowRightCtrlGuides = None
+        self.outBrowRightCtrlGuides = None
+        self.upCheekCtrlRightGuides = None
+        self.cheekCtrlRightGuides = None
+        self.mouthCornerRightCtrlGuides = None
+        self.upLipRightCtrlGuides = None
+        self.loLipRightCtrlGuides = None        
+        
+        self.microCtrlLeftGuideGrp = None
+        self.microCtrlRightGuideGrp = None  
+        
+        #micro cc
+        self.browCtrl = None
+        self.inBrowLeftCtrl = None
+        self.outBrowLeftCtrl = None
+        self.upCheekLeftCtrl = None
+        self.cheekLeftCtrl = None
+        self.mouthCornerLeftCtrl = None      
+        self.upLipLeftCtrl = None
+        self.loLipLeftCtrl = None
+        
+        self.upLipMidCtrl = None
+        self.loLipMidCtrl = None     
+        self.microCtrlGrp = None  
+        self.microCtrlList = None 
+
+        #namelist
+        self.nameList = ['neck','head','jaw','eye','muzzle','nose','nostril','upTeeth','loTeeth','tongue','ear','beam']
+        self.microCtrlNameList = ['brow','inBrow','outBrow','upCheek','cheek','mouthCorner','upLip','loLip']
+        
+        #metanode
+        self.metaMain = metaMain
+        self.metaSpine = metaSpine
+
+    def buildGuides(self):
+        
+        self.browCtrlGuides = []
+        self.inBrowLeftCtrlGuides = []
+        self.outBrowLeftCtrlGuides = []
+        self.upCheekCtrlLeftGuides = []
+        self.cheekCtrlLeftGuides = []
+        self.mouthCornerLeftCtrlGuides = []
+        self.upLipMidCtrlGuides = []
+        self.upLipLeftCtrlGuides = []
+        self.loLipMidCtrlGuides = []
+        self.loLipLeftCtrlGuides = []
+        
+        #right
+        self.inBrowRightCtrlGuides = []
+        self.outBrowRightCtrlGuides = []
+        self.upCheekCtrlRightGuides = []
+        self.cheekCtrlRightGuides = []
+        self.mouthCornerRightCtrlGuides = []
+        self.upLipRightCtrlGuides = []
+        self.loLipRightCtrlGuides = []
+        
+        #brow
+        browLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[0],'gud')
+        browLoc = pm.spaceLocator(n = browLocName)
+        browLoc.t.set(self.browPosArray)
+        browLoc.localScale.set(0.3,0.3,0.3)
+        self.browCtrlGuides.append(browLoc)
+        
+        #inBrow 
+        #left
+        inBrowLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[1],'gud')
+        inBrowLeftLoc = pm.spaceLocator(n = inBrowLeftLocName)
+        inBrowLeftLoc.t.set(self.inBrowLeftPosArray)
+        inBrowLeftLoc.localScale.set(0.3,0.3,0.3)
+        self.inBrowLeftCtrlGuides.append(inBrowLeftLoc)
+
+        #right
+        inBrowRightLocName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[1],'gud')
+        inBrowRightLoc = pm.spaceLocator(n = inBrowRightLocName)
+        inBrowRightLoc.localScale.set(0.3,0.3,0.3)
+        
+        inBrowRightMDTrsNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[1] + 'TRS','MDN')
+        inBrowRightMDTrsNode = pm.createNode('multiplyDivide',n = inBrowRightMDTrsNodeName)
+        
+        inBrowLeftLoc.t.connect(inBrowRightMDTrsNode.input1)
+        inBrowRightMDTrsNode.input2X.set(-1)
+        inBrowRightMDTrsNode.output.connect(inBrowRightLoc.t)
+        
+        inBrowRightMDRotNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[1] + 'ROT','MDN')
+        inBrowRightMDRotNode = pm.createNode('multiplyDivide',n = inBrowRightMDRotNodeName)
+        
+        inBrowLeftLoc.r.connect(inBrowRightMDRotNode.input1)
+        inBrowRightMDRotNode.input2Y.set(-1)
+        inBrowRightMDRotNode.input2Z.set(-1)
+        inBrowRightMDRotNode.output.connect(inBrowRightLoc.r)
+        self.inBrowRightCtrlGuides.append(inBrowRightLoc)
+        
+        #outBrow 
+        #left
+        outBrowLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[2],'gud')
+        outBrowLeftLoc = pm.spaceLocator(n = outBrowLeftLocName)
+        outBrowLeftLoc.t.set(self.outBrowLeftPosArray)
+        outBrowLeftLoc.localScale.set(0.3,0.3,0.3)
+        self.outBrowLeftCtrlGuides.append(outBrowLeftLoc)      
+         
+        #right
+        outBrowRightLocName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[2],'gud')
+        outBrowRightLoc = pm.spaceLocator(n = outBrowRightLocName)
+        outBrowRightLoc.localScale.set(0.3,0.3,0.3)
+        
+        outBrowRightMDTrsNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[2] + 'TRS','MDN')
+        outBrowRightMDTrsNode = pm.createNode('multiplyDivide',n = outBrowRightMDTrsNodeName)
+        
+        outBrowLeftLoc.t.connect(outBrowRightMDTrsNode.input1)
+        outBrowRightMDTrsNode.input2X.set(-1)
+        outBrowRightMDTrsNode.output.connect(outBrowRightLoc.translate)
+        
+        outBrowRightMDRotNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[2] + 'ROT','MDN')
+        outBrowRightMDRotNode = pm.createNode('multiplyDivide',n = outBrowRightMDRotNodeName)
+        
+        outBrowLeftLoc.r.connect(outBrowRightMDRotNode.input1)
+        outBrowRightMDRotNode.input2Y.set(-1)
+        outBrowRightMDRotNode.input2Z.set(-1)
+        outBrowRightMDRotNode.output.connect(outBrowRightLoc.r)
+        self.outBrowRightCtrlGuides.append(outBrowRightLoc) 
+            
+        #upCheek 
+        #left 
+        upCheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[3],'gud')
+        upCheekLeftLoc = pm.spaceLocator(n = upCheekLeftLocName)
+        upCheekLeftLoc.t.set(self.upCheekLeftPosArray)
+        upCheekLeftLoc.localScale.set(0.3,0.3,0.3)
+        self.upCheekCtrlLeftGuides.append(upCheekLeftLoc)    
+        
+        #right
+        upCheekRightLocName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[3],'gud')
+        upCheekRightLoc = pm.spaceLocator(n = upCheekRightLocName)
+        upCheekRightLoc.localScale.set(0.3,0.3,0.3)
+        
+        upCheekRightMDTrsNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[3] + 'TRS','MDN')
+        upCheekRightMDTrsNode = pm.createNode('multiplyDivide',n = upCheekRightMDTrsNodeName)
+        
+        upCheekLeftLoc.t.connect(upCheekRightMDTrsNode.input1)
+        upCheekRightMDTrsNode.input2X.set(-1)
+        upCheekRightMDTrsNode.output.connect(upCheekRightLoc.translate)
+        
+        upCheekRightMDRotNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[3] + 'ROT','MDN')
+        upCheekRightMDRotNode = pm.createNode('multiplyDivide',n = upCheekRightMDRotNodeName)
+        
+        upCheekLeftLoc.r.connect(upCheekRightMDRotNode.input1)
+        upCheekRightMDRotNode.input2Y.set(-1)
+        upCheekRightMDRotNode.input2Z.set(-1)
+        upCheekRightMDRotNode.output.connect(upCheekRightLoc.r)
+        self.upCheekCtrlRightGuides.append(upCheekRightLoc)         
+        
+        #cheek 
+        #left
+        cheekLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[4],'gud')
+        cheekLeftLoc = pm.spaceLocator(n = cheekLeftLocName)
+        cheekLeftLoc.t.set(self.cheekLeftPosArray)
+        cheekLeftLoc.r.set(self.cheekLeftRotArray)
+        cheekLeftLoc.localScale.set(0.3,0.3,0.3)
+        self.cheekCtrlLeftGuides.append(cheekLeftLoc)
+        
+        #right
+        cheekRightLocName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[4],'gud')
+        cheekRightLoc = pm.spaceLocator(n = cheekRightLocName)
+        cheekRightLoc.localScale.set(0.3,0.3,0.3)
+        
+        cheekRightMDTrsNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[4] + 'TRS','MDN')
+        cheekRightMDTrsNode = pm.createNode('multiplyDivide',n = cheekRightMDTrsNodeName)
+        
+        cheekLeftLoc.t.connect(cheekRightMDTrsNode.input1)
+        cheekRightMDTrsNode.input2X.set(-1)
+        cheekRightMDTrsNode.output.connect(cheekRightLoc.translate)
+        
+        cheekRightMDRotNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[4] + 'ROT','MDN')
+        cheekRightMDRotNode = pm.createNode('multiplyDivide',n = cheekRightMDRotNodeName)
+        
+        cheekLeftLoc.r.connect(cheekRightMDRotNode.input1)
+        cheekRightMDRotNode.input2Y.set(-1)
+        cheekRightMDRotNode.input2Z.set(-1)
+        cheekRightMDRotNode.output.connect(cheekRightLoc.r)
+        self.cheekCtrlRightGuides.append(cheekRightLoc)
+        
+        #mouthCorner 
+        #left
+        mouthCornerLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[5],'gud')
+        mouthCornerLeftLoc = pm.spaceLocator(n = mouthCornerLeftLocName)
+        mouthCornerLeftLoc.t.set(self.mouthCornerLeftPosArray)
+        mouthCornerLeftLoc.r.set(self.mouthCornerLeftRotArray)
+        mouthCornerLeftLoc.localScale.set(0.3,0.3,0.3)
+        self.mouthCornerLeftCtrlGuides.append(mouthCornerLeftLoc)    
+        
+        #right
+        mouthCornerRightLocName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[5],'gud')
+        mouthCornerRightLoc = pm.spaceLocator(n = mouthCornerRightLocName)
+        mouthCornerRightLoc.localScale.set(0.3,0.3,0.3)
+        
+        mouthCornerRightMDTrsNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[5] + 'TRS','MDN')
+        mouthCornerRightMDTrsNode = pm.createNode('multiplyDivide',n = mouthCornerRightMDTrsNodeName)
+        
+        mouthCornerLeftLoc.t.connect(mouthCornerRightMDTrsNode.input1)
+        mouthCornerRightMDTrsNode.input2X.set(-1)
+        mouthCornerRightMDTrsNode.output.connect(mouthCornerRightLoc.t)
+        
+        mouthCornerRightMDRotNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[5] + 'ROT','MDN')
+        mouthCornerRightMDRotNode = pm.createNode('multiplyDivide',n = mouthCornerRightMDRotNodeName)
+        
+        mouthCornerLeftLoc.r.connect(mouthCornerRightMDRotNode.input1)
+        mouthCornerRightMDRotNode.input2Y.set(-1)
+        mouthCornerRightMDRotNode.input2Z.set(-1)
+        mouthCornerRightMDRotNode.output.connect(mouthCornerRightLoc.r)
+        self.mouthCornerRightCtrlGuides.append(mouthCornerRightLoc)
+        
+        #upLip
+        #mid
+        upLipMidLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[6],'gud')
+        upLipMidLoc = pm.spaceLocator(n = upLipMidLocName)
+        upLipMidLoc.t.set(self.upLipMidPosArray)
+        upLipMidLoc.localScale.set(0.3,0.3,0.3)
+        self.upLipMidCtrlGuides.append(upLipMidLoc)    
+        
+        #left
+        upLipLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[6],'gud')
+        upLipLeftLoc = pm.spaceLocator(n = upLipLeftLocName)
+        upLipLeftLoc.t.set(self.upLipLeftPosArray)
+        upLipLeftLoc.localScale.set(0.3,0.3,0.3)
+        self.upLipLeftCtrlGuides.append(upLipLeftLoc)
+        
+        #right
+        upLipRightLocName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[6],'gud')
+        upLipRightLoc = pm.spaceLocator(n = upLipRightLocName)
+        upLipRightLoc.localScale.set(0.3,0.3,0.3)
+        
+        upLipRightMDTrsNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[6] + 'TRS','MDN')
+        upLipRightMDTrsNode = pm.createNode('multiplyDivide',n = upLipRightMDTrsNodeName)
+        
+        upLipLeftLoc.t.connect(upLipRightMDTrsNode.input1)
+        upLipRightMDTrsNode.input2X.set(-1)
+        upLipRightMDTrsNode.output.connect(upLipRightLoc.t)
+        
+        upLipRightMDRotNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[6] + 'ROT','MDN')
+        upLipRightMDRotNode = pm.createNode('multiplyDivide',n = upLipRightMDRotNodeName)
+        
+        upLipLeftLoc.r.connect(upLipRightMDRotNode.input1)
+        upLipRightMDRotNode.input2Y.set(-1)
+        upLipRightMDRotNode.input2Z.set(-1)
+        upLipRightMDRotNode.output.connect(upLipRightLoc.r)
+        self.upLipRightCtrlGuides.append(upLipRightLoc)   
+        
+        #loLip
+        #mid
+        loLipMidLocName = nameUtils.getUniqueName(self.side[1],self.microCtrlNameList[7],'gud')
+        loLipMidLoc = pm.spaceLocator(n = loLipMidLocName)
+        loLipMidLoc.t.set(self.loLipMidPosArray)
+        loLipMidLoc.localScale.set(0.3,0.3,0.3)
+        self.loLipMidCtrlGuides.append(loLipMidLoc)
+        
+        #left
+        loLipLeftLocName = nameUtils.getUniqueName(self.side[0],self.microCtrlNameList[7],'gud')
+        loLipLeftLoc = pm.spaceLocator(n = loLipLeftLocName)
+        loLipLeftLoc.t.set(self.loLipLeftPosArray)
+        loLipLeftLoc.localScale.set(0.3,0.3,0.3)
+        self.loLipLeftCtrlGuides.append(loLipLeftLoc)
+        
+        #right
+        loLipRightLocName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[7],'gud')
+        loLipRightLoc = pm.spaceLocator(n = loLipRightLocName)
+        loLipRightLoc.localScale.set(0.3,0.3,0.3)
+        
+        loLipRightMDTrsNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[7] + 'TRS','MDN')
+        loLipRightMDTrsNode = pm.createNode('multiplyDivide',n = loLipRightMDTrsNodeName)
+        
+        loLipLeftLoc.t.connect(loLipRightMDTrsNode.input1)
+        loLipRightMDTrsNode.input2X.set(-1)
+        loLipRightMDTrsNode.output.connect(loLipRightLoc.t)
+        
+        loLipRightMDRotNodeName = nameUtils.getUniqueName(self.side[2],self.microCtrlNameList[7] + 'ROT','MDN')
+        loLipRightMDRotNode = pm.createNode('multiplyDivide',n = loLipRightMDRotNodeName)
+        
+        loLipLeftLoc.r.connect(loLipRightMDRotNode.input1)
+        loLipRightMDRotNode.input2Y.set(-1)
+        loLipRightMDRotNode.input2Z.set(-1)
+        loLipRightMDRotNode.output.connect(loLipRightLoc.r)
+        self.loLipRightCtrlGuides.append(loLipRightLoc)   
+
+                
+        #left grp        
+        self.microCtrlLeftGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[0],self.baseName + 'McGud','grp'))
+        self.inBrowLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+        self.outBrowLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+        self.upCheekCtrlLeftGuides[0].setParent(self.microCtrlLeftGuideGrp)
+        self.cheekCtrlLeftGuides[0].setParent(self.microCtrlLeftGuideGrp)
+        self.loLipLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+        self.upLipLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+        self.mouthCornerLeftCtrlGuides[0].setParent(self.microCtrlLeftGuideGrp)
+        
+        #right grp
+        self.microCtrlRightGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[2],self.baseName + 'McGud','grp'))
+        self.inBrowRightCtrlGuides[0].setParent(self.microCtrlRightGuideGrp)
+        self.outBrowRightCtrlGuides[0].setParent(self.microCtrlRightGuideGrp)
+        self.upCheekCtrlRightGuides[0].setParent(self.microCtrlRightGuideGrp)
+        self.cheekCtrlRightGuides[0].setParent(self.microCtrlRightGuideGrp)
+        self.loLipRightCtrlGuides[0].setParent(self.microCtrlRightGuideGrp)
+        self.upLipRightCtrlGuides[0].setParent(self.microCtrlRightGuideGrp)
+        self.mouthCornerRightCtrlGuides[0].setParent(self.microCtrlRightGuideGrp)
+        
+        #total grp
+        self.microCtrlTotalGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],self.baseName + 'McGud','grp'))        
+        self.browCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
+        self.loLipMidCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
+        self.upLipMidCtrlGuides[0].setParent(self.microCtrlTotalGuideGrp)
+        self.microCtrlLeftGuideGrp.setParent(self.microCtrlTotalGuideGrp)
+        self.microCtrlRightGuideGrp.setParent(self.microCtrlTotalGuideGrp)
+        
+    def addMircoCtrl(self):
+         
+        self.microCtrlGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],'microCtrl','grp'))
+        self.mirrorMicroCtrlList = []
+        self.microCtrlList = []
+         
+        #brow
+        self.browCtrl = control.Control(self.side[1],self.microCtrlNameList[0],self.size) 
+        self.browCtrl.microCtrl()
+        pm.xform(self.browCtrl.controlGrp,ws = 1,matrix = self.browCtrlGuides[0].worldMatrix.get())
+#         self.browCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.browCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.browCtrl.control)
+         
+        #inBrowLeft
+        self.inBrowLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[1],self.size) 
+        self.inBrowLeftCtrl.microCtrl()
+        pm.xform(self.inBrowLeftCtrl.controlGrp,ws = 1,matrix = self.inBrowLeftCtrlGuides[0].worldMatrix.get())
+#         self.inBrowLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.inBrowLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.inBrowLeftCtrl.control)
+         
+        #outBrowLeft
+        self.outBrowLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[2],self.size) 
+        self.outBrowLeftCtrl.microCtrl()
+        pm.xform(self.outBrowLeftCtrl.controlGrp,ws = 1,matrix = self.outBrowLeftCtrlGuides[0].worldMatrix.get())
+#         self.outBrowLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.outBrowLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.outBrowLeftCtrl.control)
+         
+        #upCheekLeft
+        self.upCheekLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[3],self.size) 
+        self.upCheekLeftCtrl.microCtrl()
+        pm.xform(self.upCheekLeftCtrl.controlGrp,ws = 1,matrix = self.upCheekCtrlLeftGuides[0].worldMatrix.get())
+#         self.upCheekLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.upCheekLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.upCheekLeftCtrl.control)
+         
+        #cheekLeft
+        self.cheekLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[4],self.size) 
+        self.cheekLeftCtrl.microCtrl()
+        pm.xform(self.cheekLeftCtrl.controlGrp,ws = 1,matrix = self.cheekCtrlLeftGuides[0].worldMatrix.get())
+#         self.cheekLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.cheekLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.cheekLeftCtrl.control)
+         
+        #mouthCornerLeft
+        self.mouthCornerLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[5],self.size) 
+        self.mouthCornerLeftCtrl.microCtrl()
+        pm.xform(self.mouthCornerLeftCtrl.controlGrp,ws = 1,matrix = self.mouthCornerLeftCtrlGuides[0].worldMatrix.get())
+#         self.mouthCornerLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.mouthCornerLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.mouthCornerLeftCtrl.control)
+         
+        #upLipLeft        
+        self.upLipLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[6],self.size) 
+        self.upLipLeftCtrl.microCtrl()
+        pm.xform(self.upLipLeftCtrl.controlGrp,ws = 1,matrix = self.upLipLeftCtrlGuides[0].worldMatrix.get())
+#         self.upLipLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.upLipLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.upLipLeftCtrl.control)
+         
+        #loLipLeft
+        self.loLipLeftCtrl = control.Control(self.side[0],self.microCtrlNameList[7],self.size) 
+        self.loLipLeftCtrl.microCtrl()
+        pm.xform(self.loLipLeftCtrl.controlGrp,ws = 1,matrix = self.loLipLeftCtrlGuides[0].worldMatrix.get())
+#         self.loLipLeftCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.loLipLeftCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.loLipLeftCtrl.control)          
+         
+        #upLipMid
+        self.upLipMidCtrl = control.Control(self.side[1],self.microCtrlNameList[6],self.size) 
+        self.upLipMidCtrl.microCtrl()
+        pm.xform(self.upLipMidCtrl.controlGrp,ws = 1,matrix = self.upLipMidCtrlGuides[0].worldMatrix.get())
+#         self.upLipMidCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.upLipMidCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.upLipMidCtrl.control)              
+         
+        #loLipMid
+        self.loLipMidCtrl = control.Control(self.side[1],self.microCtrlNameList[7],self.size) 
+        self.loLipMidCtrl.microCtrl()
+        pm.xform(self.loLipMidCtrl.controlGrp,ws = 1,matrix = self.loLipMidCtrlGuides[0].worldMatrix.get())
+#         self.loLipMidCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+        self.loLipMidCtrl.controlGrp.setParent(self.microCtrlGrp)
+        self.microCtrlList.append(self.loLipMidCtrl.control)
+         
+#         #add mirror microList
+#         for num,loc in enumerate(self.mirrorMicroGuides):
+#             self.mirrorMicroCtrl = control.Control(self.side[2],self.microCtrlNameList[num + 1],self.size) 
+#             self.mirrorMicroCtrl.microCtrl()
+#               
+#             pm.xform(self.mirrorMicroCtrl.controlGrp,ws = 1,matrix = self.mirrorMicroGuides[num][0].worldMatrix.get())
+#             self.mirrorMicroCtrl.controlGrp.s.set(self.tongueDis / 2,self.tongueDis / 2,self.tongueDis / 2)
+#             self.mirrorMicroCtrl.controlGrp.setParent(self.microCtrlGrp)            
+#              
+#             self.mirrorMicroCtrlList.append(self.mirrorMicroCtrl.controlGrp)
+#             self.mirrorMicroCtrl.controlGrp.setParent(self.microCtrlGrp)
+#             self.microCtrlList.append(self.mirrorMicroCtrl.control)   
+#              
+#         self.microCtrlGrp.setParent(self.headCtrl.control)    
+        
 class LidClass(object):
 
     def __init__(self,eyeBall,lidSide,ctrlSize):
@@ -1925,7 +2192,9 @@ class HeadModuleUi(object):
         pm.separator(h = 10)
         
         #main part
-        self.name = pm.text(l = '**** Head Module ****')       
+        ###1st step
+        self.name = pm.text(l = '**** Head Module ****')
+        self.name = pm.text(l = '*** basic skin ***')
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',cl2 = ['left','left'],
                                          ad2 = 1,text = 'head')
         self.cntSizeF = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
@@ -1933,7 +2202,19 @@ class HeadModuleUi(object):
         self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',cl2 = ['left','left'],
                                               ad2 = 1,text = 'spineMeta')   
         self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'],
-                                             text = 'mainMeta')        
+                                             text = 'mainMeta')
+        
+        ###2st step
+        self.name = pm.text(l = '*** BlendShapeGroup ***')
+        self.blendShapeP = pm.textFieldGrp(l = 'blendShapePath : ',cl2 = ['left','left'],
+                                              ad2 = 1,text = '')
+        self.bsGeo = pm.textFieldGrp(l = 'blendShapeGeo : ',cl2 = ['left','left'],
+                                              ad2 = 1,text = '')
+        
+        self.loadBlendShapeClass = pm.button(l = 'load BlendShape Class',c = self.getBlendShapeInstance)
+        self.buildBlendShapeGuide = pm.button(l = 'micro guide',c = self.__buildBlendShapeGuide)
+        self.linkBlendShape = pm.button(l = 'micro set',c = self.__getBlendShapeLink)
+        
         pm.separator(h = 10)
 
         #lid part        
@@ -1955,7 +2236,7 @@ class HeadModuleUi(object):
         
         #erase button
         pm.separator(h = 10)
-        self.name = pm.text(l = '**** Remove This Panel ****')       
+        self.name = pm.text(l = '**** Remove This Panel ****')
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         self.__pointerClass = None
         
@@ -1973,7 +2254,31 @@ class HeadModuleUi(object):
         
         self.__pointerClass = HeadModule(baseName = baseNameT,size = sizeF,
                                          metaMain = mainMetaNode,metaSpine = spineMetaNode)
-        return self.__pointerClass                     
+        return self.__pointerClass
+
+    def getBlendShapeInstance(self,*arg):
+        
+        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
+        sizeF = pm.floatFieldGrp(self.cntSizeF,q = 1,v = 1)
+        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
+        spineMetaNode = pm.textFieldGrp(self.metaSpineNodeN,q = 1,text = 1)
+        
+        self.blendShapeClass = DeceiverMoudle(baseName = baseNameT,size = sizeF,
+                                              metaMain = mainMetaNode,metaSpine = spineMetaNode)
+        
+        print ''
+        print 'B!  S!  G!'
+        print ''
+        
+        return self.blendShapeClass
+
+    def __buildBlendShapeGuide(self,*arg):
+        
+        self.blendShapeClass.buildGuides()
+    
+    def __getBlendShapeLink(self,*arg):
+        
+        self.blendShapeClass.addMircoCtrl()
 
     def getLidInstance(self,*arg):
         
@@ -2004,7 +2309,6 @@ class HeadModuleUi(object):
     def __finishLidSetting(self,*arg):
         
         self.lidClass.finishLidSetting()        
-        
         
 # from Modules import legModule,footModule
 # hg = headModule.HeadModule()
