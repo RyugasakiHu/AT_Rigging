@@ -957,7 +957,8 @@ class DeceiverMoudle(object):
     loLipMidPosArray = [0,15.318,1.464]
     loLipLeftPosArray = [0.221,15.318,1.389]
     
-    def __init__(self,baseName = 'head',size = 2,metaMain = None,metaSpine = None):
+    def __init__(self,baseName = 'head',size = 2,metaHead = None,metaMain = None,
+                 bsGeo = None,bsPath = None):
         
         self.baseName = baseName
         self.side = ['l','m','r']
@@ -1006,9 +1007,13 @@ class DeceiverMoudle(object):
         self.nameList = ['neck','head','jaw','eye','muzzle','nose','nostril','upTeeth','loTeeth','tongue','ear','beam']
         self.microCtrlNameList = ['brow','inBrow','outBrow','upCheek','cheek','mouthCorner','upLip','loLip']
         
-        #metanode
+        #blendShape Method
+        self.bsGeo = bsGeo
+        self.bsPath = bsPath
+        
+        #metaNode
+        self.metaHead = metaHead
         self.metaMain = metaMain
-        self.metaSpine = metaSpine
 
     def buildGuides(self):
         
@@ -1174,13 +1179,12 @@ class DeceiverMoudle(object):
         
     def addMircoCtrl(self):
         
-        self.microCtrlLeftGuideGrp.v.set(0)
-        self.microCtrlRightGuideGrp.v.set(0)
+        self.microCtrlTotalGuideGrp.v.set(0)
          
         self.microCtrlGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side[1],'microCtrl','grp'))
         self.mirrorMicroCtrlList = []
         self.microCtrlList = []
-         
+        
         #brow
         self.browCtrl = control.Control(self.side[1],self.microCtrlNameList[0],self.size) 
         self.browCtrl.microCtrl()
@@ -1261,12 +1265,90 @@ class DeceiverMoudle(object):
                 rightMicroCtrl.controlGrp.setParent(self.microCtrlGrp)
                 
                 self.microCtrlList.append(rightMicroCtrl.control)   
-              
-#         self.microCtrlGrp.setParent(self.headCtrl.control)  
         
+        self.__blendShape()
+        self.__cleanUp()
+        
+    def __blendShape(self):
+        
+        #import obj
+        #change notation \ to /
+        
+        files = pm.getFileList(folder = self.bsPath,filespec = '*.obj')
+        if len(files) == 0:
+            pm.warning('Do not receive target, requesting for another path')
+        else :
+            for file in files:
+                pm.importFile(self.bsPath + file,i = 1)
+        
+    def __cleanUp(self):
+        
+        if pm.objExists(self.metaHead) and pm.objExists(self.metaMain) == 1:
+            
+            #head
+            pm.select(self.metaHead) 
+            head = pm.selected()[0]
+            
+            #meta spine
+            headCtrlDestinations = []
+            headCtrlGrp = pm.connectionInfo(head.controls, destinationFromSource=True)
+            
+            #get linked
+            for tempHeadCtrlDestination in headCtrlGrp:
+                splitTempHeadDestination = tempHeadCtrlDestination.split('.')
+                headCtrlDestinations.append(splitTempHeadDestination[0])
+            
+            #to the main
+            for ctrl in headCtrlDestinations :
+                if 'head' in ctrl :
+                    headCtrl = ctrl
+                    
+            self.microCtrlGrp.setParent(headCtrl)
+            
+            ###
+            #meta main
+            #main
+            pm.select(self.metaMain) 
+            main = pm.selected()[0]
+            
+            mainDestinations = []
+            moduleGrp = pm.connectionInfo(main.moduleGrp, destinationFromSource=True)
+            
+            for tempMainDestination in moduleGrp:
+                splitTempMainDestination = tempMainDestination.split('.')
+                mainDestinations.append(splitTempMainDestination[0])
+                
+            #to the main hierachy
+            for grp in mainDestinations:
+                destnation = grp.split('_')
+                if destnation[1] == 'CC':
+                    CC = grp                
+                elif destnation[1] == 'SKL':
+                    SKL = grp                    
+                elif destnation[1] == 'IK':
+                    IK = grp                    
+                elif destnation[1] == 'LOC':
+                    LOC = grp                            
+                elif destnation[1] == 'XTR':
+                    XTR = grp                             
+                elif destnation[1] == 'GUD':
+                    GUD = grp                          
+                elif destnation[1] == 'GEO':
+                    GEO = grp                      
+                elif destnation[1] == 'ALL':
+                    ALL = grp                      
+                elif destnation[1] == 'XTR':
+                    XTR = grp                      
+                elif destnation[1] == 'TRS':
+                    TRS = grp                      
+                elif destnation[1] == 'PP':
+                    PP = grp
+                
+            self.microCtrlTotalGuideGrp.setParent(GUD)
+            
 class LidClass(object):
 
-    def __init__(self,eyeBall,lidSide,ctrlSize):
+    def __init__(self,eyeBall,lidSide,ctrlSize,metaHead = None):
         
         #initial
         self.eyeBall = eyeBall
@@ -1338,9 +1420,11 @@ class LidClass(object):
         elif lidSide == 2:
             self.lidSide =  'r'
 
+        #meta
+        self.headMeta = metaHead
+
     def createLidCurve(self,*arg):
  
-#         self.__createLoc()
         self.__createJj()
         self.__createAimCnst()
         self.__createCurve()
@@ -1355,6 +1439,7 @@ class LidClass(object):
     
     def loadUpVertex(self):
         
+        print self.headMeta
         self.upVertexes = []
         upVertexes = pm.ls(os = 1,fl = 1)
         
@@ -1372,16 +1457,6 @@ class LidClass(object):
             self.downVertexes.append(downVertex)
 
         return self.downVertexes
-    
-#     def __createLoc(self):
-        
-        #create base loc make center
-#         pm.select(self.eyeBall)
-#         self.eyeBall = pm.selected()
-#         self.baseLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[1],'loc'))
-#         alginLoc = pm.pointConstraint(self.eyeBall[0],self.baseLoc,mo = 0)
-#         pm.delete(alginLoc)
-#         pm.select(cl = 1)
         
     def __createJj(self):
         
@@ -1905,7 +1980,8 @@ class LidClass(object):
         downFollow.setParent(self.downLidCtrl.controlGrp)
         downFollow.t.set(0,0,0)
         downFollow.r.set(0,0,0)
-        self.downLidCtrl.control.setParent(self.downFollow)                
+        self.downLidCtrl.control.setParent(self.downFollow)
+
         
 #         .rotateX.connect(upFollowNode.input.inputR)
 #         .rotateY.connect(upFollowNode.input.inputG)
@@ -1938,21 +2014,25 @@ class HeadModuleUi(object):
         #main part
         ###1st step
         self.name = pm.text(l = '**** Head Module ****')
-        self.name = pm.text(l = '*** basic skin ***')
+        self.name = pm.text(l = '*** basicSkin ***')
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',cl2 = ['left','left'],
                                          ad2 = 1,text = 'head')
         self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',cl2 = ['left','left'],
                                               ad2 = 1,text = 'spineMeta')   
         self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'],
                                              text = 'mainMeta')
+        pm.separator(h = 10)
         
         ###2st step
-        self.name = pm.text(l = '*** BlendShapeGroup ***')
+        self.name = pm.text(l = '*** blendShapeGroup ***')
         self.cntSizeF = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
                                          ad2 = 1,numberOfFields = 1,value1 = 1.5)
-        self.blendShapeP = pm.textFieldGrp(l = 'blendShapePath : ',cl2 = ['left','left'],
-                                              ad2 = 1,text = '')
+        
+        self.headMetaNodeN = pm.textFieldGrp(l = 'headMeta :',ad2 = 1,cl2 = ['left','left'],
+                                             text = 'headMeta')
         self.bsGeo = pm.textFieldGrp(l = 'blendShapeGeo : ',cl2 = ['left','left'],
+                                              ad2 = 1,text = '')
+        self.bsPath = pm.textFieldGrp(l = 'blendShapePath : ',cl2 = ['left','left'],
                                               ad2 = 1,text = '')
         
         self.loadBlendShapeClass = pm.button(l = 'load BlendShape Class',c = self.getBlendShapeInstance)
@@ -1965,6 +2045,8 @@ class HeadModuleUi(object):
         self.lidTool = pm.text(l = '**** Lid Tool ****')
         self.eyeBallT = pm.textFieldGrp(l='eyeBall :',cl2 = ['left','left'],
                                          ad2 = 1,text = 'eyeBall')
+        self.headMetaLidNodeN = pm.textFieldGrp(l = 'headMeta :',ad2 = 1,cl2 = ['left','left'],
+                                             text = 'headMeta')
         self.eyeBallSideR = pm.radioButtonGrp(label = 'eyeBall side :',nrb = 2,
                                           cal = [1,'left'],la2 = ['left','right'],sl = 1)
         self.lidCcSizeF = pm.floatFieldGrp(l='lid Ctrl Size :',cl2 = ['left','left'],
@@ -2003,11 +2085,14 @@ class HeadModuleUi(object):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
         sizeF = pm.floatFieldGrp(self.cntSizeF,q = 1,v = 1)
+        bsGeoT = pm.textFieldGrp(self.bsGeo,q = 1,text = 1)
+        bsPathT = pm.textFieldGrp(self.bsPath,q = 1,text = 1)
+        headMetaNode = pm.textFieldGrp(self.headMetaNodeN,q = 1,text = 1)
         mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
-        spineMetaNode = pm.textFieldGrp(self.metaSpineNodeN,q = 1,text = 1)
         
         self.blendShapeClass = DeceiverMoudle(baseName = baseNameT,size = sizeF,
-                                              metaMain = mainMetaNode,metaSpine = spineMetaNode)
+                                              bsGeo = bsGeoT,bsPath = bsPathT,
+                                              metaHead = headMetaNode,metaMain = mainMetaNode)
         
         print ''
         print 'B!  S!  G!'
@@ -2028,7 +2113,8 @@ class HeadModuleUi(object):
         eyeBallR = pm.textFieldGrp(self.eyeBallT,q = 1,text = 1)
         eyeBallSizeR = pm.radioButtonGrp(self.eyeBallSideR,q = 1,sl = 1)
         lidCtrlF =  pm.floatFieldGrp(self.lidCcSizeF,q = 1,v = 1)
-        self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeBallSizeR,ctrlSize = lidCtrlF)
+        metaHeadT = pm.textFieldGrp(self.headMetaLidNodeN ,q = 1,text = 1)
+        self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeBallSizeR,ctrlSize = lidCtrlF,metaHead = metaHeadT)
 
         pm.selectPref(tso = 1)
         print 'LidClass ready to roll'
