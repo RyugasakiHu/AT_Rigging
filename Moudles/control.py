@@ -22,7 +22,7 @@ class Control(object):
         self.__buildName()
         
         #set cc and cc limit
-        self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [0,0,1],r = 0.2)[0]
+        self.control = pm.circle(name = self.controlName,ch = 0,o = 1 ,nr = [0,0,1],r = 0.25)[0]
         pm.transformLimits( tx=(-1, 1), ty=(-1, 1))
         pm.transformLimits( etx=(True, True), ety=(True, True))
         
@@ -33,10 +33,14 @@ class Control(object):
         boundary.getShape().overrideEnabled.set(1)
         boundary.getShape().overrideDisplayType.set(1)
         boundary.v.set(0)
+
+        pm.delete(self.control,ch = 1)
+        pm.delete(boundary,ch = 1)
         
         #group them all
         grpName = nameUtils.getUniqueName(self.side,self.baseName + '_cc','grp')
         self.controlGrp = pm.group(self.control,boundary,n = grpName)
+        self.controlGrp.s.set(self.size,self.size,self.size)
         lockAndHideAttr(self.control,['tz','rx','ry','rz','sx','sy','sz','v'])
         self.__colorSet()   
         
@@ -383,6 +387,7 @@ class Control(object):
         pm.delete(circleV)
         pm.setAttr(line + '.scale',self.size,self.size,self.size)
         self.control = line
+        self.control.s.set(self.size,self.size,self.size)
         pm.delete(self.control,ch = 1)
         
         self.__finalizeCc()
