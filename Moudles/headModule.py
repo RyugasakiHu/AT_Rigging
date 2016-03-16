@@ -40,7 +40,6 @@ class HeadModule(object):
         #jj
         self.neckFkChain = None
         self.headJoint = None
-#         self.sklGrp = None
         
         #guides 
         #single guides
@@ -401,7 +400,7 @@ class HeadModule(object):
         self.neckFkChain = fkChain.FkChain(self.nameList[0],self.side[1],size = self.neckDis * 2,
                                            fkCcType = 'cc',type = 'jj',pointCnst = 1)
         self.neckFkChain.fromList(self.neckGuidePos,self.neckGuideRot,skipLast = 1,fallOff = 1)
-        self.headJoint.append(self.neckFkChain.chain)
+        self.headJoint.append(self.neckFkChain.chain[0])
         
         for num,joint in enumerate(self.neckFkChain.chain):
             if num == (self.neckFkChain.chainLength() - 1):
@@ -429,7 +428,7 @@ class HeadModule(object):
         self.jawChains = boneChain.BoneChain(self.nameList[2],self.side[1],type = 'jj')
         self.jawChains.fromList(self.jawGuidePos,self.jawGuideRot)
         self.jawChains.chain[0].setParent(self.neckFkChain.chain[-1])
-        self.headJoint.append(self.jawChains.chain)
+        self.headJoint.append(self.jawChains.chain[0])
 
         #eye pos get
         self.eyeLeftGuidePos = [x.getTranslation(space = 'world') for x in self.eyeLeftGuides]
@@ -460,7 +459,6 @@ class HeadModule(object):
         pm.select(cl = 1)
         self.muzzleChain = pm.joint(p = self.muzzleGuidePos[0],n = nameUtils.getUniqueName(self.side[1],self.nameList[4],'jj'))
         self.muzzleChain.setParent(self.neckFkChain.chain[-1])
-        self.headJoint.append(self.muzzleChain)
         
         #nose pos get
         self.nostrilLeftGuidePos = [x.getTranslation(space = 'world') for x in self.nostrilLeftGuides]
@@ -473,7 +471,7 @@ class HeadModule(object):
         self.noseChain = boneChain.BoneChain(self.nameList[5],self.side[1],type = 'jj')
         self.noseChain.fromList(self.noseGuidePos,self.noseGuideRot)
         self.noseChain.chain[0].setParent(self.muzzleChain)
-        self.headJoint.append(self.noseChain)
+        self.headJoint.append(self.noseChain.chain[0])
         
         #nostril jj
         #left nostril jj
@@ -481,7 +479,6 @@ class HeadModule(object):
         self.nostrilLeftChain = pm.joint(p = self.nostrilLeftGuidePos[0],
                                          n = nameUtils.getUniqueName(self.side[0],self.nameList[6],'jj'))
         self.nostrilLeftChain.setParent(self.noseChain.chain[0])
-        self.headJoint.append(self.nostrilLeftChain)
         
         #right nostril jj
         self.nostrilRightGuidePos = [x.getTranslation(space = 'world') for x in self.nostrilRightGuides]
@@ -491,7 +488,6 @@ class HeadModule(object):
         self.nostrilRightChain = pm.joint(p = self.nostrilRightGuidePos[0],
                                           n = nameUtils.getUniqueName(self.side[-1],self.nameList[6],'jj'))
         self.nostrilRightChain.setParent(self.noseChain.chain[0])
-        self.headJoint.append(self.nostrilRightChain)
         
         #left ear pos get
         self.earLeftGuidePos = [x.getTranslation(space = 'world') for x in self.earLeftGuides]
@@ -501,7 +497,7 @@ class HeadModule(object):
         self.earLeftChain = boneChain.BoneChain(self.nameList[10],self.side[0],type = 'jj')
         self.earLeftChain.fromList(self.earLeftGuidePos,self.earLeftGuideRot)
         self.earLeftChain.chain[0].setParent(self.neckFkChain.chain[-1])
-        self.headJoint.append(self.earLeftChain.chain)
+        self.headJoint.append(self.earLeftChain.chain[0])
         
         #right ear pos get
         self.earRightGuidePos = [x.getTranslation(space = 'world') for x in self.earRightGuides]
@@ -511,7 +507,7 @@ class HeadModule(object):
         self.earRightChain = boneChain.BoneChain(self.nameList[10],self.side[1],type = 'jj')
         self.earRightChain.fromList(self.earRightGuidePos,self.earRightGuideRot)
         self.earRightChain.chain[0].setParent(self.neckFkChain.chain[-1])
-        self.headJoint.append(self.earRightChain.chain)
+        self.headJoint.append(self.earRightChain.chain[0])
         
         #upTeeth pos get
         self.upTeethGuidePos = [x.getTranslation(space = 'world') for x in self.upTeethGuides]
@@ -522,7 +518,6 @@ class HeadModule(object):
         self.upTeethChain = pm.joint(p = self.upTeethGuidePos[0],
                                      n = nameUtils.getUniqueName(self.side[1],self.nameList[7],'jj')) 
         self.upTeethChain.setParent(self.muzzleChain)      
-        self.headJoint.append(self.upTeethChain)
         
         #loTeeth pos get
         self.loTeethGuidePos = [x.getTranslation(space = 'world') for x in self.loTeethGuides]
@@ -532,8 +527,7 @@ class HeadModule(object):
         pm.select(cl = 1)
         self.loTeethChain = pm.joint(p = self.loTeethGuidePos[0],
                                      n = nameUtils.getUniqueName(self.side[1],self.nameList[8],'jj')) 
-        self.loTeethChain.setParent(self.jawChains.chain[0])
-        self.headJoint.append(self.loTeethChain)        
+        self.loTeethChain.setParent(self.jawChains.chain[0])      
         
         #set tongue         
         #get pos info
@@ -545,7 +539,8 @@ class HeadModule(object):
         self.tongueChain = boneChain.BoneChain(self.nameList[9],self.side[1],type = 'jj')
         self.tongueChain.fromList(self.tongueGuidePos,self.tongueGuideRot)
         self.tongueChain.chain[0].setParent(self.jawChains.chain[0])
-        self.headJoint.append(self.tongueChain.chain)
+        self.headJoint.append(self.tongueChain.chain[0])
+        
 #         self.tongueFkChain = fkChain.FkChain(self.nameList[9],self.side[1],size = self.tongueDis * 0.75,
 #                                              fkCcType = 'cc',type = 'jj',pointCnst = 1)
 #         self.tongueFkChain.fromList(self.tongueGuidePos,self.tongueGuideRot,skipLast = 1,autoOrient = 1)
@@ -597,7 +592,7 @@ class HeadModule(object):
         self.eyeRad = float(self.eyeLeftGuides[-1].getTranslation(space = 'object')[2])
         self.eyeLeftCtrl = control.Control(self.side[0],self.nameList[3],size = self.eyeRad * 2.5) 
         self.eyeLeftCtrl.sphereCtrl()
-        control.lockAndHideAttr(self.eyeLeftCtrl.control,['rx','ry','rz','sx','sy','sz','v'])
+        control.lockAndHideAttr(self.eyeLeftCtrl.control,['tx','ty','tz','sx','sy','sz','v'])
         pm.xform(self.eyeLeftCtrl.controlGrp,ws = 1,matrix = self.eyeLeftChain.chain[0].worldMatrix.get())
         pm.orientConstraint(self.eyeLeftCtrl.control,self.eyeLeftChain.chain[0],mo = 0)
         pm.pointConstraint(self.eyeLeftCtrl.control,self.eyeLeftChain.chain[0],mo = 0)
@@ -605,7 +600,7 @@ class HeadModule(object):
         
         self.eyeRightCtrl = control.Control(self.side[2],self.nameList[3],size = self.eyeRad * 2.5) 
         self.eyeRightCtrl.sphereCtrl()
-        control.lockAndHideAttr(self.eyeRightCtrl.control,['rx','ry','rz','sx','sy','sz','v'])     
+        control.lockAndHideAttr(self.eyeRightCtrl.control,['tx','ty','tz','sx','sy','sz','v'])     
         pm.xform(self.eyeRightCtrl.controlGrp,ws = 1,matrix = self.eyeRightChain.chain[0].worldMatrix.get())
         pm.orientConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
         pm.pointConstraint(self.eyeRightCtrl.control,self.eyeRightChain.chain[0],mo = 0)
@@ -857,11 +852,12 @@ class HeadModule(object):
 #         metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL])  
 #         metaUtils.addToMeta(self.meta,'controls', self.microCtrlList + self.mainCtrl)
         metaUtils.addToMeta(self.meta,'controls',self.mainCtrl)
+        metaUtils.addToMeta(self.meta,'joint',[joint for joint in self.headJoint])
 
     def buildConnections(self):
         
         #reveice info from incoming package
-        if pm.objExists(self.metaMain) and pm.objExists(self.metaSpine) == 1:
+        if pm.objExists(self.metaMain)  == 1:
             
             print ''
             print 'Package from (' + self.metaMain + ') has been received'
@@ -869,34 +865,15 @@ class HeadModule(object):
             pm.select(self.metaMain) 
             main = pm.selected()[0]
             
-            pm.select(self.metaSpine)
-            spine = pm.selected()[0]
-            
             #meta main
             mainDestinations = []
             moduleGrp = pm.connectionInfo(main.moduleGrp, destinationFromSource=True)
-            
-            #meta spine
-            spineDestinations = []
-            ctrlGrp = pm.connectionInfo(spine.controls, destinationFromSource=True)
             
             #get linked
             for tempMainDestination in moduleGrp:
                 splitTempMainDestination = tempMainDestination.split('.')
                 mainDestinations.append(splitTempMainDestination[0])
-                
-            for tempSpineDestination in ctrlGrp:
-                splitTempSpineDestination = tempSpineDestination.split('.')
-                spineDestinations.append(splitTempSpineDestination[0])
-                
-#             print 'spineDestinations' + str(spineDestinations)
-#             print 'mainDestinations' + str(mainDestinations)
-            
-            #to the chest
-            for ctrl in spineDestinations :
-                if 'Chest' in ctrl :
-                    chestCtrl = ctrl
-                                
+
             #to the main hierachy
             for grp in mainDestinations:
                 destnation = grp.split('_')
@@ -924,9 +901,7 @@ class HeadModule(object):
                     PP = grp
                           
             self.jointGuideGrp.setParent(GUD)
-#             self.microCtrlTotalGuideGrp.setParent(GUD)
             self.eyeBeamGrp.setParent(XTR)            
-            self.neckFkChain.controlsArray[0].controlGrp.setParent(chestCtrl)
             self.eyeWorldGrp.setParent(IK)
             self.eyeAimCtrl.controlGrp.setParent(IK)
             self.neckFkChain.chain[0].setParent(SKL)
@@ -938,8 +913,33 @@ class HeadModule(object):
             
         else:
             OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
+        
+        #spine     
+        if pm.objExists(self.metaSpine) == 1:
+            pm.select(self.metaSpine)
+            spine = pm.selected()[0]
+            
+            #meta spine
+            spineDestinations = []
+            ctrlGrp = pm.connectionInfo(spine.controls, destinationFromSource=True)            
+                
+            for tempSpineDestination in ctrlGrp:
+                splitTempSpineDestination = tempSpineDestination.split('.')
+                spineDestinations.append(splitTempSpineDestination[0])          
+            
+            #to the chest
+            for ctrl in spineDestinations :
+                if 'Chest' in ctrl :
+                    chestCtrl = ctrl
+                                
+            self.neckFkChain.controlsArray[0].controlGrp.setParent(chestCtrl)            
     
-        #beam mouth side to ETR
+        else:
+            OpenMaya.MGlobal.displayError('Target :' + self.metaSpine + ' is NOT exist')
+
+                    
+#             print 'spineDestinations' + str(spineDestinations)
+#             print 'mainDestinations' + str(mainDestinations)
 
 class DeceiverMoudle(object):
     
@@ -1391,8 +1391,8 @@ class LidClass(object):
         #grp
         self.lidGrp = None
         self.lidJcGrp = None
-#         self.upFollow = None
-#         self.downFollow = None
+        self.upFollow = None
+        self.downFollow = None
         self.upJointGrp = None
         self.downJointGrp = None
         self.upLocGrp = None
@@ -1443,6 +1443,7 @@ class LidClass(object):
         self.__createCc()
         self.__createBlinkCc()
         self.__cleanUp()
+        self.__buildConnection()
     
     def loadUpVertex(self):
         
@@ -1479,13 +1480,13 @@ class LidClass(object):
         #up 
         for upVertex in self.upVertexes:
             #create je and align
-            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'je'))
+            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jj'))
             pos = pm.xform(upVertex, q=1, ws=1, t=1)
             pm.xform(je, ws=1, t=pos)
              
             #create jj
             pm.select(cl=1)
-            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jj'))
+            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jc'))
             alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
             pm.delete(alginCnst)
              
@@ -1502,13 +1503,13 @@ class LidClass(object):
         for downVertex in self.downVertexes:
              
             #create je and align
-            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'je'))
+            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jj'))
             pos = pm.xform(downVertex, q=1, ws=1, t=1)
             pm.xform(je, ws=1, t=pos)
              
             #create jj
             pm.select(cl=1)
-            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jj'))
+            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jc'))
             alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
             pm.delete(alginCnst)
              
@@ -1966,42 +1967,14 @@ class LidClass(object):
         
     def __buildConnection(self):
         
-        #up follow grp
-        upFollow = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'upLidFollow','grp'))
-        upFollow.setParent(self.upLidCtrl.controlGrp)
-        upFollow.t.set(0,0,0)
-        upFollow.r.set(0,0,0)
-        self.upLidCtrl.control.setParent(self.upFollow)
-        
-        upFollowNodeName = nameUtils.getUniqueName(self.lidSide,'upLid','CLA')
-        upFollowNode = pm.createNode('clamp',n = upFollowNodeName)
-        
-        upFollowNodeName.minR.set(-10)
-        upFollowNodeName.minG.set(-10)
-        
-        #down follow grp
-        downFollow = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'downLidFollow','grp'))
-        downFollow.setParent(self.downLidCtrl.controlGrp)
-        downFollow.t.set(0,0,0)
-        downFollow.r.set(0,0,0)
-        self.downLidCtrl.control.setParent(self.downFollow)
-
-        
-#         .rotateX.connect(upFollowNode.input.inputR)
-#         .rotateY.connect(upFollowNode.input.inputG)
-
-#         up low jnt grp setParent to the head jj
-#         self.upJointGrp.setParent()
-#         self.downJointGrp.setParent()
-    
         #meta head
-        if pm.objExists(self.metaHead) == 1:
+        if pm.objExists(self.headMeta) == 1:
             
             #head
-            pm.select(self.metaHead) 
+            pm.select(self.headMeta) 
             head = pm.selected()[0]
             
-            #meta head
+            #meta head ctrls
             headCtrlDestinations = []
             headCtrlGrp = pm.connectionInfo(head.controls, destinationFromSource=True)
             
@@ -2016,14 +1989,85 @@ class LidClass(object):
                     
             self.lidJcGrp.setParent(headCtrl)
             self.aimLoc.setParent(headCtrl)
+            self.lidCcGrp.setParent(headCtrl)
+            self.lidJcGrp.v.set(0)
+            self.aimLoc.v.set(0)    
+            
+            #meta head ctrls
+            headJointDestinations = []
+            headJointGrp = pm.connectionInfo(head.joint, destinationFromSource=True)
+            
+            #get linked
+            for tempHeadJointDestination in headJointGrp:
+                splitTempHeadDestination = tempHeadJointDestination.split('.')
+                headJointDestinations.append(splitTempHeadDestination[0])
+                    
+            for joint in headJointDestinations :
+                if 'head' in joint :
+                    headJoint = joint
+                if 'l_eye' in joint :
+                    pm.select(joint)
+                    leftEyeJoint = pm.selected()[0]
+                if 'r_eye' in joint :
+                    pm.select(joint)
+                    rightEyeJoint = pm.selected()[0]
+                    
+            self.upJointGrp.setParent(headJoint)
+            self.downJointGrp.setParent(headJoint)
+            self.upJointGrp.v.set(0)
+            self.downJointGrp.v.set(0)
+            
+            ###### follow
+            #node and follow grp perpare
+            followNodeName = nameUtils.getUniqueName(self.lidSide,'upLid','CLA')
+            followNode = pm.createNode('clamp',n = followNodeName)
+            
+            #up follow grp
+            self.upFollow = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'upLidFollow','grp'))
+            self.upFollowGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'upLidFollowZero','grp'))
+            self.upFollow.setParent(self.upFollowGrp)
+            
+            #down follow grp
+            self.downFollow = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'downLidFollow','grp'))
+            self.downFollowGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.lidSide,'downLidFollowZero','grp'))
+            self.downFollow.setParent(self.downFollowGrp)
+            
+            if self.lidSide == 'l':
+                pm.xform(self.upFollowGrp,ws = 1,matrix = leftEyeJoint.worldMatrix.get())
+                pm.xform(self.downFollowGrp,ws = 1,matrix = leftEyeJoint.worldMatrix.get())
+                leftEyeJoint.rz.connect(followNode.inputR)
+                leftEyeJoint.ry.connect(followNode.inputG)
+            elif self.lidSide == 'r':
+                pm.xform(self.upFollowGrp,ws = 1,matrix = rightEyeJoint.worldMatrix.get())
+                pm.xform(self.downFollowGrp,ws = 1,matrix = leftEyeJoint.worldMatrix.get())
+                rightEyeJoint.rz.connect(followNode.inputR)
+                rightEyeJoint.ry.connect(followNode.inputG)            
+            
+            #node connect
+            followNode.minR.set(-10)
+            followNode.minG.set(-10)
+            followNode.maxR.set(10)
+            followNode.maxG.set(10)
+            
+            followNode.outputR.connect(self.upFollow.rz)
+            followNode.outputG.connect(self.upFollow.ry)
+
+            followNode.outputR.connect(self.downFollow.rz)
+            followNode.outputG.connect(self.downFollow.ry)            
+            
+            self.upLidCtrl.controlGrp.setParent(self.upFollow)
+            self.upFollowGrp.setParent(self.lidCcGrp)
+            
+            self.downLidCtrl.controlGrp.setParent(self.downFollow)
+            self.downFollowGrp.setParent(self.lidCcGrp)            
             
         else:
-            print 'DO NOT receive metaHead for LC squad'
+            print 'DO NOT receive headMeta for LC squad'
+            
         #meta main
-        
-        if pm.objExists(self.metaMain) == 1:
+        if pm.objExists(self.mainMeta) == 1:
             #meta main
-            pm.select(self.metaMain) 
+            pm.select(self.mainMeta) 
             main = pm.selected()[0]
             
             mainDestinations = []
@@ -2060,6 +2104,7 @@ class LidClass(object):
                     PP = grp
                     
             self.lidGrp.setParent(XTR)
+            self.lidGrp.v.set(0)
             
         else:
             print 'DO NOT receive metaMain for LC squad'
