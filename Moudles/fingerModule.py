@@ -7,26 +7,34 @@ from maya import OpenMaya
 class FingerModule(object):
     
     posThumbArray = [(6.4540,13.8587,0.0015),(6.6541,13.8587,0.0015),(6.8466,13.8587,0.0015),(7.0855,13.8587,0.0015)]
-                # (6.6541,13.7464,0.1988),(6.8466,13.6588,0.3228),(7.0855,13.5695,0.453)]
     posIndexArray = [[6.58,14.03,-0.04],[6.94,14.03,-0.04],[7.3,14.03,-0.04],[7.515,14.03,-0.04],[7.74,14.03,-0.04]]
     posMiddleArray = [[6.539,14.05,-0.22],[6.9,14.05,-0.22],[7.361,14.05,-0.22],[7.58,14.05,-0.22],[7.88,14.05,-0.22]]
     posRingArray = [[6.58,14.055,-0.413],[6.94,14.055,-0.413],[7.3,14.055,-0.413],[7.515,14.055,-0.413],[7.74,14.055,-0.413]]
     posPinkyArray = [[6.746,14.03,-0.585],[6.94,14.03,-0.585],[7.134,14.03,-0.585],[7.276,14.03,-0.585],[7.5,14.03,-0.585]]
     
     rotThumbArrary = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
-    #[[30.642,-40.607,-28.588],[51.66,-26.885,-23.588],[51.856,-26.178,-23.579],[50.438,-27.655,-23.932]]
     rotIndexArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotMiddleArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotRingArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     rotPinkyArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     
     def __init__(self,baseName = 'finger',side = 'l',size = 0.5,
-                 metaArm = None,metaMain = None,metaSpine = None,controlOrient = [0,0,0]):
+                 metaArm = None,metaMain = None,metaSpine = None,
+                 fingerNum = 'ni'):
         
         self.baseName = baseName
         self.side = side
         self.size = size
-        self.controlOrient = controlOrient
+
+        #num
+        if fingerNum == 'ni':
+            self.fingerNum = 2            
+        elif fingerNum == 'sann':
+            self.fingerNum = 3            
+        elif fingerNum == 'shi':
+            self.fingerNum = 4            
+        elif fingerNum == 'go':
+            self.fingerNum = 5
         
         #guides 
         self.guides = None
@@ -86,14 +94,37 @@ class FingerModule(object):
         
         #build guides        
         self.guides = []
-        self.guideGrp = []
+        self.guideGrp = []        
         
         self.thumbGuides = []
         self.indexGuides = []
         self.middleGuides = []
         self.ringGuides = []
-        self.pinkyGuides = []
-
+        self.pinkyGuides = []        
+        
+        #guide grp       
+        guideName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
+        self.guideGrp = pm.group(em = 1,n = guideName)
+        print self.fingerNum
+        #num
+        if self.fingerNum == 2:
+            self.posMiddleArray = []
+            self.rotMiddleArray = []
+            self.posRingArray = []
+            self.rotRingArray = []
+            self.posPinkyArray = []
+            self.rotPinkyArray = []
+            
+        elif self.fingerNum == 3:
+            self.posRingArray = []
+            self.rotRingArray = []
+            self.posPinkyArray = []
+            self.rotPinkyArray = []
+            
+        elif self.fingerNum == 4:
+            self.posPinkyArray = []
+            self.rotPinkyArray = []        
+        
         #thumb
         for num,obj in enumerate(self.posThumbArray):
             name = nameUtils.getUniqueName(self.side,self.fingerName[0] + self.thumbJointName[num],'gud')
@@ -109,8 +140,9 @@ class FingerModule(object):
             if i != (len(self.tempThumbGuides) - 1):
                 pm.parent(self.tempThumbGuides[i],self.tempThumbGuides[i + 1])
         self.tempThumbGuides.reverse()
-        self.guides.append(self.tempThumbGuides[0])        
-            
+        self.guides.append(self.tempThumbGuides[0])
+        self.tempThumbGuides[0].setParent(self.guideGrp)
+        
         #index    
         for num,obj in enumerate(self.posIndexArray):
             name = nameUtils.getUniqueName(self.side,self.fingerName[1] + self.fingerJointName[num],'gud')
@@ -127,6 +159,7 @@ class FingerModule(object):
                 pm.parent(self.tempIndexGuides[i],self.tempIndexGuides[i + 1])
         self.tempIndexGuides.reverse()
         self.guides.append(self.tempIndexGuides[0])
+        self.tempIndexGuides[0].setParent(self.guideGrp)
         
         #middle
         for num,obj in enumerate(self.posMiddleArray):
@@ -136,14 +169,16 @@ class FingerModule(object):
             loc.r.set(self.rotMiddleArray[num])
             loc.localScale.set(0.2,0.2,0.2)
             self.middleGuides.append(loc)
-             
-        self.tempMiddleGuides = list(self.middleGuides)
-        self.tempMiddleGuides.reverse()
-        for i in range(len(self.tempMiddleGuides)):
-            if i != (len(self.tempMiddleGuides) - 1):
-                pm.parent(self.tempMiddleGuides[i],self.tempMiddleGuides[i + 1])
-        self.tempMiddleGuides.reverse()   
-        self.guides.append(self.tempMiddleGuides[0])        
+
+        if len(self.middleGuides) != 0:             
+            self.tempMiddleGuides = list(self.middleGuides)
+            self.tempMiddleGuides.reverse()
+            for i in range(len(self.tempMiddleGuides)):
+                if i != (len(self.tempMiddleGuides) - 1):
+                    pm.parent(self.tempMiddleGuides[i],self.tempMiddleGuides[i + 1])
+            self.tempMiddleGuides.reverse()
+            self.guides.append(self.tempMiddleGuides[0])
+            self.tempMiddleGuides[0].setParent(self.guideGrp)   
          
         #ring 
         for num,obj in enumerate(self.posRingArray):
@@ -154,13 +189,15 @@ class FingerModule(object):
             loc.localScale.set(0.2,0.2,0.2)
             self.ringGuides.append(loc)
              
-        self.tempRingGuides = list(self.ringGuides)
-        self.tempRingGuides.reverse()
-        for i in range(len(self.tempRingGuides)):
-            if i != (len(self.tempRingGuides) - 1):
-                pm.parent(self.tempRingGuides[i],self.tempRingGuides[i + 1])
-        self.tempRingGuides.reverse()   
-        self.guides.append(self.tempRingGuides[0])            
+        if len(self.ringGuides) != 0:
+            self.tempRingGuides = list(self.ringGuides)
+            self.tempRingGuides.reverse()
+            for i in range(len(self.tempRingGuides)):
+                if i != (len(self.tempRingGuides) - 1):
+                    pm.parent(self.tempRingGuides[i],self.tempRingGuides[i + 1])
+            self.tempRingGuides.reverse()   
+            self.guides.append(self.tempRingGuides[0])
+            self.tempRingGuides[0].setParent(self.guideGrp)
          
         #pinky 
         for num,obj in enumerate(self.posPinkyArray):
@@ -171,22 +208,15 @@ class FingerModule(object):
             loc.localScale.set(0.2,0.2,0.2)
             self.pinkyGuides.append(loc)
              
-        self.tempPinkyGuides = list(self.pinkyGuides)
-        self.tempPinkyGuides.reverse()
-        for i in range(len(self.tempPinkyGuides)):
-            if i != (len(self.tempPinkyGuides) - 1):
-                pm.parent(self.tempPinkyGuides[i],self.tempPinkyGuides[i + 1])
-        self.tempPinkyGuides.reverse()   
-        self.guides.append(self.tempPinkyGuides[0])
-        
-        #guide grp       
-        guideName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(em = 1,n = guideName)
-        self.tempIndexGuides[0].setParent(self.guideGrp)
-        self.tempMiddleGuides[0].setParent(self.guideGrp)
-        self.tempRingGuides[0].setParent(self.guideGrp)
-        self.tempPinkyGuides[0].setParent(self.guideGrp)
-        self.tempThumbGuides[0].setParent(self.guideGrp)
+        if len(self.pinkyGuides) != 0:     
+            self.tempPinkyGuides = list(self.pinkyGuides)
+            self.tempPinkyGuides.reverse()
+            for i in range(len(self.tempPinkyGuides)):
+                if i != (len(self.tempPinkyGuides) - 1):
+                    pm.parent(self.tempPinkyGuides[i],self.tempPinkyGuides[i + 1])
+            self.tempPinkyGuides.reverse()   
+            self.guides.append(self.tempPinkyGuides[0])
+            self.tempPinkyGuides[0].setParent(self.guideGrp)    
         
     def build(self):
         
@@ -217,46 +247,49 @@ class FingerModule(object):
         self.indexGrp = pm.group(self.indexChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[1],'grp'))
         indexInitial =  self.indexChain.chain[0].getTranslation(space = 'world')
         pm.move(indexInitial[0],indexInitial[1],indexInitial[2],self.indexGrp + '.rotatePivot')
-        pm.move(indexInitial[0],indexInitial[1],indexInitial[2],self.indexGrp + '.scalePivot') 
+        pm.move(indexInitial[0],indexInitial[1],indexInitial[2],self.indexGrp + '.scalePivot')
         
-        #mid info
-        self.guideMidPos = [x.getTranslation(space = 'world') for x in self.middleGuides]
-        self.guideMidRot = [x.getRotation(space = 'world') for x in self.middleGuides]
+        if self.fingerNum > 2:
+            #mid info
+            self.guideMidPos = [x.getTranslation(space = 'world') for x in self.middleGuides]
+            self.guideMidRot = [x.getRotation(space = 'world') for x in self.middleGuides]
+            
+            #mid jj
+            self.midChain = boneChain.BoneChain(self.fingerName[2],self.side,type = 'jj')
+            self.midChain.fromList(self.guideMidPos,self.guideMidRot)    
+            
+            self.midGrp = pm.group(self.midChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[2],'grp'))
+            midInitial =  self.midChain.chain[0].getTranslation(space = 'world')
+            pm.move(midInitial[0],midInitial[1],midInitial[2],self.midGrp + '.rotatePivot')
+            pm.move(midInitial[0],midInitial[1],midInitial[2],self.midGrp + '.scalePivot')  
         
-        #mid jj
-        self.midChain = boneChain.BoneChain(self.fingerName[2],self.side,type = 'jj')
-        self.midChain.fromList(self.guideMidPos,self.guideMidRot)    
+        if self.fingerNum > 3: 
+            #ring info
+            self.guideRingPos = [x.getTranslation(space = 'world') for x in self.ringGuides]
+            self.guideRingRot = [x.getRotation(space = 'world') for x in self.ringGuides]
+            
+            #ring jj
+            self.ringChain = boneChain.BoneChain(self.fingerName[3],self.side,type = 'jj')
+            self.ringChain.fromList(self.guideRingPos,self.guideRingRot)     
+            
+            self.ringGrp = pm.group(self.ringChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[3],'grp'))
+            ringInitial =  self.ringChain.chain[0].getTranslation(space = 'world')
+            pm.move(ringInitial[0],ringInitial[1],ringInitial[2],self.ringGrp + '.rotatePivot')
+            pm.move(ringInitial[0],ringInitial[1],ringInitial[2],self.ringGrp + '.scalePivot')
         
-        self.midGrp = pm.group(self.midChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[2],'grp'))
-        midInitial =  self.midChain.chain[0].getTranslation(space = 'world')
-        pm.move(midInitial[0],midInitial[1],midInitial[2],self.midGrp + '.rotatePivot')
-        pm.move(midInitial[0],midInitial[1],midInitial[2],self.midGrp + '.scalePivot')  
-               
-        #ring info
-        self.guideRingPos = [x.getTranslation(space = 'world') for x in self.ringGuides]
-        self.guideRingRot = [x.getRotation(space = 'world') for x in self.ringGuides]
-        
-        #ring jj
-        self.ringChain = boneChain.BoneChain(self.fingerName[3],self.side,type = 'jj')
-        self.ringChain.fromList(self.guideRingPos,self.guideRingRot)     
-        
-        self.ringGrp = pm.group(self.ringChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[3],'grp'))
-        ringInitial =  self.ringChain.chain[0].getTranslation(space = 'world')
-        pm.move(ringInitial[0],ringInitial[1],ringInitial[2],self.ringGrp + '.rotatePivot')
-        pm.move(ringInitial[0],ringInitial[1],ringInitial[2],self.ringGrp + '.scalePivot')
-          
-        #pinky info
-        self.guidePinkyPos = [x.getTranslation(space = 'world') for x in self.pinkyGuides]
-        self.guidePinkyRot = [x.getRotation(space = 'world') for x in self.pinkyGuides] 
-        
-        #pinky jj
-        self.pinkyChain = boneChain.BoneChain(self.fingerName[4],self.side,type = 'jj')
-        self.pinkyChain.fromList(self.guidePinkyPos,self.guidePinkyRot)   
-        
-        self.pinkyGrp = pm.group(self.pinkyChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[4],'grp'))
-        pinkyInitial =  self.pinkyChain.chain[0].getTranslation(space = 'world')
-        pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.rotatePivot')
-        pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.scalePivot')               
+        if self.fingerNum > 4:
+            #pinky info
+            self.guidePinkyPos = [x.getTranslation(space = 'world') for x in self.pinkyGuides]
+            self.guidePinkyRot = [x.getRotation(space = 'world') for x in self.pinkyGuides] 
+            
+            #pinky jj
+            self.pinkyChain = boneChain.BoneChain(self.fingerName[4],self.side,type = 'jj')
+            self.pinkyChain.fromList(self.guidePinkyPos,self.guidePinkyRot)   
+            
+            self.pinkyGrp = pm.group(self.pinkyChain.chain[0],n = nameUtils.getUniqueName(self.side,self.fingerName[4],'grp'))
+            pinkyInitial =  self.pinkyChain.chain[0].getTranslation(space = 'world')
+            pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.rotatePivot')
+            pm.move(pinkyInitial[0],pinkyInitial[1],pinkyInitial[2],self.pinkyGrp + '.scalePivot')               
  
         self.__fingerCC()
         self.__partialJoint()
@@ -410,120 +443,123 @@ class FingerModule(object):
         #index clean up       
         self.indexCc[0].getParent().getParent().setParent(self.indexGrp )
         pm.rename(self.indexChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[1]  + self.fingerJointName[4],'je')) 
-                
-        #create mid cc ctrl
-        for num,midJoint in enumerate(self.midChain.chain):
-            #correct jj name
-            pm.rename(midJoint,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'jj'))
-                                    
-            if num < self.midChain.chainLength() - 1:                
-                #create sdk and correct cc name
-#                 cc = control.Control(self.side,self.baseName,size = midJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size) 
-                cc.circleCtrl()
-                self.midCc.append(cc.control)
-                
-                #create sdk grp
-                sdkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'SDK'))
-                self.midSdks.append(sdkGrp)
-                          
-                #align cc grp
-                pm.xform(cc.controlGrp,ws = 1,matrix = midJoint.worldMatrix.get())
-                pm.xform(sdkGrp,ws = 1,matrix = midJoint.worldMatrix.get())
-
-                cc.control.setParent(sdkGrp)
-                sdkGrp.setParent(cc.controlGrp) 
-                
-                #clean up and rename                
-                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'cc'))
-                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'grp'))    
-                pm.delete(cc.control,ch=1)
-                
-        #jj clean up
-        for num,ctrl in enumerate(self.midCc):
-            self.midChain.chain[num].setParent(ctrl)
-            if num > 0 :
-                ctrl.getParent().getParent().setParent(self.midChain.chain[num - 1])
-                
-        #mid clean up       
-        self.midCc[0].getParent().getParent().setParent(self.midGrp )
-        pm.rename(self.midChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[4],'je'))                 
-                   
-        #create ring cc ctrl
-        for num,ringJoint in enumerate(self.ringChain.chain):
-            #correct jj name
-            pm.rename(ringJoint,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'jj'))
-                                    
-            if num < self.ringChain.chainLength() - 1:                
-                #create sdk and correct cc name
-#                 cc = control.Control(self.side,self.baseName,size = ringJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size) 
-                cc.circleCtrl()
-                self.ringCc.append(cc.control)                
-                
-                #create sdk grp
-                sdkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'SDK'))                
-                self.ringSdks.append(sdkGrp)           
-                     
-                #align cc grp
-                pm.xform(cc.controlGrp,ws = 1,matrix = ringJoint.worldMatrix.get())
-                pm.xform(sdkGrp,ws = 1,matrix = ringJoint.worldMatrix.get())     
-                
-                cc.control.setParent(sdkGrp)
-                sdkGrp.setParent(cc.controlGrp) 
-                
-                #clean up and rename
-                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'cc'))
-                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'grp'))
-                pm.delete(cc.control,ch=1)
         
-        #jj clean up
-        for num,ctrl in enumerate(self.ringCc):
-            self.ringChain.chain[num].setParent(ctrl)
-            if num > 0 :
-                ctrl.getParent().getParent().setParent(self.ringChain.chain[num - 1])
-                
-        #ring clean up       
-        self.ringCc[0].getParent().getParent().setParent(self.ringGrp )
-        pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[4],'je'))          
+        if self.fingerNum > 2:
+            #create mid cc ctrl
+            for num,midJoint in enumerate(self.midChain.chain):
+                #correct jj name
+                pm.rename(midJoint,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'jj'))
+                                        
+                if num < self.midChain.chainLength() - 1:                
+                    #create sdk and correct cc name
+    #                 cc = control.Control(self.side,self.baseName,size = midJoint.getRadius() / 5) 
+                    cc = control.Control(self.side,self.baseName,size = self.size) 
+                    cc.circleCtrl()
+                    self.midCc.append(cc.control)
+                    
+                    #create sdk grp
+                    sdkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'SDK'))
+                    self.midSdks.append(sdkGrp)
+                              
+                    #align cc grp
+                    pm.xform(cc.controlGrp,ws = 1,matrix = midJoint.worldMatrix.get())
+                    pm.xform(sdkGrp,ws = 1,matrix = midJoint.worldMatrix.get())
+    
+                    cc.control.setParent(sdkGrp)
+                    sdkGrp.setParent(cc.controlGrp) 
+                    
+                    #clean up and rename                
+                    pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'cc'))
+                    pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[2] + self.fingerJointName[num],'grp'))    
+                    pm.delete(cc.control,ch=1)
+                    
+            #jj clean up
+            for num,ctrl in enumerate(self.midCc):
+                self.midChain.chain[num].setParent(ctrl)
+                if num > 0 :
+                    ctrl.getParent().getParent().setParent(self.midChain.chain[num - 1])
+                    
+            #mid clean up       
+            self.midCc[0].getParent().getParent().setParent(self.midGrp )
+            pm.rename(self.midChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[4],'je'))                 
         
-        #create pinky cc ctrl
-        for num,pinkyJoint in enumerate(self.pinkyChain.chain):
-            #correct jj name
-            pm.rename(pinkyJoint,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'jj'))
-                                 
-            if num < self.pinkyChain.chainLength() - 1:                
-                #create sdk and correct cc name
-#                 cc = control.Control(self.side,self.baseName,size = pinkyJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size) 
-                cc.circleCtrl()
-                self.pinkyCc.append(cc.control)   
-                
-                #create sdk grp
-                sdkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'SDK'))                
-                self.pinkySdks.append(sdkGrp)                     
-                
-                #align cc grp
-                pm.xform(cc.controlGrp,ws = 1,matrix = pinkyJoint.worldMatrix.get())
-                pm.xform(sdkGrp,ws = 1,matrix = pinkyJoint.worldMatrix.get())     
-                
-                cc.control.setParent(sdkGrp)
-                sdkGrp.setParent(cc.controlGrp) 
-                
-                #clean up and rename  
-                pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'cc'))
-                pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'grp'))
-                pm.delete(cc.control,ch=1)
-                
-        #jj clean up
-        for num,ctrl in enumerate(self.pinkyCc):
-            self.pinkyChain.chain[num].setParent(ctrl)
-            if num > 0 :
-                ctrl.getParent().getParent().setParent(self.pinkyChain.chain[num - 1])
-                
-        #pinky clean up       
-        self.pinkyCc[0].getParent().getParent().setParent(self.pinkyGrp )
-        pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[4],'je'))                       
+        if self.fingerNum > 3:               
+            #create ring cc ctrl
+            for num,ringJoint in enumerate(self.ringChain.chain):
+                #correct jj name
+                pm.rename(ringJoint,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'jj'))
+                                        
+                if num < self.ringChain.chainLength() - 1:                
+                    #create sdk and correct cc name
+    #                 cc = control.Control(self.side,self.baseName,size = ringJoint.getRadius() / 5) 
+                    cc = control.Control(self.side,self.baseName,size = self.size) 
+                    cc.circleCtrl()
+                    self.ringCc.append(cc.control)                
+                    
+                    #create sdk grp
+                    sdkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'SDK'))                
+                    self.ringSdks.append(sdkGrp)           
+                         
+                    #align cc grp
+                    pm.xform(cc.controlGrp,ws = 1,matrix = ringJoint.worldMatrix.get())
+                    pm.xform(sdkGrp,ws = 1,matrix = ringJoint.worldMatrix.get())     
+                    
+                    cc.control.setParent(sdkGrp)
+                    sdkGrp.setParent(cc.controlGrp) 
+                    
+                    #clean up and rename
+                    pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'cc'))
+                    pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[3] + self.fingerJointName[num],'grp'))
+                    pm.delete(cc.control,ch=1)
+            
+            #jj clean up
+            for num,ctrl in enumerate(self.ringCc):
+                self.ringChain.chain[num].setParent(ctrl)
+                if num > 0 :
+                    ctrl.getParent().getParent().setParent(self.ringChain.chain[num - 1])
+                    
+            #ring clean up       
+            self.ringCc[0].getParent().getParent().setParent(self.ringGrp )
+            pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[4],'je'))          
+        
+        if self.fingerNum > 4:
+            #create pinky cc ctrl
+            for num,pinkyJoint in enumerate(self.pinkyChain.chain):
+                #correct jj name
+                pm.rename(pinkyJoint,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'jj'))
+                                     
+                if num < self.pinkyChain.chainLength() - 1:                
+                    #create sdk and correct cc name
+    #                 cc = control.Control(self.side,self.baseName,size = pinkyJoint.getRadius() / 5) 
+                    cc = control.Control(self.side,self.baseName,size = self.size) 
+                    cc.circleCtrl()
+                    self.pinkyCc.append(cc.control)   
+                    
+                    #create sdk grp
+                    sdkGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'SDK'))                
+                    self.pinkySdks.append(sdkGrp)                     
+                    
+                    #align cc grp
+                    pm.xform(cc.controlGrp,ws = 1,matrix = pinkyJoint.worldMatrix.get())
+                    pm.xform(sdkGrp,ws = 1,matrix = pinkyJoint.worldMatrix.get())     
+                    
+                    cc.control.setParent(sdkGrp)
+                    sdkGrp.setParent(cc.controlGrp) 
+                    
+                    #clean up and rename  
+                    pm.rename(cc.control,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'cc'))
+                    pm.rename(cc.controlGrp,nameUtils.getUniqueName(self.side,self.fingerName[4] + self.fingerJointName[num],'grp'))
+                    pm.delete(cc.control,ch=1)
+                    
+            #jj clean up
+            for num,ctrl in enumerate(self.pinkyCc):
+                self.pinkyChain.chain[num].setParent(ctrl)
+                if num > 0 :
+                    ctrl.getParent().getParent().setParent(self.pinkyChain.chain[num - 1])
+                    
+            #pinky clean up       
+            self.pinkyCc[0].getParent().getParent().setParent(self.pinkyGrp )
+            pm.rename(self.ringChain.chain[-1],nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[4],'je'))                       
            
     def __partialJoint(self):
         
@@ -620,135 +656,138 @@ class FingerModule(object):
                 #jointOrient
                 for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
                     partial.attr(jointOrient).set(0)
-
-        #middle
-        for num,joint in enumerate(self.midChain.chain):
-            #create partial jj
-            if num < (self.midChain.chainLength() - 1) and num != 0:
-                partial = pm.joint(n = nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[num] + self.fingerJointName[5],'jj'),
-                                   position = (0,0,0))
-                pm.xform(partial,ws = 1,matrix = joint.worldMatrix.get())
-                partial.setParent(self.midCc[num].getParent().getParent())
-                
-                #node name
-                plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
-                multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
-                
-                #create node 
-                plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
-                multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
-                
-                #connect node
-                #PMA
-                self.midSdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
-                self.midSdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
-                self.midSdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
-                self.midCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
-                self.midCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
-                self.midCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
-                
-                #MDN
-                #input 
-                plusAverage.output3Dx.connect(multipleDivide.input1X)
-                plusAverage.output3Dy.connect(multipleDivide.input1Y)
-                plusAverage.output3Dz.connect(multipleDivide.input1Z)
-                multipleDivide.input2X.set(0.5)
-                multipleDivide.input2Y.set(0.5)
-                multipleDivide.input2Z.set(0.5)
-                #output
-                multipleDivide.output.outputX.connect(partial.rx)
-                multipleDivide.output.outputY.connect(partial.ry)
-                multipleDivide.output.outputZ.connect(partial.rz)
-                
-                #jointOrient
-                for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
-                    partial.attr(jointOrient).set(0)        
-
-        #ring
-        for num,joint in enumerate(self.ringChain.chain):
-            #create partial jj
-            if num < (self.ringChain.chainLength() - 1) and num != 0:
-                partial = pm.joint(n = nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[num] + self.fingerJointName[5],'jj'),
-                                   position = (0,0,0))
-                pm.xform(partial,ws = 1,matrix = joint.worldMatrix.get())
-                partial.setParent(self.ringCc[num].getParent().getParent())
-                
-                #node name
-                plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
-                multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
-                
-                #create node 
-                plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
-                multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
-                
-                #connect node
-                #PMA
-                self.ringSdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
-                self.ringSdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
-                self.ringSdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
-                self.ringCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
-                self.ringCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
-                self.ringCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
-                
-                #MDN
-                #input 
-                plusAverage.output3Dx.connect(multipleDivide.input1X)
-                plusAverage.output3Dy.connect(multipleDivide.input1Y)
-                plusAverage.output3Dz.connect(multipleDivide.input1Z)
-                multipleDivide.input2X.set(0.5)
-                multipleDivide.input2Y.set(0.5)
-                multipleDivide.input2Z.set(0.5)
-                #output
-                multipleDivide.output.outputX.connect(partial.rx)
-                multipleDivide.output.outputY.connect(partial.ry)
-                multipleDivide.output.outputZ.connect(partial.rz)
-                
-                #jointOrient
-                for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
-                    partial.attr(jointOrient).set(0)        
-           
-        #pinky
-        for num,joint in enumerate(self.pinkyChain.chain):
-            #create partial jj
-            if num < (self.pinkyChain.chainLength() - 1) and num != 0:
-                partial = pm.joint(n = nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[num] + self.fingerJointName[5],'jj'),
-                                   position = (0,0,0))
-                pm.xform(partial,ws = 1,matrix = joint.worldMatrix.get())
-                partial.setParent(self.pinkyCc[num].getParent().getParent())
-                
-                #node name
-                plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
-                multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
-                
-                #create node 
-                plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
-                multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
-                
-                #connect node
-                #PMA
-                self.pinkySdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
-                self.pinkySdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
-                self.pinkySdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
-                self.pinkyCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
-                self.pinkyCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
-                self.pinkyCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
-                
-                #MDN
-                #input 
-                plusAverage.output3Dx.connect(multipleDivide.input1X)
-                plusAverage.output3Dy.connect(multipleDivide.input1Y)
-                plusAverage.output3Dz.connect(multipleDivide.input1Z)
-                multipleDivide.input2X.set(0.5)
-                multipleDivide.input2Y.set(0.5)
-                multipleDivide.input2Z.set(0.5)
-                #output
-                multipleDivide.output.outputX.connect(partial.rx)
-                multipleDivide.output.outputY.connect(partial.ry)
-                multipleDivide.output.outputZ.connect(partial.rz)
-                
-                #jointOrient
-                for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
-                    partial.attr(jointOrient).set(0)             
+                    
+        if self.fingerNum > 2:
+            #middle
+            for num,joint in enumerate(self.midChain.chain):
+                #create partial jj
+                if num < (self.midChain.chainLength() - 1) and num != 0:
+                    partial = pm.joint(n = nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[num] + self.fingerJointName[5],'jj'),
+                                       position = (0,0,0))
+                    pm.xform(partial,ws = 1,matrix = joint.worldMatrix.get())
+                    partial.setParent(self.midCc[num].getParent().getParent())
+                    
+                    #node name
+                    plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
+                    multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[2]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
+                    
+                    #create node 
+                    plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
+                    multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
+                    
+                    #connect node
+                    #PMA
+                    self.midSdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
+                    self.midSdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
+                    self.midSdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
+                    self.midCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
+                    self.midCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
+                    self.midCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
+                    
+                    #MDN
+                    #input 
+                    plusAverage.output3Dx.connect(multipleDivide.input1X)
+                    plusAverage.output3Dy.connect(multipleDivide.input1Y)
+                    plusAverage.output3Dz.connect(multipleDivide.input1Z)
+                    multipleDivide.input2X.set(0.5)
+                    multipleDivide.input2Y.set(0.5)
+                    multipleDivide.input2Z.set(0.5)
+                    #output
+                    multipleDivide.output.outputX.connect(partial.rx)
+                    multipleDivide.output.outputY.connect(partial.ry)
+                    multipleDivide.output.outputZ.connect(partial.rz)
+                    
+                    #jointOrient
+                    for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
+                        partial.attr(jointOrient).set(0)        
+        
+        if self.fingerNum > 3:
+            #ring
+            for num,joint in enumerate(self.ringChain.chain):
+                #create partial jj
+                if num < (self.ringChain.chainLength() - 1) and num != 0:
+                    partial = pm.joint(n = nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[num] + self.fingerJointName[5],'jj'),
+                                       position = (0,0,0))
+                    pm.xform(partial,ws = 1,matrix = joint.worldMatrix.get())
+                    partial.setParent(self.ringCc[num].getParent().getParent())
+                    
+                    #node name
+                    plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
+                    multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[3]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
+                    
+                    #create node 
+                    plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
+                    multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
+                    
+                    #connect node
+                    #PMA
+                    self.ringSdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
+                    self.ringSdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
+                    self.ringSdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
+                    self.ringCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
+                    self.ringCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
+                    self.ringCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
+                    
+                    #MDN
+                    #input 
+                    plusAverage.output3Dx.connect(multipleDivide.input1X)
+                    plusAverage.output3Dy.connect(multipleDivide.input1Y)
+                    plusAverage.output3Dz.connect(multipleDivide.input1Z)
+                    multipleDivide.input2X.set(0.5)
+                    multipleDivide.input2Y.set(0.5)
+                    multipleDivide.input2Z.set(0.5)
+                    #output
+                    multipleDivide.output.outputX.connect(partial.rx)
+                    multipleDivide.output.outputY.connect(partial.ry)
+                    multipleDivide.output.outputZ.connect(partial.rz)
+                    
+                    #jointOrient
+                    for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
+                        partial.attr(jointOrient).set(0)
+                                
+        if self.fingerNum > 4 :
+            #pinky
+            for num,joint in enumerate(self.pinkyChain.chain):
+                #create partial jj
+                if num < (self.pinkyChain.chainLength() - 1) and num != 0:
+                    partial = pm.joint(n = nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[num] + self.fingerJointName[5],'jj'),
+                                       position = (0,0,0))
+                    pm.xform(partial,ws = 1,matrix = joint.worldMatrix.get())
+                    partial.setParent(self.pinkyCc[num].getParent().getParent())
+                    
+                    #node name
+                    plusAverageName = nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[num] + self.fingerJointName[5],'PMA')
+                    multipleDivideName = nameUtils.getUniqueName(self.side,self.fingerName[4]  + self.fingerJointName[num] + self.fingerJointName[5],'MDN')
+                    
+                    #create node 
+                    plusAverage = pm.createNode('plusMinusAverage',n = plusAverageName)
+                    multipleDivide = pm.createNode('multiplyDivide',n = multipleDivideName)
+                    
+                    #connect node
+                    #PMA
+                    self.pinkySdks[num].rx.connect(plusAverage.input3D[0].input3Dx)
+                    self.pinkySdks[num].ry.connect(plusAverage.input3D[0].input3Dy)
+                    self.pinkySdks[num].rz.connect(plusAverage.input3D[0].input3Dz)
+                    self.pinkyCc[num].rx.connect(plusAverage.input3D[1].input3Dx)
+                    self.pinkyCc[num].ry.connect(plusAverage.input3D[1].input3Dy)
+                    self.pinkyCc[num].rz.connect(plusAverage.input3D[1].input3Dz)
+                    
+                    #MDN
+                    #input 
+                    plusAverage.output3Dx.connect(multipleDivide.input1X)
+                    plusAverage.output3Dy.connect(multipleDivide.input1Y)
+                    plusAverage.output3Dz.connect(multipleDivide.input1Z)
+                    multipleDivide.input2X.set(0.5)
+                    multipleDivide.input2Y.set(0.5)
+                    multipleDivide.input2Z.set(0.5)
+                    #output
+                    multipleDivide.output.outputX.connect(partial.rx)
+                    multipleDivide.output.outputY.connect(partial.ry)
+                    multipleDivide.output.outputZ.connect(partial.rz)
+                    
+                    #jointOrient
+                    for jointOrient in ['jointOrientX','jointOrientY','jointOrientZ']:
+                        partial.attr(jointOrient).set(0)             
            
     def __setSDK(self):
 
@@ -1736,13 +1775,20 @@ class FingerModuleUi(object):
         
         #(self,baseName = 'arm',side = 'l',size = 1.5,
         self.name = pm.text(l = '**** Finger Module ****')       
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'finger')
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l')
-        self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 0.5)
-        self.armMetaNodeN = pm.textFieldGrp(l = 'armMeta :',ad2 = 1)
-        self.spineMetaNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1)
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'finger',cl2 = ['left','left'],)
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l',cl2 = ['left','left'],)
+        self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],ad2 = 1,nf = 1,value1 = 0.5)
+        
+        #finger num 
+        self.fingerNumMenu = pm.optionMenu(l = 'finger Num : ')
+        pm.menuItem(l = 'ni',p = self.fingerNumMenu)
+        pm.menuItem(l = 'sann',p = self.fingerNumMenu)
+        pm.menuItem(l = 'shi',p = self.fingerNumMenu)
+        pm.menuItem(l = 'go',p = self.fingerNumMenu)
+        
+        self.armMetaNodeN = pm.textFieldGrp(l = 'armMeta :',ad2 = 1,cl2 = ['left','left'],text = 'l_arm_0_META')
+        self.spineMetaNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,cl2 = ['left','left'],text = 'm_spine_0_META')
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'],text = 'm_test_0_META')
         pm.separator(h = 10)
         
         #ver2Loc
@@ -1767,11 +1813,13 @@ class FingerModuleUi(object):
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
         sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
+        fingerNumT = pm.optionMenu(self.fingerNumMenu, q = 1,v = 1)
         armMetaNode = pm.textFieldGrp(self.armMetaNodeN,q = 1,text = 1)
         spineMetaNode = pm.textFieldGrp(self.spineMetaNodeN,q = 1,text = 1)
         mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
         
-        self.__pointerClass = FingerModule(baseNameT,sideT,size = cntSizeV,metaArm = armMetaNode,metaMain = mainMetaNode,metaSpine = spineMetaNode)
+        self.__pointerClass = FingerModule(baseNameT,sideT,size = cntSizeV,metaArm = armMetaNode,
+                                           metaMain = mainMetaNode,metaSpine = spineMetaNode,fingerNum = fingerNumT)
         return self.__pointerClass        
     
     def __clusLoc(self,*arg):
