@@ -8,7 +8,7 @@ class SpineModule(object):
 
     posSpineArray = [[],[],[]]
 
-    def __init__(self,side = 'm',bodySize = 1,ikSize = 1,baseName = None,segment = 5,metaMain = None):
+    def __init__(self,side = 'm',bodySize = 1,ctrlAxis = 'y',ikSize = 1,baseName = None,segment = 5,metaMain = None):
         
         #self para
         self.side = side
@@ -26,6 +26,7 @@ class SpineModule(object):
         self.revFkGuides = None
         
         #ctrl
+        self.ctrlAxis = ctrlAxis
         self.ribbonJc = None
         self.spineCc = None
         self.bodyCtrl = None
@@ -102,7 +103,10 @@ class SpineModule(object):
                 pm.parent(tempGuides[i],tempGuides[i + 1])            
         
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')        
-        self.guideGrp = pm.group(self.guideCc,self.fkGuides[0],self.guideTrv,n = name)   
+        self.guideGrp = pm.group(em = 1,n = name)
+        self.guideCc.setParent(self.guideGrp)
+        self.fkGuides[0].setParent(self.guideGrp)
+        self.guideTrv.setParent(self.guideGrp)
         self.guideGrp.v.set(0)
         
         self.__bodyCtrl()
@@ -113,7 +117,7 @@ class SpineModule(object):
         
     def __bodyCtrl(self):
          
-        self.bodyCtrl = control.Control(self.side,self.baseName + 'Cc',size = self.bodySize * 1.25,aimAxis = 'y') 
+        self.bodyCtrl = control.Control(self.side,self.baseName + 'Main',size = self.bodySize * 1.25,aimAxis = self.ctrlAxis) 
         self.bodyCtrl.circleCtrl()
         
         #move the target object
@@ -397,7 +401,7 @@ class SpineModule(object):
             pm.select(cl = 1)
             pm.delete(ribbonClusList[num])
             pm.select(cl = 1)
-            cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.ikSize,aimAxis = 'y')
+            cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.ikSize,aimAxis = self.ctrlAxis)
             cc.circleCtrl()
             self.bodyCtrl.control.ik_vis.connect(cc.controlGrp.v)
             self.spineCc.append(cc.control)
@@ -632,19 +636,43 @@ class SpineModule(object):
             
             pm.select(self.metaMain) 
             headQuarter = pm.selected()[0]
-            destinations = []
+            mainDestinations = []
             
             moduleGrp = pm.connectionInfo(headQuarter.moduleGrp, destinationFromSource=True)
             
             for tempDestination in moduleGrp:
                 destination = tempDestination.split('.')
-                destinations.append(destination[0])
-                
-# [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
-
-            self.bodyCtrl.controlGrp.setParent(destinations[0])
-            self.guideGrp.setParent(destinations[5])
+                mainDestinations.append(destination[0])                
+                        
+            #to the main hierachy
+            for grp in mainDestinations:
+                destnation = grp.split('_')
+                if destnation[1] == 'CC':
+                    CC = grp                
+                elif destnation[1] == 'SKL':
+                    SKL = grp                    
+                elif destnation[1] == 'IK':
+                    IK = grp                    
+                elif destnation[1] == 'LOC':
+                    LOC = grp                            
+                elif destnation[1] == 'XTR':
+                    XTR = grp                             
+                elif destnation[1] == 'GUD':
+                    GUD = grp                          
+                elif destnation[1] == 'GEO':
+                    GEO = grp                      
+                elif destnation[1] == 'ALL':
+                    ALL = grp                      
+                elif destnation[1] == 'XTR':
+                    XTR = grp                      
+                elif destnation[1] == 'TRS':
+                    TRS = grp                      
+                elif destnation[1] == 'PP':
+                    PP = grp            
             
+            self.bodyCtrl.controlGrp.setParent(CC)
+            self.guideGrp.setParent(GUD)
+
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
             print ''
@@ -685,18 +713,13 @@ class SpineModuleUi(object):
         
         #(self,baseName = 'arm',side = 'l',size = 1.5,
         self.name = pm.text(l = '**** Spine Module ****')       
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'spine')
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'm')
-        self.cntSizeBody = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 2)
-        
-        self.cntSizeIk = pm.floatFieldGrp(l = 'ik Size : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 1.8)
-        
-        self.segment = pm.intFieldGrp(l = 'segment Number : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 9)
-        
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1)
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'spine',cl2 = ['left','left'])
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'm',cl2 = ['left','left'])
+        self.cntAxisT = pm.textFieldGrp(l = 'ctrl Axis :',ad2 = 1,text = 'y',cl2 = ['left','left'])
+        self.cntSizeBody = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],ad2 = 1,numberOfFields = 1,value1 = 2)    
+        self.cntSizeIk = pm.floatFieldGrp(l = 'ik Size : ',cl2 = ['left','left'],ad2 = 1,numberOfFields = 1,value1 = 1.8)        
+        self.segment = pm.intFieldGrp(l = 'segment Number : ',cl2 = ['left','left'],ad2 = 1,numberOfFields = 1,value1 = 9)        
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'])
         
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         pm.separator(h = 10)
@@ -712,12 +735,13 @@ class SpineModuleUi(object):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
         sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        cntAxisT = pm.textFieldGrp(self.cntAxisT,q = 1,text = 1)
         cntSizeBodyV = pm.floatFieldGrp(self.cntSizeBody,q = 1,value1 = 1)
         cntSizeIkV = pm.floatFieldGrp(self.cntSizeIk,q = 1,value1 = 1)
         segmentN = pm.intFieldGrp(self.segment,q = 1,v = 1)
         mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
         
-        self.__pointerClass = SpineModule(baseName = baseNameT,side = sideT,bodySize = cntSizeBodyV,
+        self.__pointerClass = SpineModule(baseName = baseNameT,side = sideT,bodySize = cntSizeBodyV,ctrlAxis = cntAxisT,
                                           ikSize = cntSizeIkV,segment = segmentN,metaMain = mainMetaNode)
         return self.__pointerClass
         
