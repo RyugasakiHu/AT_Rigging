@@ -1,5 +1,6 @@
 import boneChain
 import pymel.core as pm
+import math
 from maya import cmds , OpenMaya
 from Modules import control
 from Utils import nameUtils
@@ -95,6 +96,7 @@ class IkChain(boneChain.BoneChain):
         self.ikCtrl = control.Control(self.side,self.baseName + self.type,self.size) 
         self.ikCtrl.circleSplitCtrl()
         self.ikCtrl.controlGrp.rotate.set(self.controlOrient)
+        pm.delete(self.ikCtrl.control,ch = 1)
         
         #snap to the last joint matrix = self.chain[i].worldMatrix.get()
         pm.xform(self.ikCtrl.controlGrp,ws = 1,matrix = self.chain[2].worldMatrix.get())
@@ -144,8 +146,33 @@ class IkChain(boneChain.BoneChain):
             arrowV *= 5
             finalV = arrowV + midV
             
+            #
+            cross1 = startEnd ^ startMid
+            cross1.normalize()
+            
+            cross2 = cross1 ^ arrowV            
+            cross2.normalize()
+            arrowV.normalize()
+            
+            matrixV = [arrowV.x,arrowV.y,arrowV.z,0,
+                       cross1.x,cross1.y,cross1.z,0,
+                       cross2.x,cross2.y,cross2.z,0,
+                       0,0,0,1]
+            
+            martixM = OpenMaya.MMatrix()
+            
+            OpenMaya.MScriptUtil.createMatrixFromList(matrixV,martixM)
+            
+            matrixFn = OpenMaya.MTransformationMatrix(martixM)
+            
+            rot = matrixFn.eulerRotation()                    
+            
             #place pole vector
-            pm.xform(self.poleVectorCtrl.controlGrp,ws = 1,t= (finalV.x , finalV.y ,finalV.z))
+            pm.xform(self.poleVectorCtrl.controlGrp,ws = 1,t = (finalV.x , finalV.y ,finalV.z))
+            pm.xform(self.poleVectorCtrl.controlGrp,ws = 1,rotation = ((rot.x/math.pi*180.0),
+                                                                (rot.y/math.pi*180.0),
+                                                                (rot.z/math.pi*180.0)))
+            
             
             #aim curve
             self.ikBeamCurve = pm.curve(d = 1,p = [self.poleVectorCtrl.control.getTranslation(space = 'world'),
@@ -259,7 +286,7 @@ class IkChain(boneChain.BoneChain):
     def __elbowKneeLock(self):
     
         #name setting
-        if self.baseName == 'arm':
+        if 'arm' in self.baseName :
             upStartLocName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2] + 'Start','loc')
             upEndLocName = nameUtils.getUniqueName(self.side,self.armLockData[0] + '_' + self.armLockData[2] + 'End','loc')
             downStartLocName = nameUtils.getUniqueName(self.side,self.armLockData[1] + '_' + self.armLockData[2] + 'Start','loc')
@@ -269,7 +296,7 @@ class IkChain(boneChain.BoneChain):
                         
             lockBlendcolorNodeName = nameUtils.getUniqueName(self.side,self.baseName + '_' + self.armLockData[2],'BCN')
             
-        elif self.baseName == 'leg':
+        elif 'leg' in self.baseName:
             upStartLocName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2] + 'Start','loc')
             upEndLocName = nameUtils.getUniqueName(self.side,self.legLockData[0] + '_' + self.legLockData[2] + 'End','loc')
             downStartLocName = nameUtils.getUniqueName(self.side,self.legLockData[1] + '_' + self.legLockData[2] + 'Start','loc')
