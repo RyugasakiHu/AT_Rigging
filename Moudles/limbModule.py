@@ -7,18 +7,19 @@ from maya import OpenMaya
 
 class LimbModule(object):
     
-#     posLimbArray = [[2,14,-0.2],[4,14,-0.3],[6.15,14,-0.2],[6.4,14,-0.2]]
-    
     posLimbArray = [[2,14,-0.2],[4,14,-0.3],[6.15,14,-0.2]]
     rotLimbArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     posShoulderArray = [[0.2,13.95,-0.25],[1.45,14.25,-0.17]]
     rotShoulderArray = [[0,0,0],[0,0,0]]
     posShoulderBladeArray = [[0.65,14,-0.6],[0.65,12.5,-0.6]]
-    rotShoulderBladeArray = [[0,0,0],[0,0,0]]    
+    rotShoulderBladeArray = [[0,0,0],[0,0,0]]
+    posElbowPartialArray = [[4,14,-1.5]]
+    rotElbowPartialArray = [[0,0,0]]
     
     def __init__(self,baseName = 'arm',side = 'l',size = 1.5,
                  solver = 'ikRPsolver',controlOrient = [0,0,0],
-                 metaSpine = None,metaMain = None,mirror = None):
+                 metaSpine = None,metaMain = None,mirror = None,
+                 shoulder = 0,elbow = 'no'):
         #init
         self.baseName = baseName
         self.side = side
@@ -50,9 +51,10 @@ class LimbModule(object):
         self.shoulderBriGrp = None
         
         #guides 
-        self.limbGuides = None
+        self.limbGuides = None        
         self.shoulderGuides = None
         self.shoulderBladeGuides = None
+        self.elbowPartialGuides = None
         self.totalGuides = None
         self.guideGrp = None
         
@@ -68,9 +70,11 @@ class LimbModule(object):
         self.ikAtHandle = None
         self.ikAtEffector  = None
         self.shoulderAtGrp = None
-        self.poseReadorGrp = None        
+        self.poseReadorGrp = None
         
         #Hook
+        self.shoulder = shoulder
+        self.elbowPartial = elbow
         self.__tempSpaceSwitch = None
         self.locLocal = None
         self.locWorld = None
@@ -82,11 +86,12 @@ class LimbModule(object):
         self.metaSpine = metaSpine
          
     def buildGuides(self):
-        
-        self.limbGuides = []
+                
         self.shoulderGuides = []
-        self.shoulderBladeGuides = []
-        self.totalGuides = []
+        self.shoulderBladeGuides = []        
+        self.limbGuides = []
+        self.elbowPartialGuides = []
+        self.totalGuides = []        
         
         #limb Guides
         for num,pos in enumerate(self.posLimbArray):
@@ -101,72 +106,86 @@ class LimbModule(object):
         for i in range(len(tempLimbGuides)):
             if i != (len(tempLimbGuides) - 1):
                 pm.parent(tempLimbGuides[i],tempLimbGuides[i + 1])
-                
-        #shoulder Guides:        
-        for num,pos in enumerate(self.posShoulderArray):
-            name = nameUtils.getUniqueName(self.side,self.baseName + 'Shoulder','gud')
-            loc = pm.spaceLocator(n = name)
-            loc.t.set(pos)
-            loc.r.set(self.rotShoulderArray[num])
-            self.shoulderGuides.append(loc)
-            
-        tempShoulderGuides = list(self.shoulderGuides)
-        tempShoulderGuides.reverse()
-        for i in range(len(tempShoulderGuides)):
-            if i != (len(tempShoulderGuides) - 1):
-                pm.parent(tempShoulderGuides[i],tempShoulderGuides[i + 1])  
-                
-        #shoulder Blade
-        for num,pos in enumerate(self.posShoulderBladeArray):
-            name = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','gud')
-            loc = pm.spaceLocator(n = name)
-            loc.t.set(pos)
-            loc.r.set(self.rotShoulderBladeArray[num])
-            self.shoulderBladeGuides.append(loc)
-             
-        tempShoulderBladeGuides = list(self.shoulderBladeGuides)
-        tempShoulderBladeGuides.reverse()
-        for i in range(len(tempShoulderBladeGuides)):
-            if i != (len(tempShoulderBladeGuides) - 1):
-                pm.parent(tempShoulderBladeGuides[i],tempShoulderBladeGuides[i + 1])
-                
-        #perpare for the mirror
         
+        #elbow partial
+        if self.elbowPartial == 'yes':
+            for num,pos in enumerate(self.posElbowPartialArray):
+                name = nameUtils.getUniqueName(self.side,self.baseName + 'Partial','gud')
+                loc = pm.spaceLocator(n = name)
+                loc.t.set(pos)
+                loc.r.set(self.rotElbowPartialArray[num])
+                self.elbowPartialGuides.append(loc)
+                loc.setParent(self.limbGuides[0])                    
+        
+        #shoulder guides
+        if self.shoulder == 'yes':            
+            
+            #shoulder Guides:        
+            for num,pos in enumerate(self.posShoulderArray):
+                name = nameUtils.getUniqueName(self.side,self.baseName + 'Shoulder','gud')
+                loc = pm.spaceLocator(n = name)
+                loc.t.set(pos)
+                loc.r.set(self.rotShoulderArray[num])
+                self.shoulderGuides.append(loc)
+                
+            tempShoulderGuides = list(self.shoulderGuides)
+            tempShoulderGuides.reverse()
+            for i in range(len(tempShoulderGuides)):
+                if i != (len(tempShoulderGuides) - 1):
+                    pm.parent(tempShoulderGuides[i],tempShoulderGuides[i + 1])  
+                    
+            #shoulder Blade
+            for num,pos in enumerate(self.posShoulderBladeArray):
+                name = nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','gud')
+                loc = pm.spaceLocator(n = name)
+                loc.t.set(pos)
+                loc.r.set(self.rotShoulderBladeArray[num])
+                self.shoulderBladeGuides.append(loc)
+                 
+            tempShoulderBladeGuides = list(self.shoulderBladeGuides)
+            tempShoulderBladeGuides.reverse()
+            for i in range(len(tempShoulderBladeGuides)):
+                if i != (len(tempShoulderBladeGuides) - 1):
+                    pm.parent(tempShoulderBladeGuides[i],tempShoulderBladeGuides[i + 1])
+                    
         for guides in self.limbGuides + self.shoulderGuides + self.shoulderBladeGuides:
             self.totalGuides.append(guides)
         
         #clean up
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(em = 1,n = name)
-        self.limbGuides[0].setParent(self.guideGrp)
-        self.shoulderGuides[0].setParent(self.guideGrp)
-        self.shoulderBladeGuides[0].setParent(self.guideGrp)
+        self.limbGuides[0].setParent(self.guideGrp)        
+        
+        if self.shoulder == 'yes':
+            self.shoulderGuides[0].setParent(self.guideGrp)
+            self.shoulderBladeGuides[0].setParent(self.guideGrp)      
                      
     def build(self):
         
         self.guideGrp.v.set(0)
-        #shoulder set
-        #shoulder pos get
-        self.shoulderGuidePos = [x.getTranslation(space = 'world') for x in self.shoulderGuides]
-        self.shoulderGuideRot = [x.getRotation(space = 'world') for x in self.shoulderGuides]
         
-        #shoulder jj set
-        self.shoulderChain = boneChain.BoneChain(self.baseName + 'Shoulder',self.side,type = 'jj')
-        self.shoulderChain.fromList(self.shoulderGuidePos,self.shoulderGuideRot)
-        pm.rename(self.shoulderChain.chain[-1],nameUtils.getUniqueName(self.side,self.baseName + 'Shoulder','je'))
+        if self.shoulder == 'yes':
+            #shoulder set
+            #shoulder pos get
+            self.shoulderGuidePos = [x.getTranslation(space = 'world') for x in self.shoulderGuides]
+            self.shoulderGuideRot = [x.getRotation(space = 'world') for x in self.shoulderGuides]
         
-        ###########################
-        #shoulder Blade set
-        #shoulder Blade pos get
-        self.shoulderBladeGuidePos = [x.getTranslation(space = 'world') for x in self.shoulderBladeGuides]
-        self.shoulderBladeGuideRot = [x.getRotation(space = 'world') for x in self.shoulderBladeGuides]
-        
-        #shoulder jj set
-        self.shoulderBladeChain = boneChain.BoneChain(self.baseName + 'ShoulderBlade',self.side,type = 'jj')
-        self.shoulderBladeChain.fromList(self.shoulderBladeGuidePos,self.shoulderBladeGuideRot)
-        pm.rename(self.shoulderBladeChain.chain[-1],nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','je'))
-        
-        
+            #shoulder jj set
+            self.shoulderChain = boneChain.BoneChain(self.baseName + 'Shoulder',self.side,type = 'jj')
+            self.shoulderChain.fromList(self.shoulderGuidePos,self.shoulderGuideRot)
+            pm.rename(self.shoulderChain.chain[-1],nameUtils.getUniqueName(self.side,self.baseName + 'Shoulder','je'))
+            
+            ###########################
+            #shoulder Blade set
+            #shoulder Blade pos get
+            self.shoulderBladeGuidePos = [x.getTranslation(space = 'world') for x in self.shoulderBladeGuides]
+            self.shoulderBladeGuideRot = [x.getRotation(space = 'world') for x in self.shoulderBladeGuides]
+            
+            #shoulder jj set
+            self.shoulderBladeChain = boneChain.BoneChain(self.baseName + 'ShoulderBlade',self.side,type = 'jj')
+            self.shoulderBladeChain.fromList(self.shoulderBladeGuidePos,self.shoulderBladeGuideRot)
+            pm.rename(self.shoulderBladeChain.chain[-1],nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','je'))
+                
         ###########################
         
         #limb set
@@ -176,7 +195,7 @@ class LimbModule(object):
         
         #addBlendCtrl 
         self.handSettingCtrl = control.Control(self.side,self.baseName + 'Settings',self.size) 
-        self.handSettingCtrl.ikfkBlender()        
+        self.handSettingCtrl.ikfkBlender() 
         
         #fk first 
         self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
@@ -206,11 +225,35 @@ class LimbModule(object):
         self.blendData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikChain.chain,self.limbBlendChain.chain,
                                                             self.handSettingCtrl.control,'IKFK',self.baseName,self.side)
         
+        #elbow partial
+        if self.elbowPartial == 'yes':
+            
+            #pos get
+            self.elbowPartialGuidePos = [x.getTranslation(space = 'world') for x in self.elbowPartialGuides]
+            self.elbowPartialGuideRot = [x.getRotation(space = 'world') for x in self.elbowPartialGuides]
+            
+            #set joint    
+            self.elbowPartialJoint = pm.joint(n = nameUtils.getUniqueName(self.side,self.baseName + 'elbowPartial','jj'),                                   
+                                              position = self.elbowPartialGuidePos[0],orientation = self.elbowPartialGuideRot[0]) 
+#             boneChain.BoneChain(self.baseName + 'elbowPartial',self.side,type = 'jj')
+#             self.elbowPartialJoint.fromList(self.elbowPartialGuidePos,self.elbowPartialGuideRot)
+            self.elbowPartialJoint.setParent(self.limbBlendChain.chain[0])
+            pm.makeIdentity(self.elbowPartialJoint,apply = True,t=0,r=1,s=0,n=0,pn=1)
+            self.elbowPartialJoint.jointOrientX.set(0)
+            self.elbowPartialJoint.jointOrientY.set(0)
+            self.elbowPartialJoint.jointOrientZ.set(0)
+
+            #cnst
+            pm.orientConstraint(self.limbBlendChain.chain[1],self.elbowPartialJoint,mo = 1)            
+            
         self.__ikfkBlender()
         self.__setRibbonUpper()
         self.__setRibbonLower()
         self.__setRibbonSubMidCc()
-        self.__shoulderCtrl()
+        
+        if self.solver == 'ikRPsolver' and self.shoulder == 'yes':
+            self.__shoulderCtrl()
+             
         self.__cleanUp()
         self.__buildHooks()
         
@@ -222,7 +265,8 @@ class LimbModule(object):
         
         #connect node
         self.handSettingCtrl.control.IKFK.connect(self.ikChain.ikCtrl.controlGrp.v)
-        self.handSettingCtrl.control.IKFK.connect(self.ikChain.poleVectorCtrl.controlGrp.v)
+        if self.solver == 'ikRPsolver' :
+            self.handSettingCtrl.control.IKFK.connect(self.ikChain.poleVectorCtrl.controlGrp.v)
         self.handSettingCtrl.control.IKFK.connect(self.handSettingCtrl.textObj[1].v)
         self.handSettingCtrl.control.IKFK.connect(reverseNode.inputX)
         reverseNode.outputX.connect(self.fkChain.chain[0].v)
@@ -254,7 +298,7 @@ class LimbModule(object):
         '''
         #get length
         self.upperJointLentgh = self.limbBlendChain.chain[1].tx.get()
-        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Length = self.upperJointLentgh,
+        self.ribon = ribbon.Ribbon(RibbonName = self.baseName + self.ribbonData[0],Length = self.upperJointLentgh,
                                    size = self.size * 0.75,subMid = 1,side = self.side,
                                    midCcName = self.baseName + self.ribbonData[0])
         self.ribon.construction()
@@ -279,7 +323,7 @@ class LimbModule(object):
         this function set ribbon for the ShoulderElbow 
         '''
         self.lowerJointLentgh = self.limbBlendChain.chain[2].tx.get()
-        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Length = self.lowerJointLentgh,
+        self.ribon45hp = ribbon.Ribbon(RibbonName = self.baseName + self.ribbonData[1],Length = self.lowerJointLentgh,
                                        size = self.size * 0.75,subMid = 1,side = self.side,
                                        midCcName=self.baseName + self.ribbonData[1])
         self.ribon45hp.construction()
@@ -301,7 +345,7 @@ class LimbModule(object):
         
     def __setRibbonSubMidCc(self):
         
-        self.subMidCtrlElbow = control.Control(size = self.size * 0.75,baseName = self.ribbonData[2] + '_CC',side = self.side) 
+        self.subMidCtrlElbow = control.Control(size = self.size * 0.75,baseName = self.baseName + self.ribbonData[2] + '_CC',side = self.side) 
         self.subMidCtrlElbow.circleCtrl()
         elbolPos = pm.xform(self.limbBlendChain.chain[1],query=1,ws=1,rp=1)
         pm.move(self.subMidCtrlElbow.controlGrp,elbolPos[0],elbolPos[1],elbolPos[2],a=True)
@@ -734,34 +778,32 @@ class LimbModule(object):
           
   
         self.ccDefGrp.setParent(self.cntsGrp)
-#         self.cntsGrp.setParent(self.hi.CC) 
-        self.handSettingCtrl.controlGrp.setParent(self.cntsGrp)    
-                  
-        if self.solver == 'ikRPsolver':
-            pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)        
+        self.handSettingCtrl.controlGrp.setParent(self.cntsGrp)                
           
         #ribbon hierarchy   
         self.ribon.main.v.set(0)
         self.ribon45hp.main.v.set(0)
-          
-        #ik stretch loc vis
-        self.ikChain.stretchStartLoc.v.set(0)
-        self.ikChain.lockUpStartLoc.v.set(0)
-  
+        
         #jj grp
-        self.limbGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
-         
-        self.ikChain.lockUpStartLoc.setParent(self.limbGrp)
-        self.ikChain.stretchStartLoc.setParent(self.limbGrp)
-         
+        self.limbGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))        
+        
+        #ik stretch/lock loc vis            
+        if self.solver == 'ikRPsolver':
+            pm.parent(self.ikChain.poleVectorCtrl.controlGrp,self.cntsGrp)
+            self.ikChain.stretchStartLoc.v.set(0)
+            self.ikChain.lockUpStartLoc.v.set(0)               
+            self.ikChain.lockUpStartLoc.setParent(self.limbGrp)
+            self.ikChain.stretchStartLoc.setParent(self.limbGrp)
+            
+        if self.shoulder == 'yes':
+            self.limbGrp.setParent(self.shoulderCtrl.control)
+            
         armInitial =  self.limbBlendChain.chain[0].getTranslation(space = 'world')
         pm.move(armInitial[0],armInitial[1],armInitial[2],self.limbGrp + '.rotatePivot')
         pm.move(armInitial[0],armInitial[1],armInitial[2],self.limbGrp + '.scalePivot')
           
         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
-            b.chain[0].setParent(self.limbGrp)
-         
-        self.limbGrp.setParent(self.shoulderCtrl.control)
+            b.chain[0].setParent(self.limbGrp)                 
          
 #         for b in (self.ikChain,self.fkChain,self.limbBlendChain):
 #             b.chain[0].setParent(self.bonesGrp)
@@ -789,8 +831,9 @@ class LimbModule(object):
         self.locWorld.r.set(0,0,0)
         self.locLocal.r.set(0,0,0)
           
-        self.locLocal.setParent(self.shoulderChain.chain[-1])
-        pm.parentConstraint(self.shoulderCtrl.control,self.locWorld,skipRotate = ['x','y','z'],mo = 1)
+        if self.shoulder == 'yes':  
+            self.locLocal.setParent(self.shoulderChain.chain[-1])
+            pm.parentConstraint(self.shoulderCtrl.control,self.locWorld,skipRotate = ['x','y','z'],mo = 1)
            
         self.fkChain.chain[0].addAttr('space',at = 'enum',en = 'world:local:',k = 1)
            
@@ -798,14 +841,13 @@ class LimbModule(object):
         targetName = nameUtils.getUniqueName(self.side,self.baseName + 'Tar','loc')
         self.__tempSpaceSwitch = pm.spaceLocator(n = targetName)
         pm.xform(self.__tempSpaceSwitch,ws = 1,matrix = self.limbBlendChain.chain[0].wm.get())
-#         self.__tempSpaceSwitch.setParent(self.hi.XTR)
         self.__tempSpaceSwitch.v.set(0)
-    
+      
         #final cnst
-        finalCnst = pm.parentConstraint(self.locLocal,self.locWorld,self.__tempSpaceSwitch,mo = 1)
+        finalCnst = pm.parentConstraint(self.locLocal,self.locWorld,self.__tempSpaceSwitch,mo = 0)
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Hook','REV')
         reverseNode = pm.createNode('reverse',n = reverseNodeName)
-            
+              
         #fk cnst
         pm.parentConstraint(self.__tempSpaceSwitch,self.limbGrp,mo = 1)
         self.fkChain.chain[0].attr('space').connect(finalCnst.attr(self.locLocal.name() + 'W0'))
@@ -843,21 +885,18 @@ class LimbModule(object):
                 splitTempSpineDestination = tempSpineDestination.split('.')
                 spineDestinations.append(splitTempSpineDestination[0])
                 
-            print 'spineDestinations' + str(spineDestinations)
-            print 'mainDestinations' + str(mainDestinations)
-            
+#             print 'spineDestinations' + str(spineDestinations)
+#             print 'mainDestinations' + str(mainDestinations)            
 #             spineDestinations[u'm_chest_0_grp']
 #             mainDestinations[u'test_CC', u'test_SKL', u'test_IK', u'test_LOC', u'test_XTR', u'test_GUD', u'test_GEO', u'test_ALL', u'test_TRS', u'test_PP']
 
-
             #to the chest
-            self.shoulderBladeGrp.setParent(spineDestinations[0])
-            self.shoulderAtGrp.setParent(spineDestinations[0])
-            self.shoulderCtrl.controlGrp.setParent(spineDestinations[0])
-            self.poseReadorGrp.setParent(spineDestinations[0])
+            if self.solver == 'ikRPsolver' and self.shoulder == 'yes' :
+                self.shoulderBladeGrp.setParent(spineDestinations[0])
+                self.shoulderAtGrp.setParent(spineDestinations[0])
+                self.shoulderCtrl.controlGrp.setParent(spineDestinations[0])
+                self.poseReadorGrp.setParent(spineDestinations[0])
 
-#             [u'test_TRS', u'test_ALL', u'test_PP', u'test_SKL', u'test_CC', u'test_IK', u'test_LOC', u'test_GEO', u'test_XTR', u'test_GUD']
-            
             #to the main hierachy
             for grp in mainDestinations:
                 destnation = grp.split('_')
@@ -898,6 +937,9 @@ class LimbModule(object):
             self.locWorld.setParent(GUD)
             self.__tempSpaceSwitch.setParent(XTR)
             
+            for guide in self.limbGuides:
+                print guide
+            
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
             print ''
@@ -911,8 +953,7 @@ class LimbModule(object):
         metaUtils.addToMeta(self.meta,'controls',[self.ikChain.ikCtrl.control] + [self.handSettingCtrl.control])
 #          ([self.ikChain.ikCtrl.control,self.ikChain.poleVectorCtrl.control] + [fk for fk in self.fkChain.chain])
         metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
-        metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
-        
+        metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])        
         
 #         #mirror part:
 #         if self.mirror == 1:
@@ -977,21 +1018,34 @@ class LimbModuleUi(object):
         self.mainL = pm.columnLayout(adj = 1)
         pm.separator(h = 10)
         
+        self.limb = pm.columnLayout(adj = 1,p = self.mainL)
         #(self,baseName = 'arm',side = 'l',size = 1.5,
         self.name = pm.text(l = '**** Limb Module ****')       
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'arm')
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l')
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,cl2 = ['left','left'],text = 'arm')
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,cl2 = ['left','left'],text = 'l')
         self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 1)
-        self.solverMenu = pm.optionMenu(l = 'color')
-        pm.menuItem(l = 'ikRPsolver')
-        pm.menuItem(l = 'ikSCsolver')
+                                        ad2 = 1,numberOfFields = 1,value1 = 1)    
+        
+        #shoulder
+        self.shoulderPartialMenu = pm.optionMenu(l = 'shoulder : ',p = self.limb)
+        pm.menuItem(l = 'yes',p = self.shoulderPartialMenu)
+        pm.menuItem(l = 'no',p = self.shoulderPartialMenu)        
+        
+        #elbow
+        self.elbowPartialMenu = pm.optionMenu(l = 'elbow Partial : ',p = self.limb)
+        pm.menuItem(l = 'yes',p = self.elbowPartialMenu)
+        pm.menuItem(l = 'no',p = self.elbowPartialMenu)
+        
+        #slover 
+        self.solverMenu = pm.optionMenu(l = 'solver : ',p = self.limb)
+        pm.menuItem(l = 'ikRPsolver',p = self.solverMenu)
+        pm.menuItem(l = 'ikSCsolver',p = self.solverMenu)
 #         self.mirror = pm.radioButtonGrp('mirror',nrb = 2,label = 'Mirror:',la2 = ['yes','no'],sl = 1)    
         
-        self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,text = 'spineMeta')        
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,text = 'mainMeta')
-        self.ver2Loc = pm.button(l = 'ver2Loc',c = self.__clusLoc)
-        self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
+        self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,cl2 = ['left','left'],text = 'spineMeta',p = self.limb)        
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'],text = 'mainMeta',p = self.limb)
+        self.ver2Loc = pm.button(l = 'ver2Loc',c = self.__clusLoc,p = self.limb)
+        self.removeB = pm.button(l = 'remove',c = self.__removeInstance,p = self.limb)
         pm.separator(h = 10)
         
         self.__pointerClass = None
@@ -1007,12 +1061,15 @@ class LimbModuleUi(object):
         sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         solverV = pm.optionMenu(self.solverMenu, q = 1,v = 1)
+        elbowPartialT = pm.optionMenu(self.elbowPartialMenu, q = 1,v = 1)
+        shoulderPartialT = pm.optionMenu(self.shoulderPartialMenu, q = 1,v = 1)
 #         mirrorC = pm.radioButtonGrp(self.mirror,q = 1,sl = 1)
         mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
         spineMetaNode = pm.textFieldGrp(self.metaSpineNodeN,q = 1,text = 1)
         
         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
-                                         metaSpine = spineMetaNode,metaMain = mainMetaNode)        
+                                         metaSpine = spineMetaNode,metaMain = mainMetaNode,
+                                         shoulder = shoulderPartialT,elbow = elbowPartialT)        
 #         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
 #                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,mirror = mirrorC)                
         
