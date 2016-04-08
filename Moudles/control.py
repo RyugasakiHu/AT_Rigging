@@ -116,10 +116,10 @@ class Control(object):
         
         if self.controlName :
             self.control = pm.curve(name = self.controlName,d = 1,
-                                    p = [(0,3,0),(0,2,-2),(0,0,-3),(0,-2,-2),(0,-3,0),
-                                         (0,-2,2),(0,0,3),(0,2,2),(0,3,0),(2,2,0),
-                                         (3,0,0),(2,-2,0),(0,-3,0),(-2,-2,0),(-3,0,0),
-                                         (-2,2,0),(0,3,0)],k = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+                                    p = [(0,1.5,0),(0,1,-1),(0,0,-1.5),(0,-1,-1),(0,-1.5,0),
+                                         (0,-1,1),(0,0,1.5),(0,1,1),(0,1.5,0),(1,1,0),
+                                         (1.5,0,0),(1,-1,0),(0,-1.5,0),(-1,-1,0),(-1.5,0,0),
+                                         (-1,1,0),(0,1.5,0)],k = [0,1,2,1,4,5,6,7,8,9,10,11,12,13,14,15,16])
             
             self.control.s.set(self.size,self.size,self.size)
             pm.makeIdentity(self.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
@@ -319,10 +319,11 @@ class Control(object):
             pm.parent(text.getShape(),self.control,shape = 1,add = 1)   
         
         pm.delete(vText,iText,sText)
-        lockAndHideAttr(self.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])
+        pm.scale(self.control,self.size,self.size,self.size)
+        pm.makeIdentity(self.control,a = 1,t = 1, r = 1,s = 1,n = 0,pn = 1)
+        lockAndHideAttr(self.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v']) 
         
-        
-        self.__finalizeCc()       
+        self.__finalizeCc()  
         self.__colorSet() 
         
     def arrow(self):
