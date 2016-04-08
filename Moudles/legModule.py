@@ -112,7 +112,8 @@ class LegModule(object):
         guideGrpName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(em = 1,n = guideGrpName)
         self.hipGuides[0].setParent(self.guideGrp)  
-        self.legGuides[0].setParent(self.guideGrp)
+        self.legGuides[0].setParent(self.guideGrp) 
+        self.guideGrp.s.set(self.size,self.size,self.size) 
             
     def build(self):
         
@@ -140,14 +141,14 @@ class LegModule(object):
         self.footSettingCtrl.ikfkBlender()
         
         #ikRpPvChain
-        self.ikRpPvChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikRPsolver',type = 'ikRP')
+        self.ikRpPvChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikRPsolver')
         self.ikRpPvChain.fromList(self.legGuidesPos[0:3],self.legGuidesRot)
         for num,joint in enumerate(self.ikRpPvChain.chain):
             name = nameUtils.getUniqueName(self.side,self.footNameList[num],'ikRP')
             pm.rename(joint,name)
   
         #ikRpChain
-        self.ikRpChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikRPsolver',type = 'ikNF')
+        self.ikRpChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikSCsolver')
         self.ikRpChain.fromList(self.legGuidesPos[0:3],self.legGuidesRot)
         for num,joint in enumerate(self.ikRpChain.chain):
             name = nameUtils.getUniqueName(self.side,self.footNameList[num],'ikNF')
@@ -267,6 +268,7 @@ class LegModule(object):
         self.ikRpChain.ikHandle.v.set(0)
         self.ikRpChain.stretchStartLoc.v.set(0)
         self.ikRpPvChain.stretchStartLoc.v.set(0)  
+        self.ikRpPvChain.ikCtrl.control.enable_PV.connect(self.ikRpPvChain.ikBeamCurve.v)
     
     def __ikfkBlendSet(self):
     
@@ -281,6 +283,10 @@ class LegModule(object):
         self.footSettingCtrl.control.IKFK.connect(reverseNode.inputX)
         reverseNode.outputX.connect(self.fkChain.chain[0].v)
         reverseNode.outputX.connect(self.footSettingCtrl.textObj[0].v)
+        self.footSettingCtrl.controlGrp.sx.set(self.size / 2)
+        self.footSettingCtrl.controlGrp.sy.set(self.size / 2)
+        self.footSettingCtrl.controlGrp.sz.set(self.size / 2)
+        pm.makeIdentity(self.footSettingCtrl.controlGrp,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
         
         #set pos
         pm.xform(self.footSettingCtrl.controlGrp,ws = 1,matrix = self.legBlendChain.chain[2].worldMatrix.get())
@@ -302,7 +308,7 @@ class LegModule(object):
         this function set ribbon for the Upper 
         '''
         self.upperJointLentgh = self.legBlendChain.chain[1].tx.get()
-        self.ribon = ribbon.Ribbon(RibbonName = self.ribbonData[0],Length = self.upperJointLentgh,
+        self.ribon = ribbon.Ribbon(RibbonName = self.baseName + self.ribbonData[0],Length = self.upperJointLentgh,
                                    size = self.size * 0.75,subMid = 1,side = self.side,
                                    midCcName = self.baseName + self.ribbonData[0])   
              
@@ -332,7 +338,7 @@ class LegModule(object):
         this function set ribbon for the thighKnee 
         '''
         self.lowerJointLentgh = self.legBlendChain.chain[2].tx.get()
-        self.ribon45hp = ribbon.Ribbon(RibbonName = self.ribbonData[1],Length = self.lowerJointLentgh,
+        self.ribon45hp = ribbon.Ribbon(RibbonName = self.baseName + self.ribbonData[1],Length = self.lowerJointLentgh,
                                    size = self.size * 0.75,subMid = 1,side = self.side,
                                    midCcName = self.baseName + self.ribbonData[1])   
                 
@@ -722,24 +728,66 @@ class LegModule(object):
                 splitTempSpineDestination = tempSpineDestination.split('.')
                 spineDestinations.append(splitTempSpineDestination[0])
 
-# [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
-            
+
             #to the hip
 #             self.shoulderBladeGrp.setParent(spineDestinations[0])
 #             self.shoulderAtChain.chain[0].setParent(spineDestinations[0])
 #             self.shoulderCtrl.controlGrp.setParent(spineDestinations[0])
 #             self.poseReadorGrp.setParent(spineDestinations[0])
             
+            print mainDestinations
+            print spineDestinations
+            
+            for grp in mainDestinations:
+                destnation = grp.split('_')
+                if destnation[1] == 'CC':
+                    CC = grp                
+                elif destnation[1] == 'SKL':
+                    SKL = grp                    
+                elif destnation[1] == 'IK':
+                    IK = grp                    
+                elif destnation[1] == 'LOC':
+                    LOC = grp                            
+                elif destnation[1] == 'XTR':
+                    XTR = grp                             
+                elif destnation[1] == 'GUD':
+                    GUD = grp                          
+                elif destnation[1] == 'GEO':
+                    GEO = grp                      
+                elif destnation[1] == 'ALL':
+                    ALL = grp                      
+                elif destnation[1] == 'XTR':
+                    XTR = grp                      
+                elif destnation[1] == 'TRS':
+                    TRS = grp                      
+                elif destnation[1] == 'PP':
+                    PP = grp              
+            
+            # [u'asd_CC', u'asd_SKL', u'asd_IK', u'asd_LOC', u'asd_XTR', u'asd_GUD', u'asd_GEO', u'asd_ALL', u'asd_TRS', u'asd_PP']
+            
+            
             #to the main hierachy
             self.legGrp.setParent(self.hipCtrl.control)
-            self.cntsGrp.setParent(mainDestinations[0]) 
-            self.ribon.main.setParent(mainDestinations[4])
-            self.ribon45hp.main.setParent(mainDestinations[4])
-            self.legGuides[2].setParent(mainDestinations[2])
-            self.guideGrp.setParent(mainDestinations[5])
-            self.locWorld.setParent(mainDestinations[2])
-            self.__tempSpaceSwitch.setParent(mainDestinations[4])
+            self.cntsGrp.setParent(CC) 
+            self.ribon.main.setParent(XTR)
+            self.ribon45hp.main.setParent(XTR)
+            self.legGuides[2].setParent(IK)
+            self.guideGrp.setParent(GUD)
+            self.locWorld.setParent(IK)
+            self.__tempSpaceSwitch.setParent(XTR)
+            self.ikRpPvChain.ikBeamCurve.setParent(XTR)
+            
             self.hipCtrl.controlGrp.setParent(spineDestinations[0])
+            
+#             self.legGrp.setParent(self.hipCtrl.control)
+#             self.cntsGrp.setParent(mainDestinations[0]) 
+#             self.ribon.main.setParent(mainDestinations[4])
+#             self.ribon45hp.main.setParent(mainDestinations[4])
+#             self.legGuides[2].setParent(mainDestinations[2])
+#             self.guideGrp.setParent(mainDestinations[5])
+#             self.locWorld.setParent(mainDestinations[2])
+#             self.__tempSpaceSwitch.setParent(mainDestinations[4])
+#             self.hipCtrl.controlGrp.setParent(spineDestinations[0])
             
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
@@ -773,12 +821,12 @@ class LegModuleUi(object):
         
         #(self,baseName = 'arm',side = 'l',size = 1.5,
         self.name = pm.text(l = '**** Leg Module ****')       
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'leg')
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l')
-        self.cntSizeBody = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'leg',cl2 = ['left','left'])
+        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l',cl2 = ['left','left'])
+        self.cntSizeV = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
                                         ad2 = 1,numberOfFields = 1,value1 = 1)
-        self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,text = 'spineMeta')        
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,text = 'mainMeta')
+        self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,text = 'spineMeta',cl2 = ['left','left'])        
+        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,text = 'mainMeta',cl2 = ['left','left'])
         
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         pm.separator(h = 10)
@@ -794,10 +842,11 @@ class LegModuleUi(object):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
         sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        cntSizeV = pm.floatFieldGrp(self.cntSizeV,q = 1,value1 = 1)
         mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
         spineMetaNode = pm.textFieldGrp(self.metaSpineNodeN,q = 1,text = 1)
         
-        self.__pointerClass = LegModule(baseName = baseNameT,side = sideT,
+        self.__pointerClass = LegModule(baseName = baseNameT,side = sideT,size = cntSizeV,
                                         metaMain = mainMetaNode,metaSpine = spineMetaNode)
         return self.__pointerClass             
 
