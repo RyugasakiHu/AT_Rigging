@@ -104,8 +104,8 @@ class FingerModule(object):
         
         #guide grp       
         guideName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(em = 1,n = guideName)
-        print self.fingerNum
+        self.guideGrp = pm.group(em = 1,n = guideName) 
+        
         #num
         if self.fingerNum == 2:
             self.posMiddleArray = []
@@ -1656,29 +1656,39 @@ class FingerModule(object):
     def buildConnections(self):
         
         #set whole grp
-        self.handGrp = pm.group(self.thumbGrp,self.indexGrp,self.midGrp,self.ringGrp,self.pinkyGrp,n = nameUtils.getUniqueName(self.side,'hand','grp'))
+        self.handGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,'hand','grp')) 
+        alignHand = pm.parentConstraint(self.armChains[5],self.handGrp,mo = 0)
+        pm.delete(alignHand)
+        
+        self.thumbGrp.setParent(self.handGrp)
+        self.indexGrp.setParent(self.handGrp) 
+        
+        if self.fingerNum == 3 :
+            self.midGrp.setParent(self.handGrp)
+        
+        if self.fingerNum == 4 :    
+            self.ringGrp.setParent(self.handGrp)
+            
+        if self.fingerNum == 5 :   
+            self.pinkyGrp.setParent(self.handGrp)
+        
         pm.select(self.armChains[5])
         armChains5 = pm.selected()
         pm.select(self.armChains[2])
         armChains2 = pm.selected()
-        
-        handGrpPiv = armChains5[0].getTranslation(space = 'world')
-        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],self.handGrp + '.rotatePivot')
-        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],self.handGrp + '.scalePivot')
-        pm.pointConstraint(armChains5[0],self.handGrp,mo = 0)
-         
+ 
         #create bridge loc and grp
         #create bri loc
         ikBri = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'armIK_bri','loc'))
-        fkBri = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'armFK_bri','loc'))
-        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],ikBri)
-        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],fkBri)
+        fkBri = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'armFK_bri','loc')) 
          
         #create bri grp
         ikBriGrp = pm.group(ikBri,n = nameUtils.getUniqueName(self.side,'armIK_bri','grp'))
         fkBriGrp = pm.group(fkBri,n = nameUtils.getUniqueName(self.side,'armFK_bri','grp'))
-        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],ikBriGrp + '.rotatePivot')
-        pm.move(handGrpPiv[0],handGrpPiv[1],handGrpPiv[2],fkBriGrp + '.scalePivot')
+        alignIk = pm.parentConstraint(self.armChains[5],ikBriGrp,mo = 0)
+        pm.delete(alignIk) 
+        alignFk = pm.parentConstraint(self.armChains[5],fkBriGrp,mo = 0)
+        pm.delete(alignFk) 
         ikBriGrp.v.set(0)
         fkBriGrp.v.set(0)
          
@@ -1686,7 +1696,8 @@ class FingerModule(object):
         ikBriGrp.setParent(self.armControls[1])
         fkBriGrp.setParent(armChains5[0])
          
-        #create Oristraint
+        #create cnst
+        pm.pointConstraint(armChains5[0],self.handGrp,mo = 0)
         ori = pm.orientConstraint(ikBri,fkBri,self.handGrp,mo = 0)
         self.armControls[0].IKFK.connect(ori.attr(ikBri.name() + 'W0'))
          
@@ -1756,7 +1767,7 @@ class FingerModule(object):
             elif destnation[1] == 'PP':
                 PP = grp              
         
-        self.guideGrp.setParent(CC)
+        self.guideGrp.setParent(GUD)
         
 def getUi(parent,mainUi):
     
