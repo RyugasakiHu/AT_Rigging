@@ -11,7 +11,7 @@ class Ribbon(object):
         '''
         
         self.RibbonName = RibbonName
-        self.Width = Length / 5
+        self.Width = 1
         self.Length = Length
         self.subMid = subMid
         self.side = side
