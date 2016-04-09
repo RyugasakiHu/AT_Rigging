@@ -672,6 +672,8 @@ class SpineModule(object):
             
             self.bodyCtrl.controlGrp.setParent(CC)
             self.guideGrp.setParent(GUD)
+            self.spineIkGrp.setParent(IK)
+            self.spineIkGrp.inheritsTransform.set(0)
 
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
