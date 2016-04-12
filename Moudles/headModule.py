@@ -504,7 +504,7 @@ class HeadModule(object):
         self.earRightGuideRot = [x.getRotation(space = 'world') for x in self.earRightGuides]
 
         #right ear jj set and clean
-        self.earRightChain = boneChain.BoneChain(self.nameList[10],self.side[1],type = 'jj')
+        self.earRightChain = boneChain.BoneChain(self.nameList[10],self.side[2],type = 'jj')
         self.earRightChain.fromList(self.earRightGuidePos,self.earRightGuideRot)
         self.earRightChain.chain[0].setParent(self.neckFkChain.chain[-1])
         self.headJoint.append(self.earRightChain.chain[0])
@@ -590,6 +590,7 @@ class HeadModule(object):
         
         #create eyeCtrl
         self.eyeRad = float(self.eyeLeftGuides[-1].getTranslation(space = 'object')[2])
+        print self.eyeRad
         self.eyeLeftCtrl = control.Control(self.side[0],self.nameList[3],size = self.eyeRad * 2.5) 
         self.eyeLeftCtrl.sphereCtrl()
         control.lockAndHideAttr(self.eyeLeftCtrl.control,['tx','ty','tz','sx','sy','sz','v'])
@@ -937,10 +938,6 @@ class HeadModule(object):
         else:
             OpenMaya.MGlobal.displayError('Target :' + self.metaSpine + ' is NOT exist')
 
-                    
-#             print 'spineDestinations' + str(spineDestinations)
-#             print 'mainDestinations' + str(mainDestinations)
-
 class DeceiverMoudle(object):
     
     #array for the micro ctrl
@@ -1282,6 +1279,144 @@ class DeceiverMoudle(object):
         else :
             for file in files:
                 pm.importFile(self.bsPath + file,i = 1)
+ 
+# upcheek lr
+# pm.setDrivenKeyframe( 'baseBlendShape.l_upCheckDown_polySurface1',v = 0, 
+#                      cd = 'l_upCheek_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_upCheckDown_polySurface1',v = 1, 
+#                      cd = 'l_upCheek_0_cc.translateY',dv = -1)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_upCheckUp_polySurface1',v = 0, 
+#                      cd = 'l_upCheek_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_upCheckUp_polySurface1',v = 1, 
+#                      cd = 'l_upCheek_0_cc.translateY',dv = 1)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_upCheckIn_polySurface1',v = 0, 
+#                      cd = 'l_upCheek_0_cc.translateX',dv = 0) 
+# pm.setDrivenKeyframe( 'baseBlendShape.l_upCheckIn_polySurface1',v = 1, 
+#                      cd = 'l_upCheek_0_cc.translateX',dv = -1)  
+# pm.setDrivenKeyframe( 'baseBlendShape.l_upCheckOut_polySurface1',v = 0, 
+#                      cd = 'l_upCheek_0_cc.translateX',dv = 0) 
+# pm.setDrivenKeyframe( 'baseBlendShape.l_upCheckOut_polySurface1',v = 1, 
+#                      cd = 'l_upCheek_0_cc.translateX',dv = 1)       
+# 
+#                                    
+# cheek lr
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkUp_polySurface1',v = 0, 
+#                       cd = 'l_cheek_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkUp_polySurface1',v = 1, 
+#                       cd = 'l_cheek_0_cc.translateY',dv = 1)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkDown_polySurface1',v = 0 , 
+#                       cd = 'l_cheek_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkDown_polySurface1',v = 1, 
+#                       cd = 'l_cheek_0_cc.translateY',dv = -1)   
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkOut_polySurface1',v = 0, 
+#                      cd = 'l_cheek_0_cc.translateX',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkOut_polySurface1',v = 1, 
+#                      cd = 'l_cheek_0_cc.translateX',dv = 1)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkIn_polySurface1',v = 0, 
+#                      cd = 'l_cheek_0_cc.translateX',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkIn_polySurface1',v = 1, 
+#                      cd = 'l_cheek_0_cc.translateX',dv = -1)                   
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkPuff_polySurface1',v = 0, 
+#                      cd = 'l_cheek_0_cc.puff',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkPuff_polySurface1',v = 1, 
+#                      cd = 'l_cheek_0_cc.puff',dv = 1)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkSuck_polySurface1',v = 0, 
+#                      cd = 'l_cheek_0_cc.puff',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_checkSuck_polySurface1',v = 1, 
+#                       cd = 'l_cheek_0_cc.puff',dv = -1)                           
+#                      
+# corner side lr
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerWide_polySurface1',v = 0, 
+#                        cd = 'r_mouthCorner_0_cc.translateX',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerWide_polySurface1',v = 1, 
+#                       cd = 'r_mouthCorner_0_cc.translateX',dv = -1)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerNorrowBoth_polySurface1',v = 0, 
+#                        cd = 'r_mouthCorner_0_cc.translateX',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerNorrowBoth_polySurface1',v = 1, 
+#                        cd = 'r_mouthCorner_0_cc.translateX',dv = 1)                              
+# 
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerUp_polySurface1',v = 0, 
+#                        cd = 'r_mouthCorner_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerUp_polySurface1',v = 1, 
+#                       cd = 'r_mouthCorner_0_cc.translateY',dv = 1)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerDown_polySurface1',v = 0, 
+#                        cd = 'r_mouthCorner_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerDown_polySurface1',v = 1, 
+#                        cd = 'r_mouthCorner_0_cc.translateY',dv = -1)                       
+        
+#outer lip lr
+# pm.setDrivenKeyframe( 'baseBlendShape.r_outUpLipDown_polySurface1',v = 0, 
+#                        cd = 'r_upLip_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_outUpLipDown_polySurface1',v = 1, 
+#                       cd = 'r_upLip_0_cc.translateY',dv = -1)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_outUpLipUp_polySurface1',v = 0, 
+#                        cd = 'r_upLip_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_outUpLipUp_polySurface1',v = 1, 
+#                        cd = 'r_upLip_0_cc.translateY',dv = 1)    
+# 
+# pm.setDrivenKeyframe( 'baseBlendShape.r_outLoLipDown_polySurface1',v = 0, 
+#                        cd = 'r_loLip_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_outLoLipDown_polySurface1',v = 1, 
+#                       cd = 'r_loLip_0_cc.translateY',dv = -1)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_outLoLipUp_polySurface1',v = 0, 
+#                        cd = 'r_loLip_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_outLoLipUp_polySurface1',v = 1, 
+#                        cd = 'r_loLip_0_cc.translateY',dv = 1)                               
+#
+#inner lip
+# pm.setDrivenKeyframe( 'baseBlendShape.inLoLipDown_polySurface1',v = 0, 
+#                        cd = 'm_loLip_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.inLoLipDown_polySurface1',v = 1, 
+#                       cd = 'm_loLip_0_cc.translateY',dv = -1)
+# pm.setDrivenKeyframe( 'baseBlendShape.inLoLipUp_polySurface1',v = 0, 
+#                        cd = 'm_loLip_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.inLoLipUp_polySurface1',v = 1, 
+#                        cd = 'm_loLip_0_cc.translateY',dv = 1)
+#
+#smile? lr
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerSmile_polySurface1',v = 0, 
+#                        cd = 'r_mouthCorner_0_cc.smile',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerSmile_polySurface1',v = 1, 
+#                       cd = 'r_mouthCorner_0_cc.smile',dv = 1)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerFrown_polySurface1',v = 0, 
+#                        cd = 'r_mouthCorner_0_cc.smile',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_cornerFrown_polySurface1',v = 1, 
+#                        cd = 'r_mouthCorner_0_cc.smile',dv = -1) 
+#
+#entire up/dn
+# pm.setDrivenKeyframe( 'baseBlendShape.entireUpLipUp_polySurface1',v = 0, 
+#                        cd = 'm_upLip_0_cc.entire',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.entireUpLipUp_polySurface1',v = 1, 
+#                       cd = 'm_upLip_0_cc.entire',dv = 1)
+# pm.setDrivenKeyframe( 'baseBlendShape.entireUpLipDown_polySurface1',v = 0, 
+#                        cd = 'm_upLip_0_cc.entire',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.entireUpLipDown_polySurface1',v = 1, 
+#                        cd = 'm_upLip_0_cc.entire',dv = -1)     
+#
+#inbrow lr up/dn
+# pm.setDrivenKeyframe( 'baseBlendShape.r_inbrowIn_polySurface1',v = 0, 
+#                        cd = 'r_inBrow_0_cc.translateX',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_inbrowIn_polySurface1',v = 1, 
+#                       cd = 'r_inBrow_0_cc.translateX',dv = -1)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_inbrowUp_polySurface1',v = 0, 
+#                        cd = 'r_inBrow_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_inbrowUp_polySurface1',v = 1, 
+#                        cd = 'r_inBrow_0_cc.translateY',dv = 1)   
+# pm.setDrivenKeyframe( 'baseBlendShape.r_inbrowDown_polySurface1',v = 0, 
+#                        cd = 'r_inBrow_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.r_inbrowDown_polySurface1',v = 1, 
+#                        cd = 'r_inBrow_0_cc.translateY',dv = -1)   
+#
+#out up/dn 
+# pm.setDrivenKeyframe( 'baseBlendShape.l_outbrowUp_polySurface1',v = 0, 
+#                        cd = 'l_outBrow_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_outbrowUp_polySurface1',v = 1, 
+#                        cd = 'l_outBrow_0_cc.translateY',dv = 1)   
+# pm.setDrivenKeyframe( 'baseBlendShape.l_outbrowDown_polySurface1',v = 0, 
+#                        cd = 'l_outBrow_0_cc.translateY',dv = 0)
+# pm.setDrivenKeyframe( 'baseBlendShape.l_outbrowDown_polySurface1',v = 1, 
+#                        cd = 'l_outBrow_0_cc.translateY',dv = -1)    
+
         
     def __cleanUp(self):
         
@@ -2039,7 +2174,7 @@ class LidClass(object):
                 leftEyeJoint.ry.connect(followNode.inputG)
             elif self.lidSide == 'r':
                 pm.xform(self.upFollowGrp,ws = 1,matrix = rightEyeJoint.worldMatrix.get())
-                pm.xform(self.downFollowGrp,ws = 1,matrix = leftEyeJoint.worldMatrix.get())
+                pm.xform(self.downFollowGrp,ws = 1,matrix = rightEyeJoint.worldMatrix.get())
                 rightEyeJoint.rz.connect(followNode.inputR)
                 rightEyeJoint.ry.connect(followNode.inputG)            
             
@@ -2140,14 +2275,13 @@ class HeadModuleUi(object):
         ###2st step
         self.name = pm.text(l = '*** blendShapeGroup ***')
         self.bsCtrlSizeF = pm.floatFieldGrp(l = 'blend shape Ctrl Size : ',cl2 = ['left','left'],
-                                         ad2 = 1,numberOfFields = 1,value1 = 1.5)
-        
-        self.headMetaBSNodeN = pm.textFieldGrp(l = 'headMeta :',ad2 = 1,cl2 = ['left','left'],
-                                             text = 'headMeta')
+                                            ad2 = 1,numberOfFields = 1,value1 = 1.5)        
         self.bsGeo = pm.textFieldGrp(l = 'blendShapeGeo : ',cl2 = ['left','left'],
-                                              ad2 = 1,text = '')
+                                     ad2 = 1,text = '')
         self.bsPath = pm.textFieldGrp(l = 'blendShapePath : ',cl2 = ['left','left'],
-                                              ad2 = 1,text = '')
+                                      ad2 = 1,text = '')
+        self.headMetaBSNodeN = pm.textFieldGrp(l = 'headMeta :',ad2 = 1,cl2 = ['left','left'],
+                                               text = 'headMeta')
         
         self.loadBlendShapeClass = pm.button(l = 'load BlendShape Class',c = self.getBlendShapeInstance)
         self.buildBlendShapeGuide = pm.button(l = 'micro guide',c = self.__buildBlendShapeGuide)
