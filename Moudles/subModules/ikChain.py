@@ -8,7 +8,7 @@ from Utils import nameUtils
 class IkChain(boneChain.BoneChain):
 
     def __init__(self, baseName = 'arm',side = 'm',size = 1,solver = 'ikSCsolver',
-                 controlOrient = [0,0,0]):    
+                 controlOrient = [0,0,0],noFlip = 0):    
         '''
         Constructor
         '''
@@ -17,6 +17,7 @@ class IkChain(boneChain.BoneChain):
         self.side = side
         self.size = size
         self.solver = solver
+        self.noFlip = noFlip
         self.controlOrient = controlOrient
         self.__acceptedSolvers = ['ikSCsolver','ikRPsolver']
         
@@ -51,8 +52,12 @@ class IkChain(boneChain.BoneChain):
         
         if self.solver == 'ikSCsolver':
             self.type = 'ikSC'
+            
         elif self.solver == 'ikRPsolver':
-            self.type = 'ikRP'
+            if self.noFlip == 1:
+                self.type = 'ikNF'
+            elif self.noFlip == 0:
+                self.type = 'ikRP'
         
         boneChain.BoneChain.__init__(self,baseName,side,type = self.type)
         
@@ -76,9 +81,9 @@ class IkChain(boneChain.BoneChain):
         ikName = nameUtils.getUniqueName(self.side,self.baseName + self.type,'iks')
         self.ikHandle,self.ikEffector = pm.ikHandle(sj = self.chain[0],ee = self.chain[2],solver = self.solver,n = ikName)
         pm.pointConstraint(self.ikCtrl.control,self.ikHandle,w = 1)
-        
+ 
         #create PV 
-        if self.solver == 'ikRPsolver':
+        if self.type == 'ikRP':
             self.poleVectorCnst = pm.poleVectorConstraint(self.poleVectorCtrl.control,ikName,w = 1)
                          
             #lock and hide
@@ -86,8 +91,8 @@ class IkChain(boneChain.BoneChain):
                 
         #add stretch    
         self.__stretchIk()
-        
-        if self.solver == 'ikRPsolver':
+        #########
+        if self.type == 'ikRP':
             self.__elbowKneeLock()
         
     def __addControls(self):
@@ -176,10 +181,14 @@ class IkChain(boneChain.BoneChain):
             
             #aim curve
             self.ikBeamCurve = pm.curve(d = 1,p = [self.poleVectorCtrl.control.getTranslation(space = 'world'),
-                                              self.chain[1].getTranslation(space = 'world')],k = [0,1],
-                                    n = nameUtils.getUniqueName(self.side,'beam','cc'))
+                                        self.chain[1].getTranslation(space = 'world')],k = [0,1],
+                                        n = nameUtils.getUniqueName(self.side,self.baseName + 'Beam' + self.type,'cc'))
+            
             self.ikBeamCurve.overrideEnabled.set(1)
             self.ikBeamCurve.overrideDisplayType.set(2)
+            
+            if 'arm' in self.baseName:
+                self.ikCtrl.controlGrp.v.connect(self.ikBeamCurve.v)
             
             #cls
             beamClusterStart = pm.cluster(self.ikBeamCurve.cv[0])
