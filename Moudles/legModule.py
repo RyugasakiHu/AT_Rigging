@@ -253,14 +253,18 @@ class LegModule(object):
         self.ikRpChain.ikHandle.poleVectorX.set(-0.1)
         self.ikRpChain.ikHandle.poleVectorY.set(0)
         self.ikRpChain.ikHandle.poleVectorZ.set(0)
+        
+        
         PMAName = nameUtils.getUniqueName(self.side,self.baseName + '_noFlip','PMA')
         pm.addAttr(self.ikRpPvChain.ikCtrl.control, ln = 'knee_twist', at ="float",dv = 0,h = False,k = True )
         pm.addAttr(self.ikRpPvChain.ikCtrl.control, ln = 'knee_offset', at ="float",dv = 0,h = False,k = True )
         plusMinusAverageNode = pm.createNode('plusMinusAverage',n = PMAName)
+        
+        flipTwistDefaultV = self.legGuides[0].ry.get() 
         self.ikRpPvChain.ikCtrl.control.knee_offset.connect(plusMinusAverageNode.input1D[0])
         self.ikRpPvChain.ikCtrl.control.knee_twist.connect(plusMinusAverageNode.input1D[1])                
         plusMinusAverageNode.output1D.connect(self.ikRpChain.ikHandle.twist)
-        self.ikRpPvChain.ikCtrl.control.knee_offset.set(-90)
+        self.ikRpPvChain.ikCtrl.control.knee_offset.set(float(-90 - flipTwistDefaultV))
         self.ikRpPvChain.ikCtrl.control.knee_offset.lock(1)
         
         #add ik pv vis
@@ -427,9 +431,7 @@ class LegModule(object):
         self.legBlendChain.chain[0].scaleX.connect(self.ribon.jj[4].scaleX)
         self.legBlendChain.chain[0].scaleY.connect(self.ribon.jj[4].scaleY)
         self.legBlendChain.chain[0].scaleZ.connect(self.ribon.jj[4].scaleZ)
-        
-        
-        
+ 
         #name setting for the scale node for kneeAnkle Jj1
         kneeAnkleScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'kneeAnkleScaleJj1','PMA')
         
