@@ -148,7 +148,7 @@ class LegModule(object):
             pm.rename(joint,name)
   
         #ikRpChain
-        self.ikRpChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikSCsolver')
+        self.ikRpChain = ikChain.IkChain(self.baseName,self.side,self.size,solver = 'ikRPsolver',noFlip = 1)
         self.ikRpChain.fromList(self.legGuidesPos[0:3],self.legGuidesRot)
         for num,joint in enumerate(self.ikRpChain.chain):
             name = nameUtils.getUniqueName(self.side,self.footNameList[num],'ikNF')
@@ -317,8 +317,10 @@ class LegModule(object):
         pm.xform(self.ribon.startLoc,ws = 1,matrix = self.legBlendChain.chain[0].worldMatrix.get())
         pm.xform(self.ribon.endLoc,ws = 1,matrix = self.legBlendChain.chain[1].worldMatrix.get())
         
-        pm.parentConstraint(self.legBlendChain.chain[0],self.ribon.startLoc,mo = 1)
-        pm.parentConstraint(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.ribon.epUploc,mo = 1)
+#         pm.parentConstraint(self.ikChain.chain[0],self.ribon.startLoc,mo = 1)
+        
+#         pm.parentConstraint(self.legBlendChain.chain[0],self.ribon.startLoc,mo = 1)
+#         pm.parentConstraint(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.ribon.epUploc,mo = 1)
         
         self.__subCtrlUpper()
         
@@ -686,7 +688,7 @@ class LegModule(object):
         self.__tempSpaceSwitch.v.set(0)
     
         #final cnst
-        finalCnst = pm.parentConstraint(self.locLocal,self.locWorld,self.__tempSpaceSwitch,mo = 1)
+        finalCnst = pm.parentConstraint(self.locLocal,self.locWorld,self.__tempSpaceSwitch,mo = 0)
         reverseNodeName = nameUtils.getUniqueName(self.side,self.baseName + 'Hook','REV')
         reverseNode = pm.createNode('reverse',n = reverseNodeName)
             
@@ -696,6 +698,8 @@ class LegModule(object):
         self.fkChain.chain[0].attr('space').connect(finalCnst.attr(self.locLocal.name() + 'W0'))
         self.fkChain.chain[0].attr('space').connect(reverseNode.inputX)
         reverseNode.outputX.connect(finalCnst.attr(self.locWorld.name() + 'W1'))        
+        
+        
         
     def buildConnections(self):
         
@@ -776,6 +780,10 @@ class LegModule(object):
             self.locWorld.setParent(IK)
             self.__tempSpaceSwitch.setParent(XTR)
             self.ikRpPvChain.ikBeamCurve.setParent(XTR)
+            self.ikRpPvChain.distTransNode.setParent(XTR)
+            self.ikRpPvChain.upDistTransNode.setParent(XTR)
+            self.ikRpPvChain.downDistTransNode.setParent(XTR)
+            self.ikRpChain.distTransNode.setParent(XTR)
             
             self.hipCtrl.controlGrp.setParent(spineDestinations[0])
             
