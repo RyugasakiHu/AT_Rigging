@@ -862,10 +862,7 @@ class HeadModule(object):
     
     def __cleanUp(self):
         
-#         metaUtils.addToMeta(self.meta,, objs)
-#         metaUtils.addToMeta(self.meta,'moduleGrp', [self.ALL])  
-#         metaUtils.addToMeta(self.meta,'controls', self.microCtrlList + self.mainCtrl)
- 
+#         metaUtils.addToMeta(self.meta,, objs)  
         metaUtils.addToMeta(self.meta,'controls',self.mainCtrl)
         metaUtils.addToMeta(self.meta,'skinJoint',[joint for joint in self.headJoint]) 
 
@@ -1641,7 +1638,7 @@ class LidClass(object):
             pm.delete(alginCnst)
              
             pm.parent(je, jj)
-            self.upJj.append(jj)
+            self.upJj.append(je)
              
             #orient joints
             pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
@@ -1664,7 +1661,7 @@ class LidClass(object):
             pm.delete(alginCnst)
              
             pm.parent(je, jj)
-            self.downJj.append(jj)
+            self.downJj.append(je)
              
             #orient joints
             pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
@@ -2113,7 +2110,9 @@ class LidClass(object):
         self.downLocGrp.setParent(self.lidGrp)
         self.blinkGrp.setParent(self.lidGrp)
         self.lidCrvGrp.setParent(self.lidGrp)
-        self.lidJcGrp.setParent(self.lidGrp)
+        self.lidJcGrp.setParent(self.lidGrp) 
+        #create metaNode for skin 
+        metaUtils.addToMeta(self.meta,'skinJoint', [upJj for upJj in self.upJj] + [downJj for downJj in self.downJj])           
         
     def __buildConnection(self):
         
@@ -2143,7 +2142,7 @@ class LidClass(object):
             self.lidJcGrp.v.set(0)
             self.aimLoc.v.set(0)    
             
-            #meta head ctrls
+            #meta head joint
             headJointDestinations = []
             headJointGrp = pm.connectionInfo(head.skinJoint, destinationFromSource=True)
             
@@ -2257,8 +2256,7 @@ class LidClass(object):
             self.lidGrp.v.set(0)
             
         else:
-            print 'DO NOT receive metaMain for LC squad'
-
+            print 'DO NOT receive metaMain for LC squad' 
 
 def getUi(parent,mainUi):
     
@@ -2281,10 +2279,13 @@ class HeadModuleUi(object):
         self.name = pm.text(l = '*** basicSkin ***')
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',cl2 = ['left','left'],
                                          ad2 = 1,text = 'head')
-        self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',cl2 = ['left','left'],
-                                              ad2 = 1,text = 'spineMeta')   
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'],
-                                             text = 'mainMeta')
+        
+        self.metaSpineNodeM = pm.optionMenu(l = 'spineMeta : ')
+        self.__metaSel()  
+        
+        self.mainMetaNodeM = pm.optionMenu(l = 'mainMeta : ')
+        self.__metaSel()  
+ 
         pm.separator(h = 10)
         
         ###2st step
@@ -2313,12 +2314,12 @@ class HeadModuleUi(object):
         self.eyeBallT = pm.textFieldGrp(l='eyeBall :',cl2 = ['left','left'],
                                          ad2 = 1,text = 'eyeBall')
         
-        self.headMetaLidNodeN = pm.textFieldGrp(l = 'headMeta :',ad2 = 1,cl2 = ['left','left'],
-                                                text = 'headMeta')
+        self.headMetaLidNodeM = pm.optionMenu(l = 'headMeta : ')
+        self.__metaSel()  
         
-        self.mainMetaLidNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'],
-                                                text = 'mainMeta')        
-        
+        self.mainMetaLidNodeM = pm.optionMenu(l = 'mainMeta : ')
+        self.__metaSel()  
+ 
         self.eyeBallSideR = pm.radioButtonGrp(label = 'eyeBall side :',nrb = 2,
                                           cal = [1,'left'],la2 = ['left','right'],sl = 1)
 
@@ -2341,11 +2342,16 @@ class HeadModuleUi(object):
         pm.deleteUI(self.mainL)
         self.mainUi.modulesUi.remove(self)
         
+    def __metaSel(self): 
+        selStr = pm.ls('*META*',type = 'lightInfo' ) 
+        for sel in selStr:
+            pm.menuItem(l = sel)   
+     
     def getModuleInstance(self):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
-        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
-        spineMetaNode = pm.textFieldGrp(self.metaSpineNodeN,q = 1,text = 1)
+        spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
+        mainMetaNode = pm.optionMenu(self.mainMetaNodeM,q = 1,v = 1)
         
         self.__pointerClass = HeadModule(baseName = baseNameT,
                                          metaMain = mainMetaNode,metaSpine = spineMetaNode)
@@ -2383,8 +2389,8 @@ class HeadModuleUi(object):
         eyeBallR = pm.textFieldGrp(self.eyeBallT,q = 1,text = 1)
         eyeBallSizeR = pm.radioButtonGrp(self.eyeBallSideR,q = 1,sl = 1)
         lidCtrlF =  pm.floatFieldGrp(self.lidCcSizeF,q = 1,v = 1)
-        metaHeadT = pm.textFieldGrp(self.headMetaLidNodeN ,q = 1,text = 1)
-        metaMainT = pm.textFieldGrp(self.mainMetaLidNodeN ,q = 1,text = 1)
+        metaHeadT = pm.textFieldGrp(self.headMetaLidNodeM ,q = 1,v = 1)
+        metaMainT = pm.textFieldGrp(self.mainMetaLidNodeM ,q = 1,v = 1)
         self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeBallSizeR,ctrlSize = lidCtrlF,
                                  metaHead = metaHeadT,metaMain = metaMainT)
 
