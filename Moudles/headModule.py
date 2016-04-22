@@ -440,7 +440,7 @@ class HeadModule(object):
         self.eyeLeftChain.fromList(self.eyeLeftGuidePos,self.eyeLeftGuideRot)
         self.eyeLeftChain.chain[0].setParent(self.neckFkChain.chain[-1])
         pm.rename(self.eyeLeftChain.chain[-1],nameUtils.getUniqueName(self.side[0],self.nameList[3],'je'))
-#         self.headJoint.append(self.eyeLeftChain.chain[0])
+        self.headJoint.append(self.eyeLeftChain.chain[0])
 
         #eye right side:
         #get pos info
@@ -452,7 +452,7 @@ class HeadModule(object):
         self.eyeRightChain.fromList(self.eyeRightGuidePos,self.eyeRightGuideRot)
         self.eyeRightChain.chain[0].setParent(self.neckFkChain.chain[-1])
         pm.rename(self.eyeRightChain.chain[-1],nameUtils.getUniqueName(self.side[2],self.nameList[3],'je'))
-#         self.headJoint.append(self.eyeRightChain.chain[0]) 
+        self.headJoint.append(self.eyeRightChain.chain[0]) 
         
         #muzzle pos get
         self.muzzleGuidePos = [x.getTranslation(space = 'world') for x in self.muzzleGuides]
@@ -1506,6 +1506,8 @@ class LidClass(object):
         self.eyeBall = eyeBall
         self.ctrlSize = ctrlSize
         self.lidSide = None
+        self.leftEyeJoint = None
+        self.rightEyeJoint = None
         
         #list
         self.upVertexes = None
@@ -1626,48 +1628,48 @@ class LidClass(object):
         
         #up 
         for upVertex in self.upVertexes:
-            #create je and align
-            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jj'))
+            #create jj and align
+            jj = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jj'))
             pos = pm.xform(upVertex, q=1, ws=1, t=1)
-            pm.xform(je, ws=1, t=pos)
+            pm.xform(jj, ws=1, t=pos)
              
-            #create jj
+            #create jc
             pm.select(cl=1)
-            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jc'))
-            alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
+            jc=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'jc'))
+            alginCnst = pm.pointConstraint(self.eyeBall[0],jc,mo = 0)
             pm.delete(alginCnst)
              
-            pm.parent(je, jj)
-            self.upJj.append(je)
+            pm.parent(jj, jc)
+            self.upJj.append(jj)
              
             #orient joints
-            pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
+            pm.joint (jc, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
              
             #clean up
-            jj.setParent(self.upJointGrp)
+            jc.setParent(self.upJointGrp)
         
         #down
         for downVertex in self.downVertexes:
              
             #create je and align
-            je = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jj'))
+            jj = pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jj'))
             pos = pm.xform(downVertex, q=1, ws=1, t=1)
-            pm.xform(je, ws=1, t=pos)
+            pm.xform(jj, ws=1, t=pos)
              
             #create jj
             pm.select(cl=1)
-            jj=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jc'))
-            alginCnst = pm.pointConstraint(self.eyeBall[0],jj,mo = 0)
+            jc=pm.joint(n = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'jc'))
+            alginCnst = pm.pointConstraint(self.eyeBall[0],jc,mo = 0)
             pm.delete(alginCnst)
              
-            pm.parent(je, jj)
-            self.downJj.append(je)
+            pm.parent(jj, jc)
+            self.downJj.append(jj)
              
             #orient joints
-            pm.joint (jj, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
+            pm.joint (jc, e=1, oj='xyz', secondaryAxisOrient='yup', ch=1, zso=1)
             
             #clean up
-            jj.setParent(self.downJointGrp)
+            jc.setParent(self.downJointGrp)
         
     def __createAimCnst(self):
         
@@ -1680,19 +1682,19 @@ class LidClass(object):
         #create aim loc
         aimLocName = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[7],'loc')
         self.aimLoc = pm.spaceLocator(n = aimLocName)
-        eyeBallPos = pm.xform(self.upJj[0], q=1, ws=1, t=1)
-        pm.xform(self.aimLoc,ws = 1,t = (eyeBallPos[0],eyeBallPos[1] + self.upJj[len(self.upJj) / 2].getChildren()[0].tx.get(),eyeBallPos[2]))
+        eyeBallPos = pm.xform(self.upJj[len(self.upJj) / 2].getParent(), q=1, ws=1, t=1) 
+        pm.xform(self.aimLoc,ws = 1,t = (eyeBallPos[0],eyeBallPos[1] + self.upJj[len(self.upJj) / 2].getParent().tx.get() ,eyeBallPos[2]))
         
         #up 
         for upJj in self.upJj:
             locName = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[5],'loc')
             loc = pm.spaceLocator(n = locName)
             self.upLocList.append(loc)
-            pos = pm.xform(upJj.getChildren(), q=1, ws=1, t=1)
+            pos = pm.xform(upJj , q=1, ws=1, t=1)
             pm.xform(loc, ws=1, t=pos)
             loc.setParent(self.upLocGrp)
-            
-            pm.aimConstraint(loc, upJj, mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0),
+            loc.v.set(0)
+            pm.aimConstraint(loc, upJj.getParent(), mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0),
                             worldUpType='object', worldUpObject=self.aimLoc)
             
         #down
@@ -1700,11 +1702,11 @@ class LidClass(object):
             locName = nameUtils.getUniqueName(self.lidSide,self.nameList[0] + self.nameList[6],'loc')
             loc = pm.spaceLocator(n = locName)
             self.downLocList.append(loc)
-            pos = pm.xform(downJj.getChildren(), q=1, ws=1, t=1)
+            pos = pm.xform(downJj , q=1, ws=1, t=1)
             pm.xform(loc, ws=1, t=pos)
             loc.setParent(self.downLocGrp)
-            
-            pm.aimConstraint(loc, downJj, mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0),
+            loc.v.set(0)
+            pm.aimConstraint(loc, downJj.getParent(), mo=1, weight=1, aimVector= (1,0,0), upVector = (0,1,0),
                             worldUpType='object', worldUpObject=self.aimLoc)            
 
     def __createCurve(self):
@@ -1822,12 +1824,12 @@ class LidClass(object):
         self.outLidCtrl.controlGrp.setParent(self.lidCcGrp)
         
         #in out jc
-        inLidPos = self.upJj[0].getChildren()[0].getTranslation(space = 'world')
-        outLidPos = self.upJj[-1].getChildren()[0].getTranslation(space = 'world')
+        inLidPos = self.upJj[0].getTranslation(space = 'world')
+        outLidPos = self.upJj[-1].getTranslation(space = 'world')
         
         #injc set pos
         self.inLidCtrl.controlGrp.t.set(inLidPos)
-        pm.move(0,0,(self.upJj[0].getChildren()[0].tx.get() / 3),
+        pm.move(0,0,(self.upJj[0].tx.get() / 3),
                 self.inLidCtrl.control.getShape().cv,r = 1)
         inLidJc = pm.joint(p = inLidPos,n = nameUtils.getUniqueName(self.lidSide,'inLid','jc'))
         
@@ -1838,7 +1840,7 @@ class LidClass(object):
         
         #outjc set pos
         self.outLidCtrl.controlGrp.t.set(outLidPos)
-        pm.move(0,0,(self.upJj[-1].getChildren()[0].tx.get() / 3),
+        pm.move(0,0,(self.upJj[-1].tx.get() / 3),
                 self.outLidCtrl.control.getShape().cv,r = 1)
         outLidJc = pm.joint(p = outLidPos,n = nameUtils.getUniqueName(self.lidSide,'outLid','jc'))
                
@@ -1911,7 +1913,7 @@ class LidClass(object):
         
         for num,pos in enumerate(upTrvPosList):
             self.upLidCc[num].t.set(pos)
-            pm.move(0,0,(self.upJj[0].getChildren()[0].tx.get() / 3),
+            pm.move(0,0,(self.upJj[0].tx.get() / 3),
                     self.upLidCc[num].getChildren()[0].getShape().cv,r = 1)
             self.upLidCc[num].setParent(self.lidCcGrp)
         
@@ -1977,7 +1979,7 @@ class LidClass(object):
                                         
         for num,pos in enumerate(downTrvPosList):
             self.downLidCc[num].t.set(pos)
-            pm.move(0,0,(self.downJj[0].getChildren()[0].tx.get() / 3),
+            pm.move(0,0,(self.downJj[0].tx.get() / 3),
                     self.downLidCc[num].getChildren()[0].getShape().cv,r = 1)            
             self.downLidCc[num].setParent(self.lidCcGrp)
         
@@ -2156,10 +2158,10 @@ class LidClass(object):
                     headJoint = joint
                 if 'l_eye' in joint :
                     pm.select(joint)
-                    leftEyeJoint = pm.selected()[0]
+                    self.leftEyeJoint = pm.selected()[0]
                 if 'r_eye' in joint :
                     pm.select(joint)
-                    rightEyeJoint = pm.selected()[0]
+                    self.rightEyeJoint = pm.selected()[0]
                     
             self.upJointGrp.setParent(headJoint)
             self.downJointGrp.setParent(headJoint)
@@ -2182,15 +2184,15 @@ class LidClass(object):
             self.downFollow.setParent(self.downFollowGrp)
             
             if self.lidSide == 'l':
-                pm.xform(self.upFollowGrp,ws = 1,matrix = leftEyeJoint.worldMatrix.get())
-                pm.xform(self.downFollowGrp,ws = 1,matrix = leftEyeJoint.worldMatrix.get())
-                leftEyeJoint.rz.connect(followNode.inputR)
-                leftEyeJoint.ry.connect(followNode.inputG)
+                pm.xform(self.upFollowGrp,ws = 1,matrix = self.leftEyeJoint.worldMatrix.get())
+                pm.xform(self.downFollowGrp,ws = 1,matrix = self.leftEyeJoint.worldMatrix.get())
+                self.leftEyeJoint.rz.connect(followNode.inputR)
+                self.leftEyeJoint.ry.connect(followNode.inputG)
             elif self.lidSide == 'r':
-                pm.xform(self.upFollowGrp,ws = 1,matrix = rightEyeJoint.worldMatrix.get())
-                pm.xform(self.downFollowGrp,ws = 1,matrix = rightEyeJoint.worldMatrix.get())
-                rightEyeJoint.rz.connect(followNode.inputR)
-                rightEyeJoint.ry.connect(followNode.inputG)            
+                pm.xform(self.upFollowGrp,ws = 1,matrix = self.rightEyeJoint.worldMatrix.get())
+                pm.xform(self.downFollowGrp,ws = 1,matrix = self.rightEyeJoint.worldMatrix.get())
+                self.rightEyeJoint.rz.connect(followNode.inputR)
+                self.rightEyeJoint.ry.connect(followNode.inputG)            
             
             #node connect
             followNode.minR.set(-10)
@@ -2220,8 +2222,8 @@ class LidClass(object):
             main = pm.selected()[0]
             
             mainDestinations = []
-            moduleGrp = pm.connectionInfo(main.moduleGrp, destinationFromSource=True)            
-                            
+            moduleGrp = pm.connectionInfo(main.transGrp, destinationFromSource=True)            
+#             transGrp
             for tempMainDestination in moduleGrp:
                 splitTempMainDestination = tempMainDestination.split('.')
                 mainDestinations.append(splitTempMainDestination[0])                            
@@ -2389,8 +2391,8 @@ class HeadModuleUi(object):
         eyeBallR = pm.textFieldGrp(self.eyeBallT,q = 1,text = 1)
         eyeBallSizeR = pm.radioButtonGrp(self.eyeBallSideR,q = 1,sl = 1)
         lidCtrlF =  pm.floatFieldGrp(self.lidCcSizeF,q = 1,v = 1)
-        metaHeadT = pm.textFieldGrp(self.headMetaLidNodeM ,q = 1,v = 1)
-        metaMainT = pm.textFieldGrp(self.mainMetaLidNodeM ,q = 1,v = 1)
+        metaHeadT = pm.optionMenu(self.headMetaLidNodeM ,q = 1,v = 1)
+        metaMainT = pm.optionMenu(self.mainMetaLidNodeM ,q = 1,v = 1)
         self.lidClass = LidClass(eyeBall = eyeBallR,lidSide = eyeBallSizeR,ctrlSize = lidCtrlF,
                                  metaHead = metaHeadT,metaMain = metaMainT)
 
