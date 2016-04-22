@@ -19,7 +19,7 @@ class LimbModule(object):
     def __init__(self,baseName = 'arm',side = 'l',size = 1.5,
                  solver = 'ikRPsolver',controlOrient = [0,0,0],
                  metaSpine = None,metaMain = None,mirror = None,
-                 shoulder = 0,elbow = 'no'):
+                 shoulder = 0,elbow = 'no',twist = None):
         #init
         self.baseName = baseName
         self.side = side
@@ -27,6 +27,7 @@ class LimbModule(object):
         self.solver = solver
         self.controlOrient = controlOrient
         self.mirror = mirror
+        self.twist = twist
         
         #jj
         self.fkChain = None
@@ -159,6 +160,8 @@ class LimbModule(object):
         if self.shoulder == 'yes':
             self.shoulderGuides[0].setParent(self.guideGrp)
             self.shoulderBladeGuides[0].setParent(self.guideGrp)      
+                     
+        self.guideGrp.s.set(self.size,self.size,self.size) 
                      
     def build(self):
         
@@ -298,6 +301,7 @@ class LimbModule(object):
         '''
         #get length
         self.upperJointLentgh = self.limbBlendChain.chain[1].tx.get()
+        
         self.ribon = ribbon.Ribbon(RibbonName = self.baseName + self.ribbonData[0],Length = self.upperJointLentgh,
                                    size = self.size * 0.75,subMid = 1,side = self.side,
                                    midCcName = self.baseName + self.ribbonData[0])
@@ -781,8 +785,8 @@ class LimbModule(object):
         self.handSettingCtrl.controlGrp.setParent(self.cntsGrp)                
           
         #ribbon hierarchy   
-        self.ribon.main.v.set(0)
-        self.ribon45hp.main.v.set(0)
+#         self.ribon.main.v.set(0)
+#         self.ribon45hp.main.v.set(0)
         
         #jj grp
         self.limbGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))        
@@ -937,9 +941,9 @@ class LimbModule(object):
             self.locWorld.setParent(GUD)
             self.__tempSpaceSwitch.setParent(XTR)
             
-            for guide in self.limbGuides:
-                print guide
-            
+#             for guide in self.limbGuides:
+#                 print guide
+            print self.upperJointLentgh
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
             print ''
@@ -1018,8 +1022,7 @@ class LimbModuleUi(object):
         self.mainL = pm.columnLayout(adj = 1)
         pm.separator(h = 10)
         
-        self.limb = pm.columnLayout(adj = 1,p = self.mainL)
-        #(self,baseName = 'arm',side = 'l',size = 1.5,
+        self.limb = pm.columnLayout(adj = 1,p = self.mainL) 
         self.name = pm.text(l = '**** Limb Module ****')       
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,cl2 = ['left','left'],text = 'arm')
         self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,cl2 = ['left','left'],text = 'l')
@@ -1027,14 +1030,14 @@ class LimbModuleUi(object):
                                         ad2 = 1,numberOfFields = 1,value1 = 1)    
         
         #shoulder
-        self.shoulderPartialMenu = pm.optionMenu(l = 'shoulder : ',p = self.limb)
-        pm.menuItem(l = 'yes',p = self.shoulderPartialMenu)
-        pm.menuItem(l = 'no',p = self.shoulderPartialMenu)        
+        self.shoulderMenu = pm.optionMenu(l = 'shoulder : ',p = self.limb)
+        pm.menuItem(l = 'no',p = self.shoulderMenu)
+        pm.menuItem(l = 'yes',p = self.shoulderMenu)        
         
         #elbow
         self.elbowPartialMenu = pm.optionMenu(l = 'elbow Partial : ',p = self.limb)
-        pm.menuItem(l = 'yes',p = self.elbowPartialMenu)
         pm.menuItem(l = 'no',p = self.elbowPartialMenu)
+        pm.menuItem(l = 'yes',p = self.elbowPartialMenu)
         
         #slover 
         self.solverMenu = pm.optionMenu(l = 'solver : ',p = self.limb)
@@ -1042,8 +1045,16 @@ class LimbModuleUi(object):
         pm.menuItem(l = 'ikSCsolver',p = self.solverMenu)
 #         self.mirror = pm.radioButtonGrp('mirror',nrb = 2,label = 'Mirror:',la2 = ['yes','no'],sl = 1)    
         
-        self.metaSpineNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,cl2 = ['left','left'],text = 'spineMeta',p = self.limb)        
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'],text = 'mainMeta',p = self.limb)
+        self.twistModule = pm.optionMenu(l = 'twist module : ',p = self.limb)
+        pm.menuItem(l = 'nope',p = self.twistModule)
+        pm.menuItem(l = 'ribon45hp',p = self.twistModule)
+        pm.menuItem(l = 'non-roll',p = self.twistModule) 
+        
+        self.metaSpineNodeM = pm.optionMenu(l = 'spineMeta : ')
+        metaUtils.metaSel()
+        self.metaMainNodeM = pm.optionMenu(l = 'mainMeta : ')
+        metaUtils.metaSel()
+        
         self.ver2Loc = pm.button(l = 'ver2Loc',c = self.__clusLoc,p = self.limb)
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance,p = self.limb)
         pm.separator(h = 10)
@@ -1062,14 +1073,15 @@ class LimbModuleUi(object):
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         solverV = pm.optionMenu(self.solverMenu, q = 1,v = 1)
         elbowPartialT = pm.optionMenu(self.elbowPartialMenu, q = 1,v = 1)
-        shoulderPartialT = pm.optionMenu(self.shoulderPartialMenu, q = 1,v = 1)
+        shoulderT = pm.optionMenu(self.shoulderMenu, q = 1,v = 1)
 #         mirrorC = pm.radioButtonGrp(self.mirror,q = 1,sl = 1)
-        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
-        spineMetaNode = pm.textFieldGrp(self.metaSpineNodeN,q = 1,text = 1)
+        twistT = pm.optionMenu(self.twistModule, q = 1,v = 1)
+        mainMetaNode = pm.optionMenu(self.metaMainNodeM,q = 1,v = 1)
+        spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
         
         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,
-                                         shoulder = shoulderPartialT,elbow = elbowPartialT)        
+                                         shoulder = shoulderT,elbow = elbowPartialT,twist = twistT)        
 #         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
 #                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,mirror = mirrorC)                
         
