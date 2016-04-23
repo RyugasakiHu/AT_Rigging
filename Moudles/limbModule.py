@@ -250,13 +250,18 @@ class LimbModule(object):
             pm.orientConstraint(self.limbBlendChain.chain[1],self.elbowPartialJoint,mo = 1)            
             
         self.__ikfkBlender()
-        self.__setRibbonUpper()
-        self.__setRibbonLower()
-        self.__setRibbonSubMidCc()
         
-        if self.solver == 'ikRPsolver' and self.shoulder == 'yes':
-            self.__shoulderCtrl()
-             
+        if self.twist == 'ribon45hp': 
+            self.__setRibbonUpper()
+            self.__setRibbonLower()
+            self.__setRibbonSubMidCc()
+        
+        if self.shoulder == 'yes':
+            if self.solver == 'ikRPsolver': 
+                self.__shoulderCtrl() 
+            else:
+                OpenMaya.MGlobal.displayError('this version shoulder need come up with ikRP for follow')
+                
         self.__cleanUp()
         self.__buildHooks()
         
@@ -769,12 +774,14 @@ class LimbModule(object):
         control.addFloatAttr(self.handSettingCtrl.control,['CC'],0,1) 
           
         #ccDef grp and v
-        self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp')) 
-        self.subMidCtrlShoulderElbow.controlGrp.setParent(self.ccDefGrp)
-        self.subMidCtrlElbowWrist.controlGrp.setParent(self.ccDefGrp)
-        self.subMidCtrlElbow.controlGrp.setParent(self.ccDefGrp)
+        self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp'))  
         self.handSettingCtrl.control.CC.set(0)
         self.handSettingCtrl.control.CC.connect(self.ccDefGrp.v)
+        
+        if self.twist == 'ribon45hp':
+            self.subMidCtrlShoulderElbow.controlGrp.setParent(self.ccDefGrp)
+            self.subMidCtrlElbowWrist.controlGrp.setParent(self.ccDefGrp)
+            self.subMidCtrlElbow.controlGrp.setParent(self.ccDefGrp)
           
         #cc hierarchy        
         self.cntsGrp = pm.group(self.ikChain.ikCtrl.controlGrp,
@@ -888,12 +895,7 @@ class LimbModule(object):
             for tempSpineDestination in transGrp:
                 splitTempSpineDestination = tempSpineDestination.split('.')
                 spineDestinations.append(splitTempSpineDestination[0])
-                
-#             print 'spineDestinations' + str(spineDestinations)
-#             print 'mainDestinations' + str(mainDestinations)            
-#             spineDestinations[u'm_chest_0_grp']
-#             mainDestinations[u'test_CC', u'test_SKL', u'test_IK', u'test_LOC', u'test_XTR', u'test_GUD', u'test_GEO', u'test_ALL', u'test_TRS', u'test_PP']
-
+ 
             #to the chest
             if self.solver == 'ikRPsolver' and self.shoulder == 'yes' :
                 self.shoulderBladeGrp.setParent(spineDestinations[0])
@@ -927,23 +929,22 @@ class LimbModule(object):
                 elif destnation[1] == 'PP':
                     PP = grp      
                 
-            self.cntsGrp.setParent(CC) 
-            self.ribon.main.setParent(XTR)
-            self.ribon45hp.main.setParent(XTR)
-#             self.ikChain.lockUpStartLoc.setParent(mainDestinations[1])
-#             self.ikChain.stretchStartLoc.setParent(mainDestinations[1])
-            self.ikChain.ikBeamCurve.setParent(XTR)
-            self.ikChain.distTransNode.setParent(XTR)
-            self.ikChain.upDistTransNode.setParent(XTR)
-            self.ikChain.downDistTransNode.setParent(XTR)
+            self.cntsGrp.setParent(CC)   
             self.ikChain.ikHandle.setParent(IK)
+            self.ikChain.distTransNode.setParent(XTR) 
             self.guideGrp.setParent(GUD)
             self.locWorld.setParent(GUD)
             self.__tempSpaceSwitch.setParent(XTR)
             
-#             for guide in self.limbGuides:
-#                 print guide
-            print self.upperJointLentgh
+            if self.solver == 'ikRPsolver':
+                self.ikChain.ikBeamCurve.setParent(XTR)
+                self.ikChain.upDistTransNode.setParent(XTR)
+                self.ikChain.downDistTransNode.setParent(XTR)
+             
+            if self.twist == 'ribon45hp':
+                self.ribon.main.setParent(XTR)
+                self.ribon45hp.main.setParent(XTR) 
+             
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
             print ''
@@ -952,10 +953,10 @@ class LimbModule(object):
             OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
             
         #create package send for next part
+        
         #template:
         #metaUtils.addToMeta(self.meta,'attr', objs)
-        metaUtils.addToMeta(self.meta,'controls',[self.ikChain.ikCtrl.control] + [self.handSettingCtrl.control])
-#          ([self.ikChain.ikCtrl.control,self.ikChain.poleVectorCtrl.control] + [fk for fk in self.fkChain.chain])
+        metaUtils.addToMeta(self.meta,'controls',[self.ikChain.ikCtrl.control] + [self.handSettingCtrl.control]) 
         metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])        
         
