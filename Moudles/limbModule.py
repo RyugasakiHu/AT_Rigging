@@ -2,8 +2,8 @@ import pymel.core as pm
 import math 
 from Modules.subModules import fkChain,ikChain,boneChain,ribbon
 from Utils import nameUtils,hookUtils,metaUtils
-from Modules import control
-from maya import OpenMaya
+from Modules import control,toolModule
+from maya import OpenMaya 
 
 class LimbModule(object):
     
@@ -19,7 +19,8 @@ class LimbModule(object):
     def __init__(self,baseName = 'arm',side = 'l',size = 1.5,
                  solver = 'ikRPsolver',controlOrient = [0,0,0],
                  metaSpine = None,metaMain = None,mirror = None,
-                 shoulder = 0,elbow = 'no',twist = None):
+                 shoulder = 0,elbow = 'no',twist = None,
+                 upperTwistNum = None,lowerTwistNum = None): 
         #init
         self.baseName = baseName
         self.side = side
@@ -28,6 +29,8 @@ class LimbModule(object):
         self.controlOrient = controlOrient
         self.mirror = mirror
         self.twist = twist
+        self.upperTwistNum = upperTwistNum 
+        self.lowerTwistNum = lowerTwistNum
         
         #jj
         self.fkChain = None
@@ -58,6 +61,14 @@ class LimbModule(object):
         self.elbowPartialGuides = None
         self.totalGuides = None
         self.guideGrp = None
+        
+        #non_flip
+        self.upperArmTwistStart = None
+        self.upperArmTwistEnd = None
+        self.upperArmTwistChain = None
+        self.upTwistIk = None
+        self.upTwistIkEffector = None
+        self.upTwistIkCurve = None
         
         #ribbon
         self.ribon = None
@@ -252,9 +263,10 @@ class LimbModule(object):
         self.__ikfkBlender()
         
         if self.twist == 'ribon45hp': 
-            self.__setRibbonUpper()
-            self.__setRibbonLower()
-            self.__setRibbonSubMidCc()
+            self.__ribonSetUp()
+        
+        if self.twist == 'non_roll':
+            self.__nonRollSetUp() 
         
         if self.shoulder == 'yes':
             if self.solver == 'ikRPsolver': 
@@ -299,7 +311,36 @@ class LimbModule(object):
 #         pm.orientConstraint(self.limbBlendChain.chain[2],self.handSettingCtrl.controlGrp,mo = 1)   
         control.lockAndHideAttr(self.handSettingCtrl.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])
         self.handSettingCtrl.control.IKFK.set(0) 
+     
+    def __nonRollSetUp(self):
+        
+        #upper arm:
+        self.upperArmTwistStart = pm.duplicate(self.limbBlendChain.chain[0],
+                                               n = nameUtils.getUniqueName(self.side,self.baseName + 'TwistS','jj'))
+        
+        self.upperArmTwistEnd = pm.listRelatives(self.upperArmTwistStart,c = 1,typ = 'joint')
+        tempJoint = pm.listRelatives(self.upperArmTwistEnd,c = 1,typ = 'joint')
+        pm.delete(tempJoint)
+        pm.rename(self.upperArmTwistEnd,nameUtils.getUniqueName(self.side,self.baseName + 'TwistE','jj'))
+        
+        #split
+        self.upperArmTwistChain = toolModule.SplitJoint(self.upperArmTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
+        self.upperArmTwistChain.splitJointTool()
+         
+        for twistJoints in self.upperArmTwistChain.joints:
+            pm.rename(twistJoints, nameUtils.getUniqueName(self.side,self.baseName + 'Twist','jj'))  
+            
+        upTwistIkName = nameUtils.getUniqueName(self.side,self.baseName + 'Twist','iks')  
+        upTwistIkCurveName = nameUtils.getUniqueName(self.side,self.baseName + 'Twist','ikc') 
+        self.upTwistIk,self.upTwistIkEffector,self.upTwistIkCurve = pm.ikHandle(sj = self.upperArmTwistStart,ee = self.upperArmTwistEnd,
+                                                                                solver = 'ikSplineSolver',n = upTwistIkName,
+                                                                                c = upTwistIkCurveName) 
     
+    def ____ribonSetUp(self):
+        self.__setRibbonUpper()
+        self.__setRibbonLower()
+        self.__setRibbonSubMidCc()
+         
     def __setRibbonUpper(self):
         '''
         this function set ribbon for the Upper 
@@ -466,7 +507,7 @@ class LimbModule(object):
         self.limbBlendChain.chain[2].scaleX.connect(self.ribon45hp.jj[0].scaleX)
         self.limbBlendChain.chain[2].scaleY.connect(self.ribon45hp.jj[0].scaleY)
         self.limbBlendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
-            
+ 
     def __shoulderCtrl(self):
         
         #add Ctrl 
@@ -958,7 +999,10 @@ class LimbModule(object):
         #metaUtils.addToMeta(self.meta,'attr', objs)
         metaUtils.addToMeta(self.meta,'controls',[self.ikChain.ikCtrl.control] + [self.handSettingCtrl.control]) 
         metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
-        metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])        
+        metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
+         
+        if self.twist == 'non_roll':
+            metaUtils.addToMeta(self.meta,'skinJoints',[skinjoint for skinjoint in self.upperArmTwistChain.joints])     
         
 #         #mirror part:
 #         if self.mirror == 1:
@@ -1032,8 +1076,8 @@ class LimbModuleUi(object):
         
         #shoulder
         self.shoulderMenu = pm.optionMenu(l = 'shoulder : ',p = self.limb)
-        pm.menuItem(l = 'no',p = self.shoulderMenu)
-        pm.menuItem(l = 'yes',p = self.shoulderMenu)        
+        pm.menuItem(l = 'yes',p = self.shoulderMenu)
+        pm.menuItem(l = 'no',p = self.shoulderMenu)        
         
         #elbow
         self.elbowPartialMenu = pm.optionMenu(l = 'elbow Partial : ',p = self.limb)
@@ -1046,20 +1090,31 @@ class LimbModuleUi(object):
         pm.menuItem(l = 'ikSCsolver',p = self.solverMenu)
 #         self.mirror = pm.radioButtonGrp('mirror',nrb = 2,label = 'Mirror:',la2 = ['yes','no'],sl = 1)    
         
+        #twist
         self.twistModule = pm.optionMenu(l = 'twist module : ',p = self.limb)
-        pm.menuItem(l = 'nope',p = self.twistModule)
+        pm.menuItem(l = 'non_roll',p = self.twistModule)
         pm.menuItem(l = 'ribon45hp',p = self.twistModule)
-        pm.menuItem(l = 'non-roll',p = self.twistModule) 
+        pm.menuItem(l = 'nope',p = self.twistModule)
         
-        self.metaSpineNodeM = pm.optionMenu(l = 'spineMeta : ')
+        #twist num
+        pm.rowLayout(adj = 1,nc=100,p = self.limb)
+        pm.button(l = 'upper Twist num : ',en=0)
+        self.upperNum = pm.intSliderGrp(f=1,max=10,s=1,min = 2,v = 5)
+         
+        pm.rowLayout(adj = 1,nc=100,p = self.limb)
+        pm.button(l = 'lower  Twist num : ',en=0)
+        self.lowerNum = pm.intSliderGrp(f=1,max=10,s=1,min = 2,v = 5) 
+        
+        #meta
+        self.metaSpineNodeM = pm.optionMenu(l = 'spineMeta : ',p = self.limb)
         metaUtils.metaSel()
-        self.metaMainNodeM = pm.optionMenu(l = 'mainMeta : ')
+        self.metaMainNodeM = pm.optionMenu(l = 'mainMeta : ',p = self.limb)
         metaUtils.metaSel()
         
         self.ver2Loc = pm.button(l = 'ver2Loc',c = self.__clusLoc,p = self.limb)
+        pm.separator(h = 10,p = self.limb)
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance,p = self.limb)
-        pm.separator(h = 10)
-        
+         
         self.__pointerClass = None
         
     def __removeInstance(self,*arg):
@@ -1077,12 +1132,15 @@ class LimbModuleUi(object):
         shoulderT = pm.optionMenu(self.shoulderMenu, q = 1,v = 1)
 #         mirrorC = pm.radioButtonGrp(self.mirror,q = 1,sl = 1)
         twistT = pm.optionMenu(self.twistModule, q = 1,v = 1)
+        upperTwistNumV = pm.intSliderGrp(self.upperNum , q = 1,v = 1)
+        lowerTwistNumV = pm.intSliderGrp(self.lowerNum ,q = 1,v = 1)
         mainMetaNode = pm.optionMenu(self.metaMainNodeM,q = 1,v = 1)
         spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
         
         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,
-                                         shoulder = shoulderT,elbow = elbowPartialT,twist = twistT)        
+                                         shoulder = shoulderT,elbow = elbowPartialT,twist = twistT,
+                                         upperTwistNum = upperTwistNumV,lowerTwistNum = lowerTwistNumV)        
 #         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
 #                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,mirror = mirrorC)                
         
