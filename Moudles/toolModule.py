@@ -1,4 +1,4 @@
-'''
+    '''
 Created on 2016/4/18
 
 @author: Ryugasaki Hu
@@ -187,15 +187,13 @@ class SplitJoint(object):
         self.splitJoint = splitJoint
         self.num = num 
         self.box = box
-        self.joints = None 
+        self.joints = []
         self.cubeList = None
         self.type = type
                      
     def splitJointTool(self): 
-        
-        self.joints = []
-        insertJointList = []
-        
+         
+        insertJointList = [] 
         pm.select(self.splitJoint) 
         parent = pm.ls(sl = 1)
         child = pm.listRelatives(parent,c = 1,typ = 'joint')
@@ -230,8 +228,7 @@ class SplitJoint(object):
         pm.parent(insertJointList[0],parent)
         pm.parent(child,insertJointList[-1])
         
-        self.joints.append(child[0])
-        print self.joints    
+        self.joints.append(child[0]) 
         
         if self.box == 1:
             self.boxCreate()
