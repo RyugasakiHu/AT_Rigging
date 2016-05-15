@@ -224,7 +224,7 @@ class LimbModule(object):
         self.ikChain.fromList(self.limbGuidePos,self.limbGuideRot)
         
         #ik cc connect ori
-        control.addFloatAttr(self.ikChain.ikCtrl.control,['upperarm_twist'],-90,90)
+        control.addFloatAttr(self.ikChain.ikCtrl.control,['up_twist'],-90,90)
         self.ikChain.ikCtrl.control.rx.connect(self.ikChain.chain[-1].rx)
         self.ikChain.ikCtrl.control.ry.connect(self.ikChain.chain[-1].ry)
         self.ikChain.ikCtrl.control.rz.connect(self.ikChain.chain[-1].rz)
@@ -338,10 +338,38 @@ class LimbModule(object):
                                                                                                   ee = self.upperArmTwistEnd[0],
                                                                                                   solver = 'ikSplineSolver',
                                                                                                   n = upperArmTwistIkName)
-        pm.skinCluster(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.upperArmTwistIkCurve)
+        upperSpIkC = pm.skinCluster(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.upperArmTwistIkCurve,
+                                   n = nameUtils.getSkinName())
         pm.rename(self.upperArmTwistIkCurve,upperArmTwistIkCurveName)
         self.upperArmTwistIk.poleVector.set(0,0,0)
         self.upperArmTwistIk.v.set(0)
+        
+        #set stretch
+        #get last cv:
+        pm.select(self.upperArmTwistIkCurve + '.cv[*]')
+        upperIkCLastCv = pm.ls(sl = 1)[0][-1]
+        pm.skinPercent(upperSpIkC,upperIkCLastCv,tv = [(self.limbBlendChain.chain[1],1)])
+        
+        #get cv length
+        upperArmTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'upperArmTwist','cvINFO')
+        upperArmTwistIkCurveInfoNode = pm.createNode('curveInfo',n = upperArmTwistIkCurveInfoName)
+        self.upperArmTwistIkCurve.getShape().worldSpace[0].connect(upperArmTwistIkCurveInfoNode.inputCurve)
+        
+        #create main Node
+        upperArmTwistCurveMDNName = nameUtils.getUniqueName(self.side,'upperArmTwistCur','MDN')
+        upperArmTwistCurveMDNNode = pm.createNode('multiplyDivide',n = upperArmTwistCurveMDNName)
+        
+        upperArmTwistIkCurveInfoNode.arcLength.connect(upperArmTwistCurveMDNNode.input1.input1X)
+        upperArmTwistCurveMDNNode.input2.input2X.set(self.limbBlendChain.chain[1].tx.get())
+        upperArmTwistCurveMDNNode.operation.set(2)
+        
+        for num,twistJoints in enumerate(self.upperArmTwistJoint.joints):
+            tempNodeName = nameUtils.getUniqueName(self.side,'upperArmTwistJnt','MDN')
+            tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
+            if num > 0 :
+                tempNode.input1.input1X.set(twistJoints.tx.get())
+                upperArmTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
+                tempNode.outputX.connect(twistJoints.tx)
         
         #create upperTwistGrp
         upperArmTwistGrpName = nameUtils.getUniqueName(self.side,'upperArmTwist','grp')
@@ -397,12 +425,39 @@ class LimbModule(object):
                                                                                                ee = self.foreArmTwistEnd[0],
                                                                                                solver = 'ikSplineSolver',
                                                                                                n = foreArmTwistIkName)
-        pm.skinCluster(self.limbBlendChain.chain[1],self.limbBlendChain.chain[2],self.foreArmTwistIkCurve)
+        foreSpIkC = pm.skinCluster(self.limbBlendChain.chain[1],self.limbBlendChain.chain[2],self.foreArmTwistIkCurve)
         pm.rename(self.foreArmTwistIkCurve,foreArmTwistIkCurveName)
         self.foreArmTwistIk.poleVector.set(0,0,0)
         self.foreArmTwistIk.v.set(0)
         
-        #create upperTwistGrp
+        #set stretch
+        #get last cv:
+        pm.select(self.foreArmTwistIkCurve + '.cv[*]')
+        foreIkCLastCv = pm.ls(sl = 1)[0][-1]
+        pm.skinPercent(foreSpIkC,foreIkCLastCv,tv = [(self.limbBlendChain.chain[2],1)])
+        
+        #get cv length
+        foreArmTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'foreArmTwist','cvINFO')
+        foreArmTwistIkCurveInfoNode = pm.createNode('curveInfo',n = foreArmTwistIkCurveInfoName)
+        self.foreArmTwistIkCurve.getShape().worldSpace[0].connect(foreArmTwistIkCurveInfoNode.inputCurve)
+        
+        #create main Node
+        foreArmTwistCurveMDNName = nameUtils.getUniqueName(self.side,'foreArmTwistCur','MDN')
+        foreArmTwistCurveMDNNode = pm.createNode('multiplyDivide',n = foreArmTwistCurveMDNName)
+        
+        foreArmTwistIkCurveInfoNode.arcLength.connect(foreArmTwistCurveMDNNode.input1.input1X)
+        foreArmTwistCurveMDNNode.input2.input2X.set(self.limbBlendChain.chain[2].tx.get())
+        foreArmTwistCurveMDNNode.operation.set(2)
+        
+        for num,twistJoints in enumerate(self.foreArmTwistJoint.joints):
+            tempNodeName = nameUtils.getUniqueName(self.side,'foreArmTwistJnt','MDN')
+            tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
+            if num > 0 :
+                tempNode.input1.input1X.set(twistJoints.tx.get())
+                foreArmTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
+                tempNode.outputX.connect(twistJoints.tx)
+        
+        #create foreTwistGrp
         foreArmTwistGrpName = nameUtils.getUniqueName(self.side,'foreArmTwist','grp')
         self.foreArmTwistGrp = pm.group(em = 1,n = foreArmTwistGrpName) 
         self.foreArmTwistIk.setParent(self.foreArmTwistGrp) 
@@ -431,7 +486,7 @@ class LimbModule(object):
 
         
     def __ribonSetUp(self):
-        self.__setRibbonUpper()
+        self.__setRibboforer()
         self.__setRibbonLower()
         self.__setRibbonSubMidCc()
          
@@ -1102,9 +1157,9 @@ class LimbModule(object):
             self.upperArmTwistInfoGrp.setParent(XTR)
             self.foreArmTwistStart[0].setParent(SKL)
             self.foreArmTwistGrp.setParent(XTR)
-            self.ikChain.ikCtrl.control.upperarm_twist.connect(self.ikChain.ikHandle.twist)
-            control.addFloatAttr(self.handSettingCtrl.control,['forearm_twist'],-90,90) 
-            self.handSettingCtrl.control.forearm_twist.connect(self.foreArmTwistIk.twist)
+            self.ikChain.ikCtrl.control.up_twist.connect(self.ikChain.ikHandle.twist)
+            control.addFloatAttr(self.handSettingCtrl.control,['fore_twist'],-90,90) 
+            self.handSettingCtrl.control.fore_twist.connect(self.foreArmTwistIk.twist)
             
 #         #mirror part:
 #         if self.mirror == 1:
