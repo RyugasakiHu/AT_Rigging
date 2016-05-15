@@ -1,6 +1,6 @@
 import pymel.core as pm
 from Modules.subModules import fkChain,ikChain,boneChain,ribbon
-from Utils import nameUtils
+from Utils import nameUtils,metaUtils
 from Modules import control,hierarchy,limbModule
 from maya import OpenMaya
 
@@ -217,6 +217,8 @@ class FingerModule(object):
             self.tempPinkyGuides.reverse()   
             self.guides.append(self.tempPinkyGuides[0])
             self.tempPinkyGuides[0].setParent(self.guideGrp)    
+            
+        self.guideGrp.s.set(self.size,self.size,self.size)     
         
     def build(self):
         
@@ -1667,9 +1669,12 @@ class FingerModule(object):
             self.midGrp.setParent(self.handGrp)
         
         if self.fingerNum == 4 :    
+            self.midGrp.setParent(self.handGrp)
             self.ringGrp.setParent(self.handGrp)
             
         if self.fingerNum == 5 :   
+            self.midGrp.setParent(self.handGrp)
+            self.ringGrp.setParent(self.handGrp)
             self.pinkyGrp.setParent(self.handGrp)
         
         pm.select(self.armChains[5])
@@ -1784,22 +1789,27 @@ class FingerModuleUi(object):
         self.mainL = pm.columnLayout(adj = 1)
         pm.separator(h = 10)
         
-        #(self,baseName = 'arm',side = 'l',size = 1.5,
+        self.finger = pm.columnLayout(adj = 1,p = self.mainL) 
         self.name = pm.text(l = '**** Finger Module ****')       
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'finger',cl2 = ['left','left'],)
         self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l',cl2 = ['left','left'],)
         self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],ad2 = 1,nf = 1,value1 = 0.5)
         
         #finger num 
-        self.fingerNumMenu = pm.optionMenu(l = 'finger Num : ')
+        self.fingerNumMenu = pm.optionMenu(l = 'finger Num : ',p = self.finger)
         pm.menuItem(l = 'ni',p = self.fingerNumMenu)
         pm.menuItem(l = 'sann',p = self.fingerNumMenu)
         pm.menuItem(l = 'shi',p = self.fingerNumMenu)
         pm.menuItem(l = 'go',p = self.fingerNumMenu)
         
-        self.armMetaNodeN = pm.textFieldGrp(l = 'armMeta :',ad2 = 1,cl2 = ['left','left'],text = 'l_arm_0_META')
-        self.spineMetaNodeN = pm.textFieldGrp(l = 'spineMeta :',ad2 = 1,cl2 = ['left','left'],text = 'm_spine_0_META')
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'],text = 'm_test_0_META')
+        #meta
+        self.metaArmNodeM = pm.optionMenu(l = 'armMeta :',p = self.finger)
+        metaUtils.metaSel()
+        self.metaSpineNodeM = pm.optionMenu(l = 'spineMeta : ',p = self.finger)
+        metaUtils.metaSel()
+        self.metaMainNodeM = pm.optionMenu(l = 'mainMeta : ',p = self.finger)
+        metaUtils.metaSel()
+        
         pm.separator(h = 10)
         
         #ver2Loc
@@ -1825,9 +1835,9 @@ class FingerModuleUi(object):
         sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         fingerNumT = pm.optionMenu(self.fingerNumMenu, q = 1,v = 1)
-        armMetaNode = pm.textFieldGrp(self.armMetaNodeN,q = 1,text = 1)
-        spineMetaNode = pm.textFieldGrp(self.spineMetaNodeN,q = 1,text = 1)
-        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
+        armMetaNode = pm.optionMenu(self.metaArmNodeM,q = 1,v = 1)
+        spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
+        mainMetaNode = pm.optionMenu(self.metaMainNodeM,q = 1,v = 1)
         
         self.__pointerClass = FingerModule(baseNameT,sideT,size = cntSizeV,metaArm = armMetaNode,
                                            metaMain = mainMetaNode,metaSpine = spineMetaNode,fingerNum = fingerNumT)
