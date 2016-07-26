@@ -2,7 +2,7 @@ import imp
 from maya import cmds
 from Core import buildSession
 import autorig_settings
-from see import see
+# from see import see
 
 class BuildSessionUi(object):
     
@@ -27,14 +27,12 @@ class BuildSessionUi(object):
         
         for menu in self.buildSession.availableModules:
             cmds.menuItem(l = menu)            
-#             cmds.menuItem(l = menu.replace('Module.py',''))
             
         cmds.separator(h = 5,st = 'none')
         self.addButton = cmds.button(label = 'ADD',h = 30,c = self.addModule)
         cmds.separator(h = 10)
         
-        self.modulesScrollLayout = cmds.scrollLayout(hst = 0,vst = 16,h = 360,rc = self.__resizeScroll)
-        
+        self.modulesScrollLayout = cmds.scrollLayout(hst = 0,vst = 16,rc = self.__resizeScroll)          
         self.modulesLayout = cmds.columnLayout(w = 299,adj = 1)
         self.__resizeScroll()
         
@@ -45,11 +43,11 @@ class BuildSessionUi(object):
         cmds.showWindow(self.win)
 
     def __resizeScroll(self,*args):
-        
-        h = cmds.window(self.win,q = 1,h = 1)
-        cmds.scrollLayout(self.modulesScrollLayout,e = 1,h = (h - 140))
-        wh = cmds.scrollLayout(self.modulesScrollLayout , q = 1,w = 1)
-        cmds.columnLayout(self.modulesLayout, e = 1,w = wh - 7)
+         
+        high = cmds.window(self.win,q = 1,h = 1)
+        wegh = cmds.scrollLayout(self.modulesScrollLayout,q = 1,w = 1)
+        cmds.scrollLayout(self.modulesScrollLayout,e = 1,h = wegh)                
+        cmds.columnLayout(self.modulesLayout, e = 1,w = wegh - 7)    
         
     def addModule(self,*args):
         
