@@ -1,6 +1,9 @@
 import pymel.core as pm
 from Modules.subModules import fkChain,ikChain,boneChain,ribbon
 from Utils import nameUtils,metaUtils
+
+print 'asd'
+
 from Modules import control,hierarchy,toolModule
 from maya import OpenMaya
 
@@ -410,7 +413,7 @@ class LegModule(object):
                          worldUpType = 'objectrotation',worldUpVector = [0,0,1],
                          worldUpObject = self.legBlendChain.chain[1])
         twistInfoJnt.rx.connect(self.thighTwistIk.twist)
-        pm.parentConstraint(self.hipChain.chain[0],twistInfoGrpName,mo = 1)
+#         pm.parentConstraint(self.hipChain.chain[0],twistInfoGrpName,mo = 1)
          
         ###
         #fore Leg
@@ -997,9 +1000,16 @@ class LegModuleUi(object):
         self.leg = pm.columnLayout(adj = 1,p = self.mainL) 
         self.name = pm.text(l = '**** Leg Module ****')       
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'leg',cl2 = ['left','left'])
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l',cl2 = ['left','left'])
+        
+        pm.rowLayout(adj = 1,nc=100,p = self.leg)
+        
+        #side
+        pm.rowLayout(adj = 1,nc=100,p = self.leg)
+        pm.button(l = 'side : ')
+        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)        
+        
         self.cntSizeV = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                         ad2 = 1,numberOfFields = 1,value1 = 1)
+                                         ad2 = 1,numberOfFields = 1,value1 = 1,p = self.leg)
         
         #twist
         self.twistModule = pm.optionMenu(l = 'twist module : ',p = self.leg)
@@ -1009,11 +1019,11 @@ class LegModuleUi(object):
         
         #twist num
         pm.rowLayout(adj = 1,nc=100,p = self.leg)
-        pm.button(l = 'upper Twist num : ',en=0)
+        pm.button(l = 'upper Twist num : ')
         self.upperNum = pm.intSliderGrp(f=1,max=10,s=1,min = 2,v = 5)
          
         pm.rowLayout(adj = 1,nc=100,p = self.leg)
-        pm.button(l = 'lower  Twist num : ',en=0)
+        pm.button(l = 'lower  Twist num : ')
         self.lowerNum = pm.intSliderGrp(f=1,max=10,s=1,min = 2,v = 5) 
         
         #meta
@@ -1035,7 +1045,13 @@ class LegModuleUi(object):
     def getModuleInstance(self):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
-        sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        
+        sideR = pm.radioButtonGrp(self.sideR,q = True,sl = True)
+        if sideR == 1:
+            sideT = 'l'
+        elif sideR == 2:
+            sideT = 'r'     
+        
         cntSizeV = pm.floatFieldGrp(self.cntSizeV,q = 1,value1 = 1)
         mainMetaNode = pm.optionMenu(self.metaMainNodeM,q = 1,v = 1)
         spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
