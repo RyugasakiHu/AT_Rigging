@@ -1,6 +1,6 @@
 import pymel.core as pm
 from Utils import nameUtils,metaUtils
-from Modules import control,limbModule
+from Modules import control 
 
 class Hierarchy(object):
     '''
@@ -47,8 +47,10 @@ class Hierarchy(object):
         name = nameUtils.getHierachyName('visibility','gud')
         loc = pm.spaceLocator(n = name)
         self.visGuides.append(loc)
-        
+
     def build(self):
+        
+        self.visGuides[0].v.set(0)
         
         #vis cc
         self.visGuidePos = [x.getTranslation(space = 'world') for x in self.visGuides]
@@ -78,7 +80,6 @@ class Hierarchy(object):
         #set ctrl
         #set cog
         self.cogCtrl = control.Control(side = 'm',baseName = self.characterName ,size = self.size,aimAxis = 'y')
-#         self.cogCtrl.cogCtrlTest()
         self.cogCtrl.circleCtrl()
         self.cogCtrl.controlGrp.setParent(self.ALL)        
         
@@ -99,7 +100,9 @@ class Hierarchy(object):
         
     def buildConnections(self):
                 
-        pass
+        self.visCtrl.controlGrp.setParent(self.CC)
+        self.visGuides[0].setParent(self.GUD)
+        
                          
     def __cleanUp(self):
         
@@ -131,6 +134,7 @@ class MainModuleUi(object):
         self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'm')
         self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
                                         ad2 = 1,numberOfFields = 1,value1 = 3)
+        self.tempButton = pm.button(l = 'measure',c = self.__measure)
         
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         pm.separator(h = 10)
@@ -141,6 +145,23 @@ class MainModuleUi(object):
         
         pm.deleteUI(self.mainL)
         self.mainUi.modulesUi.remove(self)
+    
+    def __measure(self,*arg):
+        
+        sizeOneCtrl = control.Control('m','measureSizeOne',1,'y')
+        sizeOneCtrl.circleCtrl()
+        sizeFiveCtrl = control.Control('m','measureSizeFive',5,'y')
+        sizeFiveCtrl.circleCtrl()
+        sizeTenCtrl = control.Control('m','measureSizeTen',10,'y')
+        sizeTenCtrl.circleCtrl()
+        sizeTwentyCtrl = control.Control('m','measureSizeTwenty',20,'y')
+        sizeTwentyCtrl.circleCtrl()
+        
+        tempGrp = pm.group(empty = 1,n = nameUtils.getUniqueName('m','measure','grp'))
+        sizeOneCtrl.controlGrp.setParent(tempGrp)
+        sizeFiveCtrl.controlGrp.setParent(tempGrp)
+        sizeTenCtrl.controlGrp.setParent(tempGrp)
+        sizeTwentyCtrl.controlGrp.setParent(tempGrp)              
         
     def getModuleInstance(self):
         
