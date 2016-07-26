@@ -1791,9 +1791,15 @@ class FingerModuleUi(object):
         
         self.finger = pm.columnLayout(adj = 1,p = self.mainL) 
         self.name = pm.text(l = '**** Finger Module ****')       
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'finger',cl2 = ['left','left'],)
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l',cl2 = ['left','left'],)
-        self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],ad2 = 1,nf = 1,value1 = 0.5)
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'finger',cl2 = ['left','left'])
+        
+        #side
+        pm.rowLayout(adj = 1,nc=100,p = self.finger)
+        pm.button(l = 'side : ')
+        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)
+        
+#         self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,text = 'l',cl2 = ['left','left'])
+        self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],ad2 = 1,nf = 1,value1 = 0.5,p = self.finger)
         
         #finger num 
         self.fingerNumMenu = pm.optionMenu(l = 'finger Num : ',p = self.finger)
@@ -1813,14 +1819,14 @@ class FingerModuleUi(object):
         pm.separator(h = 10)
         
         #ver2Loc
-        self.ver2LocTool = pm.text(l = '**** Lid Tool ****')
-        self.ver2Loc = pm.button(l = 'ver2Loc',c = self.__clusLoc)
-        pm.separator(h = 10)
+        self.ver2LocTool = pm.text(l = '**** Lid Tool ****',p = self.finger)
+        self.ver2Loc = pm.button(l = 'ver2Loc',c = self.__clusLoc,p = self.finger)
+        pm.separator(h = 10,p = self.finger)
         
         #remove
-        self.removeButtonIntr = pm.text(l = '**** Remove This Panel ****')
-        self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
-        pm.separator(h = 10)
+        self.removeButtonIntr = pm.text(l = '**** Remove This Panel ****',p = self.finger)
+        self.removeB = pm.button(l = 'remove',c = self.__removeInstance,p = self.finger)
+        pm.separator(h = 10,p = self.finger)
         
         self.__pointerClass = None
         
