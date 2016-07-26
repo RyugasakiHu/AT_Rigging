@@ -24,6 +24,7 @@ class SpineModule(object):
         self.guideGrp = None        
         self.fkGuides = None
         self.revFkGuides = None
+        self.ikJj = None
         
         #ctrl
         self.ctrlAxis = ctrlAxis
@@ -65,7 +66,8 @@ class SpineModule(object):
                                 n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','gud'))      
         curveInfo = pm.createNode('curveInfo',n = nameUtils.getUniqueName(self.side,self.baseName + '_cc','cvINFO'))
         self.guideCc.getShape().worldSpace.connect(curveInfo.inputCurve)
-        self.length = curveInfo.arcLength.get()
+        self.length = curveInfo.arcLength.get()        
+        control.lockAndHideAttr(self.guideCc,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])
         
     def build(self):
         
@@ -346,6 +348,7 @@ class SpineModule(object):
                  
     def __ikJj(self):    
         
+        self.ikJj = []
         #create IKRibbonSpine
         #ribbon spine info:
         curveInfo = [0,(self.segment - 1) / 4,(self.segment - 1) / 2,
@@ -403,6 +406,7 @@ class SpineModule(object):
             pm.select(cl = 1)
             cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.ikSize,aimAxis = self.ctrlAxis)
             cc.circleCtrl()
+            pm.makeIdentity(cc.control,apply = True,t=0,r=1,s=0,n=0,pn=1)
             self.bodyCtrl.control.ik_vis.connect(cc.controlGrp.v)
             self.spineCc.append(cc.control)
             control.lockAndHideAttr(cc.control,['sx','sy','sz','v'])
@@ -469,6 +473,7 @@ class SpineModule(object):
             jj.translateX.set(0)
             jj.translateY.set(0)
             jj.translateZ.set(0)
+            self.ikJj.append(jj)
             
         #create spine grp
         self.spineIkGrp = pm.group(self.spineCc[0].getParent(),self.spineCc[1].getParent(),self.spineCc[2].getParent(),self.folGrp,ribbonGeo[0],
@@ -687,6 +692,7 @@ class SpineModule(object):
         #metaUtils.addToMeta(self.meta,'attr', objs)
         metaUtils.addToMeta(self.meta,'controls',[self.bodyCtrl.control] + [spineCc for spineCc in self.spineCc])
         metaUtils.addToMeta(self.meta,'transGrp',[self.chestGrp])
+        metaUtils.addToMeta(self.meta,'skinJoints',[joint for joint in self.ikJj])
 
 #         controls = [u'm_spineHip_0_cc', u'm_spineCc_0_cc', u'm_spineMid_0_cc', u'm_spineChest_0_cc']
 
@@ -720,8 +726,9 @@ class SpineModuleUi(object):
         self.cntAxisT = pm.textFieldGrp(l = 'ctrl Axis :',ad2 = 1,text = 'y',cl2 = ['left','left'])
         self.cntSizeBody = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],ad2 = 1,numberOfFields = 1,value1 = 2)    
         self.cntSizeIk = pm.floatFieldGrp(l = 'ik Size : ',cl2 = ['left','left'],ad2 = 1,numberOfFields = 1,value1 = 1.8)        
-        self.segment = pm.intFieldGrp(l = 'segment Number : ',cl2 = ['left','left'],ad2 = 1,numberOfFields = 1,value1 = 9)        
-        self.mainMetaNodeN = pm.textFieldGrp(l = 'mainMeta :',ad2 = 1,cl2 = ['left','left'])
+        self.segment = pm.intFieldGrp(l = 'segment Number : ',cl2 = ['left','left'],ad2 = 1,numberOfFields = 1,value1 = 9) 
+        self.mainMetaNodeM = pm.optionMenu(l = 'mainMeta : ')
+        metaUtils.metaSel()
         
         self.removeB = pm.button(l = 'remove',c = self.__removeInstance)
         pm.separator(h = 10)
@@ -741,8 +748,8 @@ class SpineModuleUi(object):
         cntSizeBodyV = pm.floatFieldGrp(self.cntSizeBody,q = 1,value1 = 1)
         cntSizeIkV = pm.floatFieldGrp(self.cntSizeIk,q = 1,value1 = 1)
         segmentN = pm.intFieldGrp(self.segment,q = 1,v = 1)
-        mainMetaNode = pm.textFieldGrp(self.mainMetaNodeN,q = 1,text = 1)
-        
+        mainMetaNode = pm.optionMenu(self.mainMetaNodeM,q = 1,v = 1)
+
         self.__pointerClass = SpineModule(baseName = baseNameT,side = sideT,bodySize = cntSizeBodyV,ctrlAxis = cntAxisT,
                                           ikSize = cntSizeIkV,segment = segmentN,metaMain = mainMetaNode)
         return self.__pointerClass
