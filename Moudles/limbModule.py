@@ -403,7 +403,7 @@ class LimbModule(object):
                          worldUpType = 'objectrotation',worldUpVector = [0,0,1],
                          worldUpObject = self.limbBlendChain.chain[1])
         twistInfoJnt.rx.connect(self.upperArmTwistIk.twist)
-        pm.parentConstraint(self.shoulderChain.chain[0],twistInfoGrpName,mo = 1)
+#         pm.parentConstraint(self.shoulderChain.chain[0],twistInfoGrpName,mo = 1)
         
         ###
         #fore arm
@@ -484,9 +484,8 @@ class LimbModule(object):
         foreArmTwistLocStr.worldMatrix.connect(self.foreArmTwistIk.dWorldUpMatrix)
         foreArmTwistLocEd.worldMatrix.connect(self.foreArmTwistIk.dWorldUpMatrixEnd)
 
-        
     def __ribonSetUp(self):
-        self.__setRibboforer()
+        self.__setRibbonUpper()
         self.__setRibbonLower()
         self.__setRibbonSubMidCc()
          
@@ -604,8 +603,6 @@ class LimbModule(object):
         self.limbBlendChain.chain[0].scaleX.connect(self.ribon.jj[4].scaleX)
         self.limbBlendChain.chain[0].scaleY.connect(self.ribon.jj[4].scaleY)
         self.limbBlendChain.chain[0].scaleZ.connect(self.ribon.jj[4].scaleZ)
-        
-        
         
         #name setting for the scale node for elbowWrist Jj1
         elbowWristScaleNodeNameJj1 = nameUtils.getUniqueName(self.side,self.baseName + 'elbowWristScaleJj1','PMA')
@@ -1151,7 +1148,8 @@ class LimbModule(object):
         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
          
         if self.twist == 'non_roll':
-            metaUtils.addToMeta(self.meta,'skinJoints',[skinjoint for skinjoint in self.upperArmTwistJoint.joints])     
+            metaUtils.addToMeta(self.meta,'skinJoints',[skinjoint for skinjoint in self.upperArmTwistJoint.joints]
+                                + [skinjoint for skinjoint in self.foreArmTwistJoint.joints])     
             self.upperArmTwistStart[0].setParent(SKL)
             self.upperArmTwistGrp.setParent(XTR)
             self.upperArmTwistInfoGrp.setParent(XTR)
@@ -1227,9 +1225,13 @@ class LimbModuleUi(object):
         self.limb = pm.columnLayout(adj = 1,p = self.mainL) 
         self.name = pm.text(l = '**** Limb Module ****')       
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,cl2 = ['left','left'],text = 'arm')
-        self.sideT = pm.textFieldGrp(l = 'side :',ad2 = 1,cl2 = ['left','left'],text = 'l')
+        
+        #side
+        pm.rowLayout(adj = 1,nc=100,p = self.limb)
+        pm.button(l = 'side : ')
+        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)
         self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 1)    
+                                        ad2 = 1,numberOfFields = 1,value1 = 1,p = self.limb)    
         
         #shoulder
         self.shoulderMenu = pm.optionMenu(l = 'shoulder : ',p = self.limb)
@@ -1255,11 +1257,11 @@ class LimbModuleUi(object):
         
         #twist num
         pm.rowLayout(adj = 1,nc=100,p = self.limb)
-        pm.button(l = 'upper Twist num : ',en=0)
+        pm.button(l = 'upper Twist num : ')
         self.upperNum = pm.intSliderGrp(f=1,max=10,s=1,min = 2,v = 5)
          
         pm.rowLayout(adj = 1,nc=100,p = self.limb)
-        pm.button(l = 'lower  Twist num : ',en=0)
+        pm.button(l = 'lower  Twist num : ')
         self.lowerNum = pm.intSliderGrp(f=1,max=10,s=1,min = 2,v = 5) 
         
         #meta
@@ -1282,7 +1284,13 @@ class LimbModuleUi(object):
     def getModuleInstance(self):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
-        sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        sideR = pm.radioButtonGrp(self.sideR,q = True,sl = True)
+        
+        if sideR == 1:
+            sideT = 'l'
+        elif sideR == 2:
+            sideT = 'r'     
+   
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         solverV = pm.optionMenu(self.solverMenu, q = 1,v = 1)
         elbowPartialT = pm.optionMenu(self.elbowPartialMenu, q = 1,v = 1)
