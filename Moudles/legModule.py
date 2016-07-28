@@ -1,35 +1,35 @@
 import pymel.core as pm
 from Modules.subModules import fkChain,ikChain,boneChain,ribbon
 from Utils import nameUtils,metaUtils
-
-print 'asd'
-
 from Modules import control,hierarchy,toolModule
 from maya import OpenMaya
 
 class LegModule(object):
     
-    posLegArray = [[0.772,9.008,0],[0.772,4.8,0.258],[0.772,1,-0.411],[0.772,0,-1.1],[0.772,0,1.8],[0.443,0,0.584],[1.665,0,0.584],[0.772,0,0.584]]
-    rotLegArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
     posHipArray = [[0.772,9.957,0],[0.772,9.008,0]]
     rotHipArray = [[0,0,0],[0,0,0]]
+    posLegArray = [[0.772,9.008,0],[0.772,4.8,0.258],[0.772,1,-0.411],[0.772,0,-1.1],[0.772,0,1.8],[0.443,0,0.584],[1.665,0,0.584],[0.772,0,0.584]]
+    rotLegArray = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+    posSplitLegArray = [[0.772,5.1,0.258],[0.772,4.5,0.258]]
+    rotSplitLegArray = [[0,0,0],[0,0,0]]
     
     def __init__(self,baseName = 'leg',side = 'l',size = 1.5,
                  controlOrient = [0,0,0],metaMain = None,metaSpine = None,
-                 twist = None,upperTwistNum = None,lowerTwistNum = None):
+                 twist = None,split = None,upperTwistNum = None,lowerTwistNum = None):
         
         self.baseName = baseName
         self.side = side
         self.size = size
         self.controlOrient = controlOrient
         self.twist = twist
+        self.split = split
         self.upperTwistNum = upperTwistNum 
         self.lowerTwistNum = lowerTwistNum
         
         '''
         self para
         '''
-
+        
         #jj 
         self.ikRpPvChain = None
         self.ikRpChain = None
@@ -51,6 +51,7 @@ class LegModule(object):
         #guide
         self.hipGuides = None
         self.legGuides = None
+        self.splitLegGuides = None
         self.guideGrp = None
         
         #ribon
@@ -68,6 +69,7 @@ class LegModule(object):
         
         #name list 
         self.ribbonData = ['ThighKnee','KneeAnkle','Knee']
+        self.splitLegNameList = ['splitLegUp','splitLegDown']
         self.legNameList = ['Thigh','Knee','Ankle','Heel','Toe','Inside','Outside','Ball']
         self.footNameList = ['Thigh','Knee','Ankle','Ball','Toe','Heel']       
         
@@ -79,7 +81,7 @@ class LegModule(object):
     def buildGuides(self):
         
         self.legGuides = []
-        self.hipGuides = []
+        self.hipGuides = []        
         
         #hipGuides
         #set pos loc    
@@ -115,18 +117,39 @@ class LegModule(object):
             if i != (len(tempLegGuides) - 1):
                 pm.parent(tempLegGuides[i],tempLegGuides[i + 1])
         
+        if self.split == 1:            
+            self.splitLegGuides = []
+            #splitLegGuides
+            #set pos loc    
+            for i,p in enumerate(self.posSplitLegArray):
+                name = nameUtils.getUniqueName(self.side,self.splitLegNameList[i],'gud')
+                loc = pm.spaceLocator(n = name)
+                loc.t.set(p)
+                loc.r.set(self.rotLegArray[i])
+                self.splitLegGuides.append(loc)
+                               
+            #set loc grp
+            pm.parent(self.splitLegGuides[1],self.splitLegGuides[0])
+            self.splitLegGuides.reverse()
+            
         #clean up
         guideGrpName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(em = 1,n = guideGrpName)
         self.hipGuides[0].setParent(self.guideGrp)  
-        self.legGuides[0].setParent(self.guideGrp) 
-        self.guideGrp.s.set(self.size,self.size,self.size) 
+        self.legGuides[0].setParent(self.guideGrp)
+        
+        if self.split == 1:
+            self.splitLegGuides[1].setParent(self.legGuides[1])
+            self.splitLegGuides.reverse()
+        
+        self.guideGrp.s.set(self.size,self.size,self.size)
             
     def build(self):
         
         self.guideGrp.v.set(0)
         
-        #create hip jj
+        ###pos
+        #create hip pos
         self.hipGuidesPos = [x.getTranslation(space = 'world') for x in self.hipGuides]
         self.hipGuidesRot = [x.getRotation(space = 'world') for x in self.hipGuides]
         
@@ -134,7 +157,7 @@ class LegModule(object):
         self.hipChain.fromList(self.hipGuidesPos,self.hipGuidesRot) 
         pm.rename(self.hipChain.chain[-1],nameUtils.getUniqueName(self.side,'hip','je')) 
         
-        #create leg jj
+        #create leg pos
         self.legGuidesPos = [x.getTranslation(space = 'world') for x in self.legGuides]
         self.legGuidesRot = [x.getRotation(space = 'world') for x in self.legGuides]
         
@@ -143,6 +166,42 @@ class LegModule(object):
         footPos.append(self.legGuidesPos[4])
         footPos.append(self.legGuidesPos[3])
         
+        #split
+        if self.split == 1:
+            #split pos
+            self.splitKneePos = []
+            self.splitKneePos.append(self.legGuidesPos[1])
+            for splitLegGuide in self.splitLegGuides:
+                splitLegGuidePos = splitLegGuide.getTranslation(space = 'world')
+                self.splitKneePos.append(splitLegGuidePos)                
+            
+            #split rot
+            self.splitKneeRot = []
+            self.splitKneeRot.append(self.legGuidesPos[1])
+            for splitLegGuide in self.splitLegGuides:
+                splitLegGuideRot = splitLegGuide.getRotation(space = 'world')
+                self.splitKneeRot.append(splitLegGuidePos)  
+            
+            #real pos
+            #up
+            self.splitLegUpPos = []
+            self.splitLegUpPos.append(self.legGuidesPos[0])
+            self.splitLegUpPos.append(self.splitKneePos[1])
+
+            self.splitLegUpRot = []
+            self.splitLegUpRot.append(self.legGuidesRot[0])
+            self.splitLegUpRot.append(self.splitKneeRot[1])
+            
+            #down
+            self.splitLegDownPos = []
+            self.splitLegDownPos.append(self.splitKneePos[2])
+            self.splitLegDownPos.append(self.legGuidesPos[2])
+            
+            self.splitLegDownRot = []
+            self.splitLegDownRot.append(self.splitKneeRot[2])
+            self.splitLegDownRot.append(self.legGuidesRot[2])
+                        
+        ###create joint
         #addBlendCtrl 
         self.footSettingCtrl = control.Control(self.side,self.baseName + 'Settings',self.size) 
         self.footSettingCtrl.ikfkBlender()
@@ -197,20 +256,34 @@ class LegModule(object):
         self.fkChain.chain[-1].setParent(self.fkChain.chain[-4])
         self.legBlendChain.chain[-1].setParent(self.legBlendChain.chain[-4])
         
+        if self.split == 1:
+            
+            self.splitKneeChain = boneChain.BoneChain('splitKnee',self.side,type = 'jc')
+            self.splitKneeChain.fromList(self.splitKneePos,self.splitKneeRot)
+            
+            self.splitLegUpChain = boneChain.BoneChain(self.splitLegNameList[0],self.side,type = 'jc')
+            self.splitLegUpChain.fromList(self.splitLegUpPos,self.splitLegUpRot)
+            
+            self.splitLegDownChain = boneChain.BoneChain(self.splitLegNameList[1],self.side,type = 'jc')
+            self.splitLegDownChain.fromList(self.splitLegDownPos,self.splitLegDownRot)
+            
+            self.__splitJointSet()
+        
         #hip set
         self.__hipSet()
         
         #leg ikfk switcher set
         self.__ikSet()
         self.__ikfkBlendSet()
-         
+        
         #leg set        
         if self.twist == 'ribon45hp': 
             self.__ribonSetUp()
         
         if self.twist == 'non_roll':
-            self.__nonRollSetUp() 
-
+#             self.__nonRollSetUp()
+            pass
+        
         #foot set
         self.__editCtrl()
         self.__ikFootSet() 
@@ -312,11 +385,50 @@ class LegModule(object):
         pm.move(ankle_pos[0],ankle_pos[1],ankle_pos[2],self.footSettingCtrl.controlGrp + '.rotatePivot')
         pm.move(ankle_pos[0],ankle_pos[1],ankle_pos[2],self.footSettingCtrl.controlGrp + '.scalePivot')
         pm.pointConstraint(self.legBlendChain.chain[2],self.footSettingCtrl.controlGrp,mo = 1)
-#         pm.orientConstraint(self.legBlendChain.chain[2],self.footSettingCtrl.controlGrp,mo = 1)   
+#         pm.orientConstraint(self.legBlendChain.chain[2],self.footSettingCtrl.controlGrp,mo = 1)
         control.lockAndHideAttr(self.footSettingCtrl.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])     
-
-    #set ribbon
       
+    def __splitJointSet(self):
+        
+        self.splitKneeChain.chain[0].setParent(self.legBlendChain.chain[0])
+        
+        #create node
+#         #pos
+#         splitPosMDNodeName = nameUtils.getUniqueName(self.side,'splitKneePos','MDN')
+#         splitPosMDNode = pm.createNode('multiplyDivide',n = splitPosMDNodeName)
+#          
+#         #connect
+#         self.legBlendChain.chain[1].tx.connect(splitPosMDNode.input1X)
+#         self.legBlendChain.chain[1].ty.connect(splitPosMDNode.input1Y)
+#         self.legBlendChain.chain[1].tz.connect(splitPosMDNode.input1Z)
+#         
+#         splitPosMDNode.input2X.set(-0.5)
+#         splitPosMDNode.input2Y.set(-0.5)
+#         splitPosMDNode.input2Z.set(-0.5)
+#          
+#         splitPosMDNode.outputX.connect(self.splitKneeChain.chain[0].tx)
+#         splitPosMDNode.outputY.connect(self.splitKneeChain.chain[0].ty)
+#         splitPosMDNode.outputZ.connect(self.splitKneeChain.chain[0].tz)        
+                
+        #rot
+        splitRotMDNodeName = nameUtils.getUniqueName(self.side,'splitKneeRot','MDN')
+        splitRotMDNode = pm.createNode('multiplyDivide',n = splitRotMDNodeName)
+         
+        #connect
+        self.legBlendChain.chain[1].rx.connect(splitRotMDNode.input1X)
+        self.legBlendChain.chain[1].ry.connect(splitRotMDNode.input1Y)
+        self.legBlendChain.chain[1].rz.connect(splitRotMDNode.input1Z)
+        
+        splitRotMDNode.input2X.set(-0.5)
+        splitRotMDNode.input2Y.set(-0.5)
+        splitRotMDNode.input2Z.set(-0.5)
+         
+        splitRotMDNode.outputX.connect(self.splitKneeChain.chain[0].rx)
+        splitRotMDNode.outputY.connect(self.splitKneeChain.chain[0].ry)
+        splitRotMDNode.outputZ.connect(self.splitKneeChain.chain[0].rz)
+        
+        
+        
     def __ribonSetUp(self):
         
         self.__setRibbonUpper()
@@ -328,7 +440,7 @@ class LegModule(object):
         #thigh:
         #create twist Leg 
         self.thighTwistStart = pm.duplicate(self.legBlendChain.chain[0],
-                                               n = nameUtils.getUniqueName(self.side,'thighTwistS','jj')) 
+                                            n = nameUtils.getUniqueName(self.side,'thighTwistS','jj')) 
         self.thighTwistEnd = pm.listRelatives(self.thighTwistStart,c = 1,typ = 'joint')
         
         tempJoint = pm.listRelatives(self.thighTwistEnd,c = 1,typ = 'joint')
@@ -341,13 +453,13 @@ class LegModule(object):
         for twistJoints in self.thighTwistJoint.joints:
             pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'thighTwist','jj'))  
              
-        #create iks      
+        #create iks
         thighTwistIkName = nameUtils.getUniqueName(self.side,'thighTwist','iks')  
         thighTwistIkCurveName = nameUtils.getUniqueName(self.side,'thighTwist','ikc')  
         self.thighTwistIk,self.thighTwistIkEffector,self.thighTwistIkCurve = pm.ikHandle(sj = self.thighTwistStart[0],
-                                                                                                  ee = self.thighTwistEnd[0],
-                                                                                                  solver = 'ikSplineSolver',
-                                                                                                  n = thighTwistIkName)
+                                                                                         ee = self.thighTwistEnd[0],
+                                                                                         solver = 'ikSplineSolver',
+                                                                                         n = thighTwistIkName)
         upperSpIkC = pm.skinCluster(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.thighTwistIkCurve,
                                    n = nameUtils.getSkinName())
         pm.rename(self.thighTwistIkCurve,thighTwistIkCurveName)
@@ -977,8 +1089,11 @@ class LegModule(object):
         #create package send for next part
         #template:
         #metaUtils.addToMeta(self.meta,'attr', objs)
-        metaUtils.addToMeta(self.meta,'controls',[self.footSettingCtrl.control] + [self.ikRpPvChain.ikCtrl.control,self.ikRpPvChain.poleVectorCtrl.control]
+        metaUtils.addToMeta(self.meta,'controls',[self.footSettingCtrl.control] 
+                            + [self.ikRpPvChain.ikCtrl.control,self.ikRpPvChain.poleVectorCtrl.control]
                             + [fk for fk in self.fkChain.chain])
+        metaUtils.addToMeta(self.meta,'skinJoints',[self.hipChain.chain[0],self.legBlendChain.chain[-3],self.legBlendChain.chain[-4]])
+        
 #         metaUtils.addToMeta(self.meta,'moduleGrp',[self.legGrp])
 #         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.legBlendChain.chain])
         
@@ -999,17 +1114,22 @@ class LegModuleUi(object):
         
         self.leg = pm.columnLayout(adj = 1,p = self.mainL) 
         self.name = pm.text(l = '**** Leg Module ****')       
-        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'leg',cl2 = ['left','left'])
-        
+        self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'leg',cl2 = ['left','left'])        
         pm.rowLayout(adj = 1,nc=100,p = self.leg)
         
+        #size
+        self.cntSizeV = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
+                                         ad2 = 1,numberOfFields = 1,value1 = 1,p = self.leg)
         #side
         pm.rowLayout(adj = 1,nc=100,p = self.leg)
         pm.button(l = 'side : ')
         self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)        
         
-        self.cntSizeV = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                         ad2 = 1,numberOfFields = 1,value1 = 1,p = self.leg)
+        #split
+        pm.rowLayout(adj = 1,nc=100,p = self.leg)
+        pm.button(l = 'split : ')
+        self.splitR = pm.radioButtonGrp(nrb = 2,la2 = ['yes','no'],sl = 2)   
+        
         
         #twist
         self.twistModule = pm.optionMenu(l = 'twist module : ',p = self.leg)
@@ -1044,14 +1164,20 @@ class LegModuleUi(object):
         
     def getModuleInstance(self):
         
-        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
-        
+        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)        
         sideR = pm.radioButtonGrp(self.sideR,q = True,sl = True)
+        splitR = pm.radioButtonGrp(self.splitR,q = True,sl = True)
+        
         if sideR == 1:
             sideT = 'l'
         elif sideR == 2:
             sideT = 'r'     
         
+        if splitR == 1:
+            splitT = 1
+        elif splitR == 2:
+            splitT = 0
+                
         cntSizeV = pm.floatFieldGrp(self.cntSizeV,q = 1,value1 = 1)
         mainMetaNode = pm.optionMenu(self.metaMainNodeM,q = 1,v = 1)
         spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
@@ -1061,7 +1187,7 @@ class LegModuleUi(object):
         
         self.__pointerClass = LegModule(baseName = baseNameT,side = sideT,size = cntSizeV,
                                         metaMain = mainMetaNode,metaSpine = spineMetaNode,
-                                        twist = twistT,upperTwistNum = upperTwistNumV,
+                                        twist = twistT,upperTwistNum = upperTwistNumV,split = splitT,
                                         lowerTwistNum = lowerTwistNumV)
         return self.__pointerClass             
 
