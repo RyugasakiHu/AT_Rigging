@@ -423,7 +423,7 @@ class SpineModule(object):
         #create / rename fol
         self.folGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Fol','grp')) 
         
-        for fol in range(self.segment):
+        for fol in range(0,self.segment):
             
             #createNodeName
             follicleTransName = nameUtils.getUniqueName(self.side,self.baseName,'fol')
@@ -439,7 +439,7 @@ class SpineModule(object):
                 pm.connectAttr((ribbonGeo[0] + '.local'), (follicleShape + '.inputSurface'))
                 
             #Connect the worldMatrix of the surface into the follicleShape
-            pm.connectAttr((ribbonGeo[0] + '.worldMatrix[0]'), (follicleShape + '.inputWorldMatrix'))
+            pm.connectAttr((ribbonGeo[0].getShape() + '.worldMatrix[0]'), (follicleShape + '.inputWorldMatrix'))
             
             #Connect the follicleShape to it's transform
             pm.connectAttr((follicleShape + '.outRotate'), (follicleTrans + '.rotate'))
@@ -447,11 +447,12 @@ class SpineModule(object):
             
             #Set the uValue and vValue for the current follicle
             pm.setAttr((follicleShape + '.parameterV'), 0.5)
-            pm.setAttr((follicleShape + '.parameterU'), float(1.0 / self.segment) * fol + (1.0 / (self.segment * 2)))
-            
+            pm.setAttr((follicleShape + '.parameterU'), float(1.0 / float(self.segment - 1)) * fol)
+
             #Lock the translate/rotate of the follicle
             pm.setAttr((follicleTrans + '.translate'), lock=True)
             pm.setAttr((follicleTrans + '.rotate'), lock=True)
+            pm.setAttr((follicleShape + '.degree'),1)
             
             #parent
             self.folList.append(follicleTrans)
