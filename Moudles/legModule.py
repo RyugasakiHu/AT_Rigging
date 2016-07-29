@@ -385,7 +385,10 @@ class LegModule(object):
         pm.move(ankle_pos[0],ankle_pos[1],ankle_pos[2],self.footSettingCtrl.controlGrp + '.scalePivot')
         pm.pointConstraint(self.legBlendChain.chain[2],self.footSettingCtrl.controlGrp,mo = 1)
 #         pm.orientConstraint(self.legBlendChain.chain[2],self.footSettingCtrl.controlGrp,mo = 1)
-        control.lockAndHideAttr(self.footSettingCtrl.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])     
+        control.lockAndHideAttr(self.footSettingCtrl.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])
+        
+        if self.twist == 'non_roll':
+            control.addFloatAttr(self.footSettingCtrl.control,['proxy_vis'],0,1) 
       
     def __splitJointSet(self):
         
@@ -462,6 +465,9 @@ class LegModule(object):
              
             self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
             self.thighTwistJoint.splitJointTool()
+            
+            for cube in self.thighTwistJoint.cubeList:
+                self.footSettingCtrl.control.proxy_vis.connect(cube[0].v)
              
             for twistJoints in self.thighTwistJoint.joints:
                 pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'thighTwist','jj'))  
@@ -548,13 +554,22 @@ class LegModule(object):
                                                   n = nameUtils.getUniqueName(self.side,'clafTwistS','jj')) 
             self.clafTwistEnd = pm.listRelatives(self.clafTwistStart,c = 1,typ = 'joint')
             pm.parent(self.clafTwistStart,w = 1)
-             
+            
+            tempClafTrashJnt = pm.listRelatives(self.clafTwistEnd,c = 1,typ = 'joint')
+            pm.delete(tempClafTrashJnt)
+            
+            tempClafTrashNode = pm.listRelatives(self.clafTwistStart,c = 1,typ = 'ikHandle')
+            pm.delete(tempClafTrashNode)
+            
             self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
             self.clafTwistJoint.splitJointTool()
-              
+            
+            for cube in self.clafTwistJoint.cubeList:
+                self.footSettingCtrl.control.proxy_vis.connect(cube[0].v)
+               
             for twistJoints in self.clafTwistJoint.joints:
                 pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'clafTwist','jj'))  
-                  
+                   
             #create iks      
             clafTwistIkName = nameUtils.getUniqueName(self.side,'clafTwist','iks')  
             clafTwistIkCurveName = nameUtils.getUniqueName(self.side,'clafTwist','ikc')  
@@ -566,26 +581,26 @@ class LegModule(object):
             pm.rename(self.clafTwistIkCurve,clafTwistIkCurveName)
             self.clafTwistIk.poleVector.set(0,0,0)
             self.clafTwistIk.v.set(0)
-             
+              
             #set stretch
             #get last cv:
             pm.select(self.clafTwistIkCurve + '.cv[*]')
             foreIkCLastCv = pm.ls(sl = 1)[0][-1]
             pm.skinPercent(thighSpIkCluster,foreIkCLastCv,tv = [(self.legBlendChain.chain[2],1)])
-             
+              
             #get cv length
             clafTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'clafTwist','cvINFO')
             clafTwistIkCurveInfoNode = pm.createNode('curveInfo',n = clafTwistIkCurveInfoName)
             self.clafTwistIkCurve.getShape().worldSpace[0].connect(clafTwistIkCurveInfoNode.inputCurve)
-             
+              
             #create main Node
             clafTwistCurveMDNName = nameUtils.getUniqueName(self.side,'clafTwistCur','MDN')
             clafTwistCurveMDNNode = pm.createNode('multiplyDivide',n = clafTwistCurveMDNName)
-             
+              
             clafTwistIkCurveInfoNode.arcLength.connect(clafTwistCurveMDNNode.input1.input1X)
             clafTwistCurveMDNNode.input2.input2X.set(self.legBlendChain.chain[2].tx.get())
             clafTwistCurveMDNNode.operation.set(2)
-             
+              
             for num,twistJoints in enumerate(self.clafTwistJoint.joints):
                 tempNodeName = nameUtils.getUniqueName(self.side,'clafTwistJnt','MDN')
                 tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
@@ -593,17 +608,17 @@ class LegModule(object):
                     tempNode.input1.input1X.set(twistJoints.tx.get())
                     clafTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
                     tempNode.outputX.connect(twistJoints.tx)
-             
+              
             #create foreTwistGrp
             clafTwistGrpName = nameUtils.getUniqueName(self.side,'clafTwist','grp')
             self.clafTwistGrp = pm.group(em = 1,n = clafTwistGrpName) 
             self.clafTwistIk.setParent(self.clafTwistGrp) 
             self.clafTwistIkCurve.setParent(self.clafTwistGrp) 
-             
+              
             #lowerTwist
             clafTwistLocStr = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'clafTwistStart','loc'))
             clafTwistLocEd = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'clafTwistEnd','loc'))
-             
+              
             clafTwistLocStr.setParent(self.legBlendChain.chain[1])
             clafTwistLocEd.setParent(self.legBlendChain.chain[2])
             clafTwistLocStr.t.set(0,0,0)
@@ -612,7 +627,7 @@ class LegModule(object):
             clafTwistLocEd.r.set(0,0,0)
             clafTwistLocStr.v.set(0)
             clafTwistLocEd.v.set(0)
-             
+              
             self.clafTwistIk.dTwistControlEnable.set(1)
             self.clafTwistIk.dWorldUpType.set(4)
             self.clafTwistIk.dWorldUpAxis.set(3)
@@ -620,7 +635,7 @@ class LegModule(object):
             self.clafTwistIk.dWorldUpVectorEnd.set(0,0,1)
             clafTwistLocStr.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrix)
             clafTwistLocEd.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrixEnd)
-            
+             
         elif self.split == 1:
             
             #thigh:
@@ -638,6 +653,9 @@ class LegModule(object):
              
             self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
             self.thighTwistJoint.splitJointTool()
+            
+            for cube in self.thighTwistJoint.cubeList:
+                self.footSettingCtrl.control.proxy_vis.connect(cube[0].v)
              
             for twistJoints in self.thighTwistJoint.joints:
                 pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'thighTwist','jj'))  
@@ -730,6 +748,9 @@ class LegModule(object):
              
             self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
             self.clafTwistJoint.splitJointTool()
+            
+            for cube in self.clafTwistJoint.cubeList:
+                self.footSettingCtrl.control.proxy_vis.connect(cube[0].v)
               
             for twistJoints in self.clafTwistJoint.joints:
                 pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'clafTwist','jj'))  
