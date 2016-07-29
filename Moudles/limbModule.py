@@ -339,7 +339,7 @@ class LimbModule(object):
                                                                                                   solver = 'ikSplineSolver',
                                                                                                   n = upperArmTwistIkName)
         upperSpIkC = pm.skinCluster(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.upperArmTwistIkCurve,
-                                   n = nameUtils.getSkinName())
+                                    n = nameUtils.getSkinName())
         pm.rename(self.upperArmTwistIkCurve,upperArmTwistIkCurveName)
         self.upperArmTwistIk.poleVector.set(0,0,0)
         self.upperArmTwistIk.v.set(0)
@@ -408,9 +408,12 @@ class LimbModule(object):
         ###
         #fore arm
         self.foreArmTwistStart = pm.duplicate(self.limbBlendChain.chain[1],
-                                              n = nameUtils.getUniqueName(self.side,'foreArmTwistS','jj')) 
+                                              n = nameUtils.getUniqueName(self.side,'foreArmTwistS','jj'))
         self.foreArmTwistEnd = pm.listRelatives(self.foreArmTwistStart,c = 1,typ = 'joint')
         pm.parent(self.foreArmTwistStart,w = 1)
+        
+        tempTrashNode = pm.listRelatives(self.foreArmTwistStart,c = 1,typ = 'ikHandle')
+        pm.delete(tempTrashNode)
         
         self.foreArmTwistJoint = toolModule.SplitJoint(self.foreArmTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
         self.foreArmTwistJoint.splitJointTool()
