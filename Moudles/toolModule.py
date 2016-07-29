@@ -1,16 +1,10 @@
-'''
-Created on 2016/4/18
-
-@author: Ryugasaki Hu
-'''
 import pymel.core as pm
 import maya.mel as mel
 import maya.cmds as mc
+import math
+from Modules import control
 from Modules.subModules import fkChain,ikChain,boneChain
 from Utils import nameUtils,metaUtils
-from Modules import control,hierarchy,legModule 
-from maya import OpenMaya
- 
 
 def getUi(parent,mainUi):
     
@@ -41,19 +35,22 @@ class ToolModuleUi(object):
         pm.separator(h = 10)
   
         #metaSel
-        self.metaSel = pm.frameLayout('metaSel Tool : ',cll=1,p = self.mainL)
+        self.metaSel = pm.frameLayout('meta Select Tool : ',cll=1,p = self.mainL,cl = 1)
         self.metaMenu = pm.optionMenu(l = 'meta : ')
         metaUtils.metaSel()  
         pm.button(l = 'select Skin Joint',c = self.__selSkinJoint)
         
+        #skinTool
+        self.skinAreaTool = pm.frameLayout('skin Area Tool : ',cll=1,p = self.mainL)        
+        pm.button('skin Area Weight',c = self.__areaSkin) 
         
         #splitJoint
-        self.splitJoint = pm.frameLayout('split Joint Tool : ',cll=1,p = self.mainL)
+        self.splitJoint = pm.frameLayout('split Joint Tool : ',cll=1,p = self.mainL,cl = 1)
         self.splitNum = pm.intSliderGrp('intSliderGrp2',min = 1,max = 10,f = 1,s = 1,v = 1)
         pm.button('split Joint',c = self.__splitJointButton) 
         
         #shapeSize
-        self.shape = pm.frameLayout('curve Shape Tool : ',cll=1,p = self.mainL)  
+        self.shape = pm.frameLayout('curve Shape Tool : ',cll=1,p = self.mainL,cl = 1)
         self.shapeLayout = pm.columnLayout('shapeLayout',adj=1)  
         
         #mirrorSize
@@ -97,7 +94,7 @@ class ToolModuleUi(object):
         sel = pm.ls(sl = 1)
         splitJoint = sel[0] 
         num = pm.intSliderGrp(self.splitNum,q = 1,v = 1)
-        splitJoint =  SplitJoint(splitJoint,num,box = 0,type = 'tool')   
+        splitJoint =  SplitJoint(splitJoint,num,box = 1,type = 'tool')   
         splitJoint.splitJointTool()
         
     def __scaleCv(self,*args):
@@ -179,6 +176,37 @@ class ToolModuleUi(object):
                 
             pm.select(cl = 1)    
 
+    def __areaSkin(self,*args):
+
+        geo = pm.ls(sl = 1)[0]
+        skinCluster = mel.eval('findRelatedSkinCluster ' + geo)
+        vertex = pm.polyEvaluate(geo,v = 1)
+        joints = pm.skinCluster(skinCluster,q = 1,inf = 1)
+        skinList = {}
+
+        for num in range(0,vertex):
+            vertex = geo + '.vtx[' + str(num) + ']'
+            vertPos = pm.xform(vertex,q = 1,t = 1,ws = 1)
+            tempDict = {}
+          
+            for joint in joints:
+                jntPos = pm.xform(joint,q = 1,t = 1,ws = 1)
+                dist = math.sqrt(pow(vertPos[0] - jntPos[0],2) + pow(vertPos[1] - jntPos[1],2) + pow(vertPos[2] - jntPos[2],2))
+                tempDict.setdefault(joint,dist)
+                  
+            minDistVal = min(distVal for distVal in tempDict.values())
+          
+            for joint in tempDict.keys(): 
+                if minDistVal == tempDict[joint]:
+                    if joint not in skinList:
+                        skinList[joint] = []
+                    skinList[joint].append(vertex)
+                      
+        for item in skinList.items():
+            joint =  item[0]
+            vertex = item[1]
+            for vert in vertex:
+                pm.skinPercent(skinCluster,vert,transformValue = (joint,1))        
 
 class SplitJoint(object):
     
@@ -322,7 +350,8 @@ class SplitJoint(object):
                 #go head TAC-com
                 a += 1
                 count += 1
-                
+                control.lockAndHideAttr(cube[0],['tx','ty','tz','rx','ry','rz','sx','sy','sz'])     
         #break the cycle delete the tail       
-        pm.delete(self.cubeList[-1])    
+        pm.delete(self.cubeList[-1])
+        self.cubeList.pop()          
                 
