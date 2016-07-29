@@ -281,8 +281,7 @@ class LegModule(object):
             self.__ribonSetUp()
         
         if self.twist == 'non_roll':
-#             self.__nonRollSetUp()
-            pass
+            self.__nonRollSetUp()            
         
         #foot set
         self.__editCtrl()
@@ -393,22 +392,18 @@ class LegModule(object):
         self.splitKneeChain.chain[0].setParent(self.legBlendChain.chain[0])
         
         #create node
-#         #pos
-#         splitPosMDNodeName = nameUtils.getUniqueName(self.side,'splitKneePos','MDN')
-#         splitPosMDNode = pm.createNode('multiplyDivide',n = splitPosMDNodeName)
-#          
-#         #connect
-#         self.legBlendChain.chain[1].tx.connect(splitPosMDNode.input1X)
-#         self.legBlendChain.chain[1].ty.connect(splitPosMDNode.input1Y)
-#         self.legBlendChain.chain[1].tz.connect(splitPosMDNode.input1Z)
-#         
-#         splitPosMDNode.input2X.set(-0.5)
-#         splitPosMDNode.input2Y.set(-0.5)
-#         splitPosMDNode.input2Z.set(-0.5)
-#          
-#         splitPosMDNode.outputX.connect(self.splitKneeChain.chain[0].tx)
-#         splitPosMDNode.outputY.connect(self.splitKneeChain.chain[0].ty)
-#         splitPosMDNode.outputZ.connect(self.splitKneeChain.chain[0].tz)        
+        #pos
+        splitPosMDNodeName = nameUtils.getUniqueName(self.side,'splitKneePos','MDN')
+        splitPosMDNode = pm.createNode('multiplyDivide',n = splitPosMDNodeName)
+          
+        #connect
+        self.legBlendChain.chain[1].tx.connect(splitPosMDNode.input1X)
+        self.legBlendChain.chain[1].ty.connect(splitPosMDNode.input1Y)
+        self.legBlendChain.chain[1].tz.connect(splitPosMDNode.input1Z)
+          
+        splitPosMDNode.outputX.connect(self.splitKneeChain.chain[0].tx)
+        splitPosMDNode.outputY.connect(self.splitKneeChain.chain[0].ty)
+        splitPosMDNode.outputZ.connect(self.splitKneeChain.chain[0].tz)        
                 
         #rot
         splitRotMDNodeName = nameUtils.getUniqueName(self.side,'splitKneeRot','MDN')
@@ -427,7 +422,23 @@ class LegModule(object):
         splitRotMDNode.outputY.connect(self.splitKneeChain.chain[0].ry)
         splitRotMDNode.outputZ.connect(self.splitKneeChain.chain[0].rz)
         
+        #ik handle
+        upIkName = nameUtils.getUniqueName(self.side,'upSplit','iks')
+        self.upSplitIkHandle,self.upSplitIkEffector = pm.ikHandle(sj = self.splitLegUpChain.chain[0],ee = self.splitLegUpChain.chain[1],solver = 'ikSCsolver',n = upIkName)
         
+        downIkName = nameUtils.getUniqueName(self.side,'downSplit','iks')
+        self.downSplitIkHandle,self.downSplitIkEffector = pm.ikHandle(sj = self.splitLegDownChain.chain[0],ee = self.splitLegDownChain.chain[1],solver = 'ikSCsolver',n = downIkName)
+        
+        #cleanUp
+        #ik
+        self.upSplitIkHandle.setParent(self.splitKneeChain.chain[1])
+        self.downSplitIkHandle.setParent(self.legBlendChain.chain[2])
+        self.upSplitIkHandle.v.set(0)
+        self.downSplitIkHandle.v.set(0)
+        
+        #joint
+        self.splitLegUpChain.chain[0].setParent(self.legBlendChain.chain[0])
+        self.splitLegDownChain.chain[0].setParent(self.splitKneeChain.chain[2])        
         
     def __ribonSetUp(self):
         
@@ -437,175 +448,355 @@ class LegModule(object):
   
     def __nonRollSetUp(self):
         
-        #thigh:
-        #create twist Leg 
-        self.thighTwistStart = pm.duplicate(self.legBlendChain.chain[0],
-                                            n = nameUtils.getUniqueName(self.side,'thighTwistS','jj')) 
-        self.thighTwistEnd = pm.listRelatives(self.thighTwistStart,c = 1,typ = 'joint')
-        
-        tempJoint = pm.listRelatives(self.thighTwistEnd,c = 1,typ = 'joint')
-        pm.delete(tempJoint)
-        pm.rename(self.thighTwistEnd,nameUtils.getUniqueName(self.side,'thighTwistE','jj'))
-         
-        self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
-        self.thighTwistJoint.splitJointTool()
-         
-        for twistJoints in self.thighTwistJoint.joints:
-            pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'thighTwist','jj'))  
+        if self.split == 0:
+            
+            #thigh:
+            #create twist Leg 
+            self.thighTwistStart = pm.duplicate(self.legBlendChain.chain[0],
+                                                n = nameUtils.getUniqueName(self.side,'thighTwistS','jj')) 
+            self.thighTwistEnd = pm.listRelatives(self.thighTwistStart,c = 1,typ = 'joint')
+            
+            tempJoint = pm.listRelatives(self.thighTwistEnd,c = 1,typ = 'joint')
+            pm.delete(tempJoint)
+            pm.rename(self.thighTwistEnd,nameUtils.getUniqueName(self.side,'thighTwistE','jj'))
              
-        #create iks
-        thighTwistIkName = nameUtils.getUniqueName(self.side,'thighTwist','iks')  
-        thighTwistIkCurveName = nameUtils.getUniqueName(self.side,'thighTwist','ikc')  
-        self.thighTwistIk,self.thighTwistIkEffector,self.thighTwistIkCurve = pm.ikHandle(sj = self.thighTwistStart[0],
-                                                                                         ee = self.thighTwistEnd[0],
-                                                                                         solver = 'ikSplineSolver',
-                                                                                         n = thighTwistIkName)
-        upperSpIkC = pm.skinCluster(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.thighTwistIkCurve,
-                                   n = nameUtils.getSkinName())
-        pm.rename(self.thighTwistIkCurve,thighTwistIkCurveName)
-        self.thighTwistIk.poleVector.set(0,0,0)
-        self.thighTwistIk.v.set(0)
-        
-        #set stretch
-        #get last cv:
-        pm.select(self.thighTwistIkCurve + '.cv[*]')
-        upperIkCLastCv = pm.ls(sl = 1)[0][-1]
-        pm.skinPercent(upperSpIkC,upperIkCLastCv,tv = [(self.legBlendChain.chain[1],1)])
-         
-        #get cv length
-        thighTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'thighTwist','cvINFO')
-        thighTwistIkCurveInfoNode = pm.createNode('curveInfo',n = thighTwistIkCurveInfoName)
-        self.thighTwistIkCurve.getShape().worldSpace[0].connect(thighTwistIkCurveInfoNode.inputCurve)
-         
-        #create main Node
-        thighTwistCurveMDNName = nameUtils.getUniqueName(self.side,'thighTwistCur','MDN')
-        thighTwistCurveMDNNode = pm.createNode('multiplyDivide',n = thighTwistCurveMDNName)
-         
-        thighTwistIkCurveInfoNode.arcLength.connect(thighTwistCurveMDNNode.input1.input1X)
-        thighTwistCurveMDNNode.input2.input2X.set(self.legBlendChain.chain[1].tx.get())
-        thighTwistCurveMDNNode.operation.set(2)
-         
-        for num,twistJoints in enumerate(self.thighTwistJoint.joints):
-            tempNodeName = nameUtils.getUniqueName(self.side,'thighTwistJnt','MDN')
-            tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
-            if num > 0 :
-                tempNode.input1.input1X.set(twistJoints.tx.get())
-                thighTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
-                tempNode.outputX.connect(twistJoints.tx)
-         
-        #create upperTwistGrp
-        thighTwistGrpName = nameUtils.getUniqueName(self.side,'thighTwist','grp')
-        self.thighTwistGrp = pm.group(em = 1,n = thighTwistGrpName) 
-        self.thighTwistIk.setParent(self.thighTwistGrp) 
-        self.thighTwistIkCurve.setParent(self.thighTwistGrp) 
-         
-        #create upperTwistInfoGrp 
-        twistInfoGrpName = nameUtils.getUniqueName(self.side,'thighTwistInfo','grp')
-        self.thighTwistInfoGrp = pm.group(em = 1,n = twistInfoGrpName)
-         
-        #nonFlip Jnt
-        nonFlipStJnt = pm.duplicate(self.legBlendChain.chain[1],
-                                    n = nameUtils.getUniqueName(self.side,'thighNonFlip','jc'))
-        nonFlipEdJnt = pm.listRelatives(nonFlipStJnt,c = 1,typ = 'joint')
-        pm.rename(nonFlipEdJnt,nameUtils.getUniqueName(self.side,self.baseName + 'thighNonFlip','je'))
-        nonFlipStJnt[0].setParent(self.thighTwistInfoGrp)
-        nonFlipIks,nonFlipIksEffector = pm.ikHandle(sj = nonFlipStJnt[0],ee = nonFlipEdJnt[0],solver = 'ikRPsolver',
-                                                    n = nameUtils.getUniqueName(self.side,'thighNonFlip','iks'))
-        nonFlipIks.setParent(self.legBlendChain.chain[1])
-        nonFlipIks.poleVector.set(0,0,0)
-        nonFlipIks.r.set(0,0,0)
-        nonFlipIks.v.set(0)
-        pm.pointConstraint(self.legBlendChain.chain[1],nonFlipStJnt,mo = 1)
-         
-        #twist info jnt
-        twistInfoJnt = pm.joint(n = nameUtils.getUniqueName(self.side,'thighTwistInfo','jc'))
-        twistInfoJnt.setParent(nonFlipStJnt)
-        twistInfoJnt.t.set(0,0,0)
-        pm.aimConstraint(nonFlipEdJnt[0],twistInfoJnt,mo = 1,w = 1,aimVector = [1,0,0],upVector = [0,0,1],
-                         worldUpType = 'objectrotation',worldUpVector = [0,0,1],
-                         worldUpObject = self.legBlendChain.chain[1])
-        twistInfoJnt.rx.connect(self.thighTwistIk.twist)
-#         pm.parentConstraint(self.hipChain.chain[0],twistInfoGrpName,mo = 1)
-         
-        ###
-        #fore Leg
-        self.clafTwistStart = pm.duplicate(self.legBlendChain.chain[1],
-                                              n = nameUtils.getUniqueName(self.side,'clafTwistS','jj')) 
-        self.clafTwistEnd = pm.listRelatives(self.clafTwistStart,c = 1,typ = 'joint')
-        pm.parent(self.clafTwistStart,w = 1)
-         
-        self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
-        self.clafTwistJoint.splitJointTool()
-          
-        for twistJoints in self.clafTwistJoint.joints:
-            pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'clafTwist','jj'))  
+            self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
+            self.thighTwistJoint.splitJointTool()
+             
+            for twistJoints in self.thighTwistJoint.joints:
+                pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'thighTwist','jj'))  
+                 
+            #create iks
+            thighTwistIkName = nameUtils.getUniqueName(self.side,'thighTwist','iks')  
+            thighTwistIkCurveName = nameUtils.getUniqueName(self.side,'thighTwist','ikc')  
+            self.thighTwistIk,self.thighTwistIkEffector,self.thighTwistIkCurve = pm.ikHandle(sj = self.thighTwistStart[0],
+                                                                                             ee = self.thighTwistEnd[0],
+                                                                                             solver = 'ikSplineSolver',
+                                                                                             n = thighTwistIkName)
+            upperSpIkC = pm.skinCluster(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.thighTwistIkCurve,
+                                       n = nameUtils.getSkinName())
+            pm.rename(self.thighTwistIkCurve,thighTwistIkCurveName)
+            self.thighTwistIk.poleVector.set(0,0,0)
+            self.thighTwistIk.v.set(0)
+            
+            #set stretch
+            #get last cv:
+            pm.select(self.thighTwistIkCurve + '.cv[*]')
+            upperIkCLastCv = pm.ls(sl = 1)[0][-1]
+            pm.skinPercent(upperSpIkC,upperIkCLastCv,tv = [(self.legBlendChain.chain[1],1)])
+             
+            #get cv length
+            thighTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'thighTwist','cvINFO')
+            thighTwistIkCurveInfoNode = pm.createNode('curveInfo',n = thighTwistIkCurveInfoName)
+            self.thighTwistIkCurve.getShape().worldSpace[0].connect(thighTwistIkCurveInfoNode.inputCurve)
+             
+            #create main Node
+            thighTwistCurveMDNName = nameUtils.getUniqueName(self.side,'thighTwistCur','MDN')
+            thighTwistCurveMDNNode = pm.createNode('multiplyDivide',n = thighTwistCurveMDNName)
+             
+            thighTwistIkCurveInfoNode.arcLength.connect(thighTwistCurveMDNNode.input1.input1X)
+            thighTwistCurveMDNNode.input2.input2X.set(self.legBlendChain.chain[1].tx.get())
+            thighTwistCurveMDNNode.operation.set(2)
+             
+            for num,twistJoints in enumerate(self.thighTwistJoint.joints):
+                tempNodeName = nameUtils.getUniqueName(self.side,'thighTwistJnt','MDN')
+                tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
+                if num > 0 :
+                    tempNode.input1.input1X.set(twistJoints.tx.get())
+                    thighTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
+                    tempNode.outputX.connect(twistJoints.tx)
+             
+            #create upperTwistGrp
+            thighTwistGrpName = nameUtils.getUniqueName(self.side,'thighTwist','grp')
+            self.thighTwistGrp = pm.group(em = 1,n = thighTwistGrpName) 
+            self.thighTwistIk.setParent(self.thighTwistGrp) 
+            self.thighTwistIkCurve.setParent(self.thighTwistGrp) 
+             
+            #create upperTwistInfoGrp 
+            twistInfoGrpName = nameUtils.getUniqueName(self.side,'thighTwistInfo','grp')
+            self.thighTwistInfoGrp = pm.group(em = 1,n = twistInfoGrpName)
+             
+            #nonFlip Jnt
+            nonFlipStJnt = pm.duplicate(self.legBlendChain.chain[1],
+                                        n = nameUtils.getUniqueName(self.side,'thighNonFlip','jc'))
+            nonFlipEdJnt = pm.listRelatives(nonFlipStJnt,c = 1,typ = 'joint')
+            pm.rename(nonFlipEdJnt,nameUtils.getUniqueName(self.side,self.baseName + 'thighNonFlip','je'))
+            nonFlipStJnt[0].setParent(self.thighTwistInfoGrp)
+            nonFlipIks,nonFlipIksEffector = pm.ikHandle(sj = nonFlipStJnt[0],ee = nonFlipEdJnt[0],solver = 'ikRPsolver',
+                                                        n = nameUtils.getUniqueName(self.side,'thighNonFlip','iks'))
+            nonFlipIks.setParent(self.legBlendChain.chain[1])
+            nonFlipIks.poleVector.set(0,0,0)
+            nonFlipIks.r.set(0,0,0)
+            nonFlipIks.v.set(0)
+            pm.pointConstraint(self.legBlendChain.chain[1],nonFlipStJnt,mo = 1)
+             
+            #twist info jnt
+            twistInfoJnt = pm.joint(n = nameUtils.getUniqueName(self.side,'thighTwistInfo','jc'))
+            twistInfoJnt.setParent(nonFlipStJnt)
+            twistInfoJnt.t.set(0,0,0)
+            pm.aimConstraint(nonFlipEdJnt[0],twistInfoJnt,mo = 1,w = 1,aimVector = [1,0,0],upVector = [0,0,1],
+                             worldUpType = 'objectrotation',worldUpVector = [0,0,1],
+                             worldUpObject = self.legBlendChain.chain[1])
+            twistInfoJnt.rx.connect(self.thighTwistIk.twist)
+    #         pm.parentConstraint(self.hipChain.chain[0],twistInfoGrpName,mo = 1)
+             
+            ###
+            #fore Leg
+            self.clafTwistStart = pm.duplicate(self.legBlendChain.chain[1],
+                                                  n = nameUtils.getUniqueName(self.side,'clafTwistS','jj')) 
+            self.clafTwistEnd = pm.listRelatives(self.clafTwistStart,c = 1,typ = 'joint')
+            pm.parent(self.clafTwistStart,w = 1)
+             
+            self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
+            self.clafTwistJoint.splitJointTool()
               
-        #create iks      
-        clafTwistIkName = nameUtils.getUniqueName(self.side,'clafTwist','iks')  
-        clafTwistIkCurveName = nameUtils.getUniqueName(self.side,'clafTwist','ikc')  
-        self.clafTwistIk,self.clafTwistIkEffector,self.clafTwistIkCurve = pm.ikHandle(sj = self.clafTwistStart[0],
-                                                                                      ee = self.clafTwistEnd[0],
-                                                                                      solver = 'ikSplineSolver',
-                                                                                      n = clafTwistIkName)
-        foreSpIkC = pm.skinCluster(self.legBlendChain.chain[1],self.legBlendChain.chain[2],self.clafTwistIkCurve)
-        pm.rename(self.clafTwistIkCurve,clafTwistIkCurveName)
-        self.clafTwistIk.poleVector.set(0,0,0)
-        self.clafTwistIk.v.set(0)
-         
-        #set stretch
-        #get last cv:
-        pm.select(self.clafTwistIkCurve + '.cv[*]')
-        foreIkCLastCv = pm.ls(sl = 1)[0][-1]
-        pm.skinPercent(foreSpIkC,foreIkCLastCv,tv = [(self.legBlendChain.chain[2],1)])
-         
-        #get cv length
-        clafTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'clafTwist','cvINFO')
-        clafTwistIkCurveInfoNode = pm.createNode('curveInfo',n = clafTwistIkCurveInfoName)
-        self.clafTwistIkCurve.getShape().worldSpace[0].connect(clafTwistIkCurveInfoNode.inputCurve)
-         
-        #create main Node
-        clafTwistCurveMDNName = nameUtils.getUniqueName(self.side,'clafTwistCur','MDN')
-        clafTwistCurveMDNNode = pm.createNode('multiplyDivide',n = clafTwistCurveMDNName)
-         
-        clafTwistIkCurveInfoNode.arcLength.connect(clafTwistCurveMDNNode.input1.input1X)
-        clafTwistCurveMDNNode.input2.input2X.set(self.legBlendChain.chain[2].tx.get())
-        clafTwistCurveMDNNode.operation.set(2)
-         
-        for num,twistJoints in enumerate(self.clafTwistJoint.joints):
-            tempNodeName = nameUtils.getUniqueName(self.side,'clafTwistJnt','MDN')
-            tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
-            if num > 0 :
-                tempNode.input1.input1X.set(twistJoints.tx.get())
-                clafTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
-                tempNode.outputX.connect(twistJoints.tx)
-         
-        #create foreTwistGrp
-        clafTwistGrpName = nameUtils.getUniqueName(self.side,'clafTwist','grp')
-        self.clafTwistGrp = pm.group(em = 1,n = clafTwistGrpName) 
-        self.clafTwistIk.setParent(self.clafTwistGrp) 
-        self.clafTwistIkCurve.setParent(self.clafTwistGrp) 
-         
-        #lowerTwist
-        clafTwistLocStr = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'clafTwistStart','loc'))
-        clafTwistLocEd = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'clafTwistEnd','loc'))
-         
-        clafTwistLocStr.setParent(self.legBlendChain.chain[1])
-        clafTwistLocEd.setParent(self.legBlendChain.chain[2])
-        clafTwistLocStr.t.set(0,0,0)
-        clafTwistLocStr.r.set(0,0,0)
-        clafTwistLocEd.t.set(0,0,0)
-        clafTwistLocEd.r.set(0,0,0)
-        clafTwistLocStr.v.set(0)
-        clafTwistLocEd.v.set(0)
-         
-        self.clafTwistIk.dTwistControlEnable.set(1)
-        self.clafTwistIk.dWorldUpType.set(4)
-        self.clafTwistIk.dWorldUpAxis.set(3)
-        self.clafTwistIk.dWorldUpVector.set(0,0,1)
-        self.clafTwistIk.dWorldUpVectorEnd.set(0,0,1)
-        clafTwistLocStr.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrix)
-        clafTwistLocEd.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrixEnd)
-      
+            for twistJoints in self.clafTwistJoint.joints:
+                pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'clafTwist','jj'))  
+                  
+            #create iks      
+            clafTwistIkName = nameUtils.getUniqueName(self.side,'clafTwist','iks')  
+            clafTwistIkCurveName = nameUtils.getUniqueName(self.side,'clafTwist','ikc')  
+            self.clafTwistIk,self.clafTwistIkEffector,self.clafTwistIkCurve = pm.ikHandle(sj = self.clafTwistStart[0],
+                                                                                          ee = self.clafTwistEnd[0],
+                                                                                          solver = 'ikSplineSolver',
+                                                                                          n = clafTwistIkName)
+            thighSpIkCluster = pm.skinCluster(self.legBlendChain.chain[1],self.legBlendChain.chain[2],self.clafTwistIkCurve,n = nameUtils.getSkinName())
+            pm.rename(self.clafTwistIkCurve,clafTwistIkCurveName)
+            self.clafTwistIk.poleVector.set(0,0,0)
+            self.clafTwistIk.v.set(0)
+             
+            #set stretch
+            #get last cv:
+            pm.select(self.clafTwistIkCurve + '.cv[*]')
+            foreIkCLastCv = pm.ls(sl = 1)[0][-1]
+            pm.skinPercent(thighSpIkCluster,foreIkCLastCv,tv = [(self.legBlendChain.chain[2],1)])
+             
+            #get cv length
+            clafTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'clafTwist','cvINFO')
+            clafTwistIkCurveInfoNode = pm.createNode('curveInfo',n = clafTwistIkCurveInfoName)
+            self.clafTwistIkCurve.getShape().worldSpace[0].connect(clafTwistIkCurveInfoNode.inputCurve)
+             
+            #create main Node
+            clafTwistCurveMDNName = nameUtils.getUniqueName(self.side,'clafTwistCur','MDN')
+            clafTwistCurveMDNNode = pm.createNode('multiplyDivide',n = clafTwistCurveMDNName)
+             
+            clafTwistIkCurveInfoNode.arcLength.connect(clafTwistCurveMDNNode.input1.input1X)
+            clafTwistCurveMDNNode.input2.input2X.set(self.legBlendChain.chain[2].tx.get())
+            clafTwistCurveMDNNode.operation.set(2)
+             
+            for num,twistJoints in enumerate(self.clafTwistJoint.joints):
+                tempNodeName = nameUtils.getUniqueName(self.side,'clafTwistJnt','MDN')
+                tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
+                if num > 0 :
+                    tempNode.input1.input1X.set(twistJoints.tx.get())
+                    clafTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
+                    tempNode.outputX.connect(twistJoints.tx)
+             
+            #create foreTwistGrp
+            clafTwistGrpName = nameUtils.getUniqueName(self.side,'clafTwist','grp')
+            self.clafTwistGrp = pm.group(em = 1,n = clafTwistGrpName) 
+            self.clafTwistIk.setParent(self.clafTwistGrp) 
+            self.clafTwistIkCurve.setParent(self.clafTwistGrp) 
+             
+            #lowerTwist
+            clafTwistLocStr = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'clafTwistStart','loc'))
+            clafTwistLocEd = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'clafTwistEnd','loc'))
+             
+            clafTwistLocStr.setParent(self.legBlendChain.chain[1])
+            clafTwistLocEd.setParent(self.legBlendChain.chain[2])
+            clafTwistLocStr.t.set(0,0,0)
+            clafTwistLocStr.r.set(0,0,0)
+            clafTwistLocEd.t.set(0,0,0)
+            clafTwistLocEd.r.set(0,0,0)
+            clafTwistLocStr.v.set(0)
+            clafTwistLocEd.v.set(0)
+             
+            self.clafTwistIk.dTwistControlEnable.set(1)
+            self.clafTwistIk.dWorldUpType.set(4)
+            self.clafTwistIk.dWorldUpAxis.set(3)
+            self.clafTwistIk.dWorldUpVector.set(0,0,1)
+            self.clafTwistIk.dWorldUpVectorEnd.set(0,0,1)
+            clafTwistLocStr.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrix)
+            clafTwistLocEd.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrixEnd)
+            
+        elif self.split == 1:
+            
+            #thigh:
+            #non roll up            
+            #create twist Leg
+            self.thighTwistStart = pm.duplicate(self.splitLegUpChain.chain[0],
+                                                n = nameUtils.getUniqueName(self.side,'thighTwistS','jj'))
+            tempThighTrashEffNode = pm.listRelatives(self.thighTwistStart,c = 1,typ = 'ikEffector')
+            pm.delete(tempThighTrashEffNode)
+            self.thighTwistEnd = pm.listRelatives(self.thighTwistStart,c = 1,typ = 'joint')
+            
+            tempJoint = pm.listRelatives(self.thighTwistEnd,c = 1,typ = 'joint')
+            pm.delete(tempJoint)
+            pm.rename(self.thighTwistEnd,nameUtils.getUniqueName(self.side,'thighTwistE','jj'))
+             
+            self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
+            self.thighTwistJoint.splitJointTool()
+             
+            for twistJoints in self.thighTwistJoint.joints:
+                pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'thighTwist','jj'))  
+                 
+            #create iks
+            thighTwistIkName = nameUtils.getUniqueName(self.side,'thighTwist','iks')  
+            thighTwistIkCurveName = nameUtils.getUniqueName(self.side,'thighTwist','ikc')  
+            self.thighTwistIk,self.thighTwistIkEffector,self.thighTwistIkCurve = pm.ikHandle(sj = self.thighTwistStart[0],
+                                                                                             ee = self.thighTwistEnd[0],
+                                                                                             solver = 'ikSplineSolver',
+                                                                                             n = thighTwistIkName)
+            self.thighTwistIk.setParent(self.splitLegUpChain.chain[0])
+            pm.parent(self.thighTwistIkCurve,w = 1)
+            pm.parent(self.thighTwistStart,w = 1)
+            thighSpIkCurveSkinCluster = pm.skinCluster(self.splitLegUpChain.chain[0],self.splitLegUpChain.chain[1],self.thighTwistIkCurve,n = nameUtils.getSkinName())
+            pm.rename(self.thighTwistIkCurve,thighTwistIkCurveName)
+            self.thighTwistIk.poleVector.set(0,0,0)
+            self.thighTwistIk.v.set(0)
+             
+            #set stretch
+            #get last cv:
+            pm.select(self.thighTwistIkCurve + '.cv[*]')
+            upperIkCLastCv = pm.ls(sl = 1)[0][-1]
+            pm.skinPercent(thighSpIkCurveSkinCluster,upperIkCLastCv,tv = [(self.splitKneeChain.chain[1],1)])
+              
+            #get cv length
+            thighTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'thighTwist','cvINFO')
+            thighTwistIkCurveInfoNode = pm.createNode('curveInfo',n = thighTwistIkCurveInfoName)
+            self.thighTwistIkCurve.getShape().worldSpace[0].connect(thighTwistIkCurveInfoNode.inputCurve)
+               
+            #create main Node
+            thighTwistCurveMDNName = nameUtils.getUniqueName(self.side,'thighTwistCur','MDN')
+            thighTwistCurveMDNNode = pm.createNode('multiplyDivide',n = thighTwistCurveMDNName)
+               
+            thighTwistIkCurveInfoNode.arcLength.connect(thighTwistCurveMDNNode.input1.input1X)
+            thighTwistCurveMDNNode.input2.input2X.set(self.splitLegUpChain.chain[1].tx.get())
+            thighTwistCurveMDNNode.operation.set(2)
+               
+            for num,twistJoints in enumerate(self.thighTwistJoint.joints):
+                tempNodeName = nameUtils.getUniqueName(self.side,'thighTwistJnt','MDN')
+                tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
+                if num > 0 :
+                    tempNode.input1.input1X.set(twistJoints.tx.get())
+                    thighTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
+                    tempNode.outputX.connect(twistJoints.tx)
+                      
+            #create upperTwistGrp
+            thighTwistGrpName = nameUtils.getUniqueName(self.side,'thighTwist','grp')
+            self.thighTwistGrp = pm.group(em = 1,n = thighTwistGrpName) 
+            self.thighTwistIk.setParent(self.thighTwistGrp) 
+            self.thighTwistIkCurve.setParent(self.thighTwistGrp) 
+             
+            #create upperTwistInfoGrp 
+            twistInfoGrpName = nameUtils.getUniqueName(self.side,'thighTwistInfo','grp')
+            self.thighTwistInfoGrp = pm.group(em = 1,n = twistInfoGrpName)
+             
+            #nonFlip Jnt
+            nonFlipStJnt = pm.duplicate(self.legBlendChain.chain[1],
+                                        n = nameUtils.getUniqueName(self.side,'thighNonFlip','jc'))
+            nonFlipEdJnt = pm.listRelatives(nonFlipStJnt,c = 1,typ = 'joint')
+            pm.rename(nonFlipEdJnt,nameUtils.getUniqueName(self.side,self.baseName + 'thighNonFlip','je'))
+            nonFlipStJnt[0].setParent(self.thighTwistInfoGrp)
+            nonFlipIks,nonFlipIksEffector = pm.ikHandle(sj = nonFlipStJnt[0],ee = nonFlipEdJnt[0],solver = 'ikRPsolver',
+                                                        n = nameUtils.getUniqueName(self.side,'thighNonFlip','iks'))
+            nonFlipIks.setParent(self.legBlendChain.chain[1])
+            nonFlipIks.poleVector.set(0,0,0)
+            nonFlipIks.r.set(0,0,0)
+            nonFlipIks.v.set(0)
+            pm.pointConstraint(self.legBlendChain.chain[1],nonFlipStJnt,mo = 1)
+               
+            #twist info jnt
+            twistInfoJnt = pm.joint(n = nameUtils.getUniqueName(self.side,'thighTwistInfo','jc'))
+            twistInfoJnt.setParent(nonFlipStJnt)
+            twistInfoJnt.t.set(0,0,0)
+            pm.aimConstraint(nonFlipEdJnt[0],twistInfoJnt,mo = 1,w = 1,aimVector = [1,0,0],upVector = [0,0,1],
+                             worldUpType = 'objectrotation',worldUpVector = [0,0,1],
+                             worldUpObject = self.legBlendChain.chain[1])
+            twistInfoJnt.rx.connect(self.thighTwistIk.twist)
+       
+            ###
+            #fore Leg
+            self.clafTwistStart = pm.duplicate(self.splitLegDownChain.chain[0],
+                                               n = nameUtils.getUniqueName(self.side,'clafTwistS','jj'))
+            tempClafTrashEffNode = pm.listRelatives(self.clafTwistStart,c = 1,typ = 'ikEffector')
+            pm.delete(tempClafTrashEffNode) 
+            self.clafTwistEnd = pm.listRelatives(self.clafTwistStart,c = 1,typ = 'joint')
+            pm.parent(self.clafTwistStart,w = 1)
+             
+            self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
+            self.clafTwistJoint.splitJointTool()
+              
+            for twistJoints in self.clafTwistJoint.joints:
+                pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'clafTwist','jj'))  
+                  
+            #create iks      
+            clafTwistIkName = nameUtils.getUniqueName(self.side,'clafTwist','iks')  
+            clafTwistIkCurveName = nameUtils.getUniqueName(self.side,'clafTwist','ikc')  
+            self.clafTwistIk,self.clafTwistIkEffector,self.clafTwistIkCurve = pm.ikHandle(sj = self.clafTwistStart[0],
+                                                                                          ee = self.clafTwistEnd[0],
+                                                                                          solver = 'ikSplineSolver',
+                                                                                          n = clafTwistIkName)
+            thighSpIkCluster = pm.skinCluster(self.legBlendChain.chain[1],self.legBlendChain.chain[2],self.clafTwistIkCurve,n = nameUtils.getSkinName())
+            pm.rename(self.clafTwistIkCurve,clafTwistIkCurveName)
+            self.clafTwistIk.poleVector.set(0,0,0)
+            self.clafTwistIk.v.set(0)
+             
+#             #set stretch
+#             #get last cv:
+#             pm.select(self.clafTwistIkCurve + '.cv[*]')
+#             foreIkCLastCv = pm.ls(sl = 1)[0][-1]
+#             pm.skinPercent(thighSpIkCluster,foreIkCLastCv,tv = [(self.legBlendChain.chain[2],1)])
+#              
+#             #get cv length
+#             clafTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'clafTwist','cvINFO')
+#             clafTwistIkCurveInfoNode = pm.createNode('curveInfo',n = clafTwistIkCurveInfoName)
+#             self.clafTwistIkCurve.getShape().worldSpace[0].connect(clafTwistIkCurveInfoNode.inputCurve)
+#              
+#             #create main Node
+#             clafTwistCurveMDNName = nameUtils.getUniqueName(self.side,'clafTwistCur','MDN')
+#             clafTwistCurveMDNNode = pm.createNode('multiplyDivide',n = clafTwistCurveMDNName)
+#              
+#             clafTwistIkCurveInfoNode.arcLength.connect(clafTwistCurveMDNNode.input1.input1X)
+#             clafTwistCurveMDNNode.input2.input2X.set(self.legBlendChain.chain[2].tx.get())
+#             clafTwistCurveMDNNode.operation.set(2)
+#              
+#             for num,twistJoints in enumerate(self.clafTwistJoint.joints):
+#                 tempNodeName = nameUtils.getUniqueName(self.side,'clafTwistJnt','MDN')
+#                 tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
+#                 if num > 0 :
+#                     tempNode.input1.input1X.set(twistJoints.tx.get())
+#                     clafTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
+#                     tempNode.outputX.connect(twistJoints.tx)
+#              
+#             #create foreTwistGrp
+#             clafTwistGrpName = nameUtils.getUniqueName(self.side,'clafTwist','grp')
+#             self.clafTwistGrp = pm.group(em = 1,n = clafTwistGrpName) 
+#             self.clafTwistIk.setParent(self.clafTwistGrp) 
+#             self.clafTwistIkCurve.setParent(self.clafTwistGrp) 
+#              
+#             #lowerTwist
+#             clafTwistLocStr = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'clafTwistStart','loc'))
+#             clafTwistLocEd = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'clafTwistEnd','loc'))
+#              
+#             clafTwistLocStr.setParent(self.legBlendChain.chain[1])
+#             clafTwistLocEd.setParent(self.legBlendChain.chain[2])
+#             clafTwistLocStr.t.set(0,0,0)
+#             clafTwistLocStr.r.set(0,0,0)
+#             clafTwistLocEd.t.set(0,0,0)
+#             clafTwistLocEd.r.set(0,0,0)
+#             clafTwistLocStr.v.set(0)
+#             clafTwistLocEd.v.set(0)
+#              
+#             self.clafTwistIk.dTwistControlEnable.set(1)
+#             self.clafTwistIk.dWorldUpType.set(4)
+#             self.clafTwistIk.dWorldUpAxis.set(3)
+#             self.clafTwistIk.dWorldUpVector.set(0,0,1)
+#             self.clafTwistIk.dWorldUpVectorEnd.set(0,0,1)
+#             clafTwistLocStr.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrix)
+#             clafTwistLocEd.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrixEnd)               
+                      
+          
     def __setRibbonUpper(self):
         '''
         this function set ribbon for the Upper 
