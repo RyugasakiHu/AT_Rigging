@@ -1838,12 +1838,17 @@ class FingerModuleUi(object):
     def getModuleInstance(self):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
-        sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        sideR = pm.radioButtonGrp(self.sideR,q = 1,sl = 1)
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         fingerNumT = pm.optionMenu(self.fingerNumMenu, q = 1,v = 1)
         armMetaNode = pm.optionMenu(self.metaArmNodeM,q = 1,v = 1)
         spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
         mainMetaNode = pm.optionMenu(self.metaMainNodeM,q = 1,v = 1)
+        
+        if sideR == 1:
+            sideT = 'l'
+        elif sideR == 2:
+            sideT = 'r'     
         
         self.__pointerClass = FingerModule(baseNameT,sideT,size = cntSizeV,metaArm = armMetaNode,
                                            metaMain = mainMetaNode,metaSpine = spineMetaNode,fingerNum = fingerNumT)
