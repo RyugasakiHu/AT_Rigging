@@ -1,7 +1,8 @@
 import pymel.core as pm
 import boneChain
-from maya import cmds , OpenMaya
+from maya import cmds,OpenMaya
 from Modules import control
+from Utils import nameUtils
 
 class FkChain(boneChain.BoneChain):
 
@@ -64,9 +65,9 @@ class FkChain(boneChain.BoneChain):
             cntClass.circleCtrl()            
             
             if fallOff == 1:
-                cntClass.control.s.set(float(1 - float((num + 1.0) / 5)),float(1 - float((num + 1.0) / 5)),float(1 - float((num + 1.0) / 5)))
+                cntClass.control.s.set(float(1 - float((num + 1.0) / 10)),float(1 - float((num + 1.0) / 10)),float(1 - float((num + 1.0) / 10)))
                 pm.makeIdentity(cntClass.control,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
-                   
+            
             pm.delete(cntClass.control,ch=1)
             #snap to the control
             #que xform
@@ -80,7 +81,8 @@ class FkChain(boneChain.BoneChain):
            
         for i in range(len(reversedList)):
             if i != (len(reversedList)-1):
-                pm.parent(reversedList[i].controlGrp,reversedList[i+1].control)    
+                pm.parent(reversedList[i].controlGrp,reversedList[i+1].control)
+                
         #orient cnst        
         for i,c in enumerate(self.controlsArray):
             pm.orientConstraint(c.control,self.chain[i],mo = 1)
@@ -97,16 +99,34 @@ class FkChain(boneChain.BoneChain):
             
 #             for shape in ctrl.control.getShapes():
 #                 pm.parent(shape,self.chain[num],r=1,s=1)
-            pm.parent(ctrl.control.getShape(),self.chain[num],r=1,s=1)
+
+            pm.parent(ctrl.control.getShape(),self.chain[num],r=1,s=1)                        
+            
+            #stretch
+            #Add attr
+            pm.addAttr(self.chain[num],ln = 'stretch',at = 'double',dv = 0)
+            pm.setAttr(self.chain[num] + '.stretch',e = 1,k = 1)
+            
+            #create node
+            fkStrectchPMANodeName = nameUtils.getUniqueName(self.side,'fkStrectch','MDN')
+            fkStrectchPMANode = pm.createNode('plusMinusAverage',n = fkStrectchPMANodeName)
+            
+            #connect
+            oriTx = self.chain[num].tx.get()
+            fkStrectchPMANode.input3D[0].input3Dx.set(oriTx)
+            self.chain[num].stretch.connect(fkStrectchPMANode.input3D[1].input3Dx)
+            fkStrectchPMANode.operation.set(1)
+            fkStrectchPMANode.output3Dx.connect(self.chain[num].tx)
             
             #lock and hide
-            control.lockAndHideAttr(self.chain[num],["ty","tz","sy","sz",'sx'])
-        
+            control.lockAndHideAttr(self.chain[num],["tx","ty","tz","sy","sz","sx"])
+            
         #delete grp   
         for i in range(len(reversedList)):
             pm.delete(reversedList[i].controlGrp)         
             
     def __checkCcType(self):
+        
         '''
         whether the Cc is valid
         @return:bool
