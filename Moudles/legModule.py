@@ -15,7 +15,8 @@ class LegModule(object):
     
     def __init__(self,baseName = 'leg',side = 'l',size = 1.5,
                  controlOrient = [0,0,0],metaMain = None,metaSpine = None,
-                 twist = None,split = None,upperTwistNum = None,lowerTwistNum = None):
+                 twist = None,split = None,upperTwistNum = None,
+                 lowerTwistNum = None,mirror = None,metaMirror = None):
         
         self.baseName = baseName
         self.side = side
@@ -25,6 +26,7 @@ class LegModule(object):
         self.split = split
         self.upperTwistNum = upperTwistNum 
         self.lowerTwistNum = lowerTwistNum
+        self.mirror = mirror
         
         '''
         self para
@@ -77,6 +79,7 @@ class LegModule(object):
         self.meta = metaUtils.createMeta(self.side,self.baseName,0)
         self.metaMain = metaMain 
         self.metaSpine = metaSpine
+        self.metaMirror = metaMirror
         
     def buildGuides(self):
         
@@ -141,6 +144,15 @@ class LegModule(object):
         if self.split == 1:
             self.splitLegGuides[1].setParent(self.legGuides[1])
             self.splitLegGuides.reverse()
+        
+        if self.mirror == 'yes':
+            mirrorMetaNode = pm.ls(self.metaMirror)[0]
+            
+            leftGuideLocMetaList = pm.connectionInfo(mirrorMetaNode.guideLocator, destinationFromSource=True) 
+
+            for num,leftGuideLocMeta in enumerate(leftGuideLocMetaList): 
+                leftGuideLoc = leftGuideLocMeta.split('.')[0]
+                leftHipPos =    
         
         self.guideGrp.s.set(self.size,self.size,self.size)
             
@@ -1029,6 +1041,9 @@ class LegModule(object):
         self.ikRpChain.ikHandle.setParent(self.legGuides[-1])
         self.ikRpPvChain.ikHandle.setParent(self.legGuides[-1])
         pm.delete(self.ikRpPvChain.ikHandle + '_pointConstraint1')
+        
+#         parentCnst = pm.parentConstraint(self.ikRpPvChain.ikCtrl.control,self.legGuides[2],mo = 1)
+         
         pointCnst = pm.pointConstraint(self.ikRpPvChain.ikCtrl.control,self.legGuides[2],mo = 1)
         orientCnst = pm.orientConstraint(self.ikRpPvChain.ikCtrl.control,self.legGuides[2],mo = 1)
          
@@ -1313,7 +1328,7 @@ class LegModule(object):
                             + [self.ikRpPvChain.ikCtrl.control,self.ikRpPvChain.poleVectorCtrl.control]
                             + [fk for fk in self.fkChain.chain])
         metaUtils.addToMeta(self.meta,'skinJoints',[self.hipChain.chain[0],self.legBlendChain.chain[-3],self.legBlendChain.chain[-4]])
-        
+        metaUtils.addToMeta(self.meta,'guideLocator',[self.legGuides[0],self.hipGuides[0]])
 #         metaUtils.addToMeta(self.meta,'moduleGrp',[self.legGrp])
 #         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.legBlendChain.chain])
         
@@ -1340,17 +1355,26 @@ class LegModuleUi(object):
         #size
         self.cntSizeV = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
                                          ad2 = 1,numberOfFields = 1,value1 = 1,p = self.leg)
+        
         #side
         pm.rowLayout(adj = 1,nc=100,p = self.leg)
         pm.button(l = 'side : ')
-        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)        
+        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)
+        
+        #mirror 
+        pm.rowLayout(adj = 1,nc=100,p = self.leg)
+        pm.button(l = 'mirror : ')
+        self.mirrorR = pm.radioButtonGrp(nrb = 2,la2 = ['yes','no'],sl = 1)
+        
+        #mirror meta
+        self.mirrorNodeM = pm.optionMenu(l = 'mirrorMeta : ',p = self.leg)
+        metaUtils.metaSel() 
         
         #split
         pm.rowLayout(adj = 1,nc=100,p = self.leg)
-        pm.button(l = 'split : ')
+        pm.button(l = 'split knee: ')
         self.splitR = pm.radioButtonGrp(nrb = 2,la2 = ['yes','no'],sl = 2)   
-        
-        
+                
         #twist
         self.twistModule = pm.optionMenu(l = 'twist module : ',p = self.leg)
         pm.menuItem(l = 'non_roll',p = self.twistModule)
@@ -1384,9 +1408,11 @@ class LegModuleUi(object):
         
     def getModuleInstance(self):
         
-        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)        
+        baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
+             
         sideR = pm.radioButtonGrp(self.sideR,q = True,sl = True)
         splitR = pm.radioButtonGrp(self.splitR,q = True,sl = True)
+        mirrorR = pm.radioButtonGrp(self.mirrorR,q = True,sl = True)
         
         if sideR == 1:
             sideT = 'l'
@@ -1397,10 +1423,16 @@ class LegModuleUi(object):
             splitT = 1
         elif splitR == 2:
             splitT = 0
+            
+        if mirrorR == 1:
+            mirrorT = 'yes'
+        elif mirrorR == 2:
+            mirrorT = 'no'    
                 
         cntSizeV = pm.floatFieldGrp(self.cntSizeV,q = 1,value1 = 1)
         mainMetaNode = pm.optionMenu(self.metaMainNodeM,q = 1,v = 1)
         spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
+        mirrorMetaNode = pm.optionMenu(self.mirrorNodeM,q = 1,v = 1)
         twistT = pm.optionMenu(self.twistModule, q = 1,v = 1)
         upperTwistNumV = pm.intSliderGrp(self.upperNum , q = 1,v = 1)
         lowerTwistNumV = pm.intSliderGrp(self.lowerNum ,q = 1,v = 1)
@@ -1408,7 +1440,7 @@ class LegModuleUi(object):
         self.__pointerClass = LegModule(baseName = baseNameT,side = sideT,size = cntSizeV,
                                         metaMain = mainMetaNode,metaSpine = spineMetaNode,
                                         twist = twistT,upperTwistNum = upperTwistNumV,split = splitT,
-                                        lowerTwistNum = lowerTwistNumV)
+                                        lowerTwistNum = lowerTwistNumV,mirror = mirrorT,metaMirror = mirrorMetaNode)
         return self.__pointerClass             
 
 # import sys
