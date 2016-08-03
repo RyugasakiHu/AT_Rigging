@@ -109,47 +109,6 @@ class LegModule(object):
             
         tempLegGuides = list(self.legGuides)
         tempLegGuides.reverse()
-                
-        ###
-        #mirror
-        if self.mirror == 'yes':
-            mirrorMetaNode = pm.ls(self.metaMirror)[0]            
-            leftGuideLocMetaList = pm.connectionInfo(mirrorMetaNode.guideLocator, destinationFromSource=True) 
-            print leftGuideLocMetaList
-            for num,leftGuideLocMeta in enumerate(leftGuideLocMetaList):
-                if num <= 1 : 
-                    leftHipGuideLocStr = leftGuideLocMeta.split('.')[0]
-                    pm.select(leftHipGuideLocStr)
-                    leftHipGuideLoc = pm.selected()[0]                
-                    leftHipGuideLocPosX = leftHipGuideLoc.getTranslation(space = 'world')[0]
-                    leftHipGuideLocPosY = leftHipGuideLoc.getTranslation(space = 'world')[1]
-                    leftHipGuideLocPosZ = leftHipGuideLoc.getTranslation(space = 'world')[2]
-                    self.hipGuides[num].t.set(-leftHipGuideLocPosX,leftHipGuideLocPosY,leftHipGuideLocPosZ)              
-                                        
-                if num >= 2 :                        
-                    leftLegGuideLocStr = leftGuideLocMeta.split('.')[0]
-                    pm.select(leftLegGuideLocStr)
-                    leftLegGuideLoc = pm.selected()[0]                
-                    leftLegGuideLocPosX = leftLegGuideLoc.getTranslation(space = 'world')[0]
-                    leftLegGuideLocPosY = leftLegGuideLoc.getTranslation(space = 'world')[1]
-                    leftLegGuideLocPosZ = leftLegGuideLoc.getTranslation(space = 'world')[2]                        
-                    self.legGuides[num - 2].t.set(-leftLegGuideLocPosX,leftLegGuideLocPosY,leftLegGuideLocPosZ)    
-                
-        #set hip loc grp
-        for i in range(len(tempHipGuides)):
-            if i != (len(tempHipGuides) - 1):
-                pm.parent(tempHipGuides[i],tempHipGuides[i + 1])
-        
-        #set leg loc grp
-        for i in range(len(tempLegGuides)):
-            if i != (len(tempLegGuides) - 1):
-                pm.parent(tempLegGuides[i],tempLegGuides[i + 1])
-        
-        #clean up
-        guideGrpName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(em = 1,n = guideGrpName)
-        self.hipGuides[0].setParent(self.guideGrp)  
-        self.legGuides[0].setParent(self.guideGrp)
         
         ###
         #split
@@ -163,15 +122,169 @@ class LegModule(object):
                 loc.t.set(p)
                 loc.r.set(self.rotLegArray[i])
                 self.splitLegGuides.append(loc)
-                               
+        
+        ###
+        #mirror
+        if self.mirror == 'yes':
+            
+            mirrorMetaNode = pm.ls(self.metaMirror)[0]            
+            leftGuideLocMetaList = pm.connectionInfo(mirrorMetaNode.guideLocator, destinationFromSource=True)
+
+            for guideLoc in leftGuideLocMetaList:
+                destnation = guideLoc.split('_')
+                print destnation[1]
+                #hip
+                if str(destnation[1]) + str(destnation[2]) == 'hip0':
+                    hipZeroLocStr = guideLoc.split('.')[0]
+                    pm.select(hipZeroLocStr)
+                    hipZeroLoc = pm.ls(sl = 1)[0]
+                    
+                elif str(destnation[1]) + str(destnation[2]) == 'hip1':
+                    hipOneLocStr = guideLoc.split('.')[0]
+                    pm.select(hipOneLocStr)
+                    hipOneLoc = pm.ls(sl = 1)[0]               
+                
+                #leg
+                elif str(destnation[1]) + str(destnation[2]) == 'legikNFStretchStart':
+                    thighLocStr = guideLoc.split('.')[0]
+                    pm.select(thighLocStr)
+                    thighLoc = pm.ls(sl = 1)[0]
+                     
+                elif str(destnation[1]) == 'Knee':
+                    kneeLocStr = guideLoc.split('.')[0]
+                    pm.select(kneeLocStr)
+                    kneeLoc = pm.ls(sl = 1)[0] 
+                    
+                elif str(destnation[1]) + str(destnation[2]) == 'legikNFStretchEnd':
+                    clafLocStr = guideLoc.split('.')[0]
+                    pm.select(clafLocStr)
+                    clafLoc = pm.ls(sl = 1)[0] 
+                    
+                elif str(destnation[1]) == 'Heel':
+                    heelLocStr = guideLoc.split('.')[0]
+                    pm.select(heelLocStr)
+                    heelLoc = pm.ls(sl = 1)[0]  
+                    
+                elif str(destnation[1]) == 'Toe':
+                    toeLocStr = guideLoc.split('.')[0]
+                    pm.select(toeLocStr)
+                    toeLoc = pm.ls(sl = 1)[0]    
+                    
+                elif str(destnation[1]) == 'Inside':
+                    insideLocStr = guideLoc.split('.')[0]
+                    pm.select(insideLocStr)
+                    insideLoc = pm.ls(sl = 1)[0]  
+                    
+                elif str(destnation[1]) == 'Outside':
+                    outsideLocStr = guideLoc.split('.')[0]
+                    pm.select(outsideLocStr)
+                    outsideLoc = pm.ls(sl = 1)[0]    
+                
+                elif str(destnation[1]) == 'Ball':
+                    ballLocStr = guideLoc.split('.')[0]
+                    pm.select(ballLocStr)
+                    ballLoc = pm.ls(sl = 1)[0]   
+                            
+                #split knee    
+                elif str(destnation[1]) == 'splitLegUp':
+                    splitLegUpLocStr = guideLoc.split('.')[0]
+                    pm.select(splitLegUpLocStr)
+                    splitLegUpLoc = pm.ls(sl = 1)[0]  
+                    
+                elif str(destnation[1]) == 'splitLegDown':
+                    splitLegDownLocStr = guideLoc.split('.')[0]
+                    pm.select(splitLegDownLocStr)
+                    splitLegDownLoc = pm.ls(sl = 1)[0]    
+                                    
+            #hip
+            hipZeroLocPos = hipZeroLoc.getTranslation(space = 'world')
+            hipZeroLocRot = hipZeroLoc.getRotation(space = 'world')
+            self.hipGuides[0].t.set(-hipZeroLocPos[0],hipZeroLocPos[1],hipZeroLocPos[2])         
+            self.hipGuides[0].r.set(hipZeroLocRot[0],-hipZeroLocRot[1],-hipZeroLocRot[2])   
+            
+            hipOneLocPos = hipOneLoc.getTranslation(space = 'world')
+            hipOneLocRot = hipOneLoc.getRotation(space = 'world')
+            self.hipGuides[1].t.set(-hipOneLocPos[0],hipOneLocPos[1],hipOneLocPos[2])         
+            self.hipGuides[1].r.set(hipOneLocRot[0],-hipOneLocRot[1],-hipOneLocRot[2])
+            
+            #leg
+            thighLocPos = thighLoc.getTranslation(space = 'world')
+            thighLocRot = thighLoc.getRotation(space = 'world')
+            self.legGuides[0].t.set(-thighLocPos[0],thighLocPos[1],thighLocPos[2])         
+            self.legGuides[0].r.set(thighLocRot[0],-thighLocRot[1],-thighLocRot[2])   
+            
+            kneeLocPos = kneeLoc.getTranslation(space = 'world')
+            kneeLocRot = kneeLoc.getRotation(space = 'world')
+            self.legGuides[1].t.set(-kneeLocPos[0],kneeLocPos[1],kneeLocPos[2])         
+            self.legGuides[1].r.set(kneeLocRot[0],-kneeLocRot[1],-kneeLocRot[2])
+            
+            ankleLocPos = clafLoc.getTranslation(space = 'world')
+            ankleLocRot = clafLoc.getRotation(space = 'world')
+            self.legGuides[2].t.set(-ankleLocPos[0],ankleLocPos[1],ankleLocPos[2])
+            self.legGuides[2].r.set(ankleLocRot[0],-ankleLocRot[1],-ankleLocRot[2])
+            
+            heelLocPos = heelLoc.getTranslation(space = 'world')
+            heelLocRot = heelLoc.getRotation(space = 'world')
+            self.legGuides[3].t.set(-heelLocPos[0],heelLocPos[1],heelLocPos[2])         
+            self.legGuides[3].r.set(heelLocRot[0],-heelLocRot[1],-heelLocRot[2])
+            
+            toeLocPos = toeLoc.getTranslation(space = 'world')
+            toeLocRot = toeLoc.getRotation(space = 'world')
+            self.legGuides[4].t.set(-toeLocPos[0],toeLocPos[1],toeLocPos[2])         
+            self.legGuides[4].r.set(toeLocRot[0],-toeLocRot[1],-toeLocRot[2])   
+            
+            insideLocPos = insideLoc.getTranslation(space = 'world')
+            insideLocRot = insideLoc.getRotation(space = 'world')
+            self.legGuides[5].t.set(-insideLocPos[0],insideLocPos[1],insideLocPos[2])         
+            self.legGuides[5].r.set(insideLocRot[0],-insideLocRot[1],-insideLocRot[2])
+            
+            outsideLocPos = outsideLoc.getTranslation(space = 'world')
+            outsideLocRot = outsideLoc.getRotation(space = 'world')
+            self.legGuides[6].t.set(-outsideLocPos[0],outsideLocPos[1],outsideLocPos[2])         
+            self.legGuides[6].r.set(outsideLocRot[0],-outsideLocRot[1],-outsideLocRot[2])
+            
+            ballLocPos = ballLoc.getTranslation(space = 'world')
+            ballLocRot = ballLoc.getRotation(space = 'world')
+            self.legGuides[7].t.set(-ballLocPos[0],ballLocPos[1],ballLocPos[2])         
+            self.legGuides[7].r.set(ballLocRot[0],-ballLocRot[1],-ballLocRot[2])
+            
+            #split                 
+            if self.split == 1:
+                splitLegUpLocPos = splitLegUpLoc.getTranslation(space = 'world')
+                splitLegUpLocRot = splitLegUpLoc.getRotation(space = 'world')
+                self.splitLegGuides[0].t.set(-splitLegUpLocPos[0],splitLegUpLocPos[1],splitLegUpLocPos[2])         
+                self.splitLegGuides[0].r.set(splitLegUpLocRot[0],-splitLegUpLocRot[1],-splitLegUpLocRot[2])
+                
+                splitLegDownLocPos = splitLegDownLoc.getTranslation(space = 'world')
+                splitLegDownLocRot = splitLegDownLoc.getRotation(space = 'world')
+                self.splitLegGuides[1].t.set(-splitLegDownLocPos[0],splitLegDownLocPos[1],splitLegDownLocPos[2])         
+                self.splitLegGuides[1].r.set(splitLegDownLocRot[0],-splitLegDownLocRot[1],-splitLegDownLocRot[2])
+        #regroup
+        #set hip loc grp
+        for i in range(len(tempHipGuides)):
+            if i != (len(tempHipGuides) - 1):
+                pm.parent(tempHipGuides[i],tempHipGuides[i + 1])
+        
+        #set leg loc grp
+        for i in range(len(tempLegGuides)):
+            if i != (len(tempLegGuides) - 1):
+                pm.parent(tempLegGuides[i],tempLegGuides[i + 1])
+        
+        ###
+        #split    
+        if self.split == 1:
             #set loc grp
             pm.parent(self.splitLegGuides[1],self.splitLegGuides[0])
             self.splitLegGuides.reverse()
             
-        if self.split == 1:
             self.splitLegGuides[1].setParent(self.legGuides[1])
             self.splitLegGuides.reverse()
         
+        #clean up
+        guideGrpName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
+        self.guideGrp = pm.group(em = 1,n = guideGrpName)
+        self.hipGuides[0].setParent(self.guideGrp)  
+        self.legGuides[0].setParent(self.guideGrp)
         self.guideGrp.s.set(self.size,self.size,self.size)
             
     def build(self):
@@ -180,27 +293,42 @@ class LegModule(object):
         #mirror        
         self.mirrorGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp'))
         self.mirrorGuideList = []
+        self.mirrorGuideGrp.v.set(0)
         
         for hipGuide in self.hipGuides:
             mirrorHipGuide = pm.duplicate(hipGuide)
             child = pm.listRelatives(mirrorHipGuide,c = 1,typ = 'transform')
             if child != None:
                 pm.delete(child)
-            self.mirrorGuideList.append(mirrorHipGuide)
             newName = str(hipGuide) + 'Mirror' 
-            pm.rename(mirrorHipGuide,newName)
-            mirrorHipGuide[0].setParent(self.mirrorGuideGrp)   
+            renameGuide = pm.rename(mirrorHipGuide,newName)
+            mirrorHipGuide[0].setParent(self.mirrorGuideGrp)
+            self.mirrorGuideList.append(renameGuide)
         
         for legGuide in self.legGuides:
+            print legGuide
             mirrorLegGuide = pm.duplicate(legGuide)
             child = pm.listRelatives(mirrorLegGuide,c = 1,typ = 'transform')
             if child != None:
                 pm.delete(child)
-            self.mirrorGuideList.append(mirrorLegGuide)
             newName = str(legGuide) + 'Mirror' 
-            pm.rename(mirrorLegGuide,newName)
+            renameGuide = pm.rename(mirrorLegGuide,newName)
             mirrorLegGuide[0].setParent(self.mirrorGuideGrp)
-                    
+            self.mirrorGuideList.append(renameGuide)
+
+        ###split     
+        if self.split == 1:                
+            for splitLegGuide in self.splitLegGuides:
+                mirrorSplitLegGuide = pm.duplicate(splitLegGuide)
+                child = pm.listRelatives(mirrorSplitLegGuide,c = 1,typ = 'transform')
+                if child != None:
+                    pm.delete(child)
+#                 self.mirrorGuideList.append(mirrorSplitLegGuide)
+                newName = str(splitLegGuide) + 'Mirror' 
+                renameGuide = pm.rename(mirrorSplitLegGuide,newName)
+                renameGuide.setParent(self.mirrorGuideGrp)
+                self.mirrorGuideList.append(renameGuide)
+                
         #really ro roll            
         self.guideGrp.v.set(0)
         ###pos
@@ -1168,19 +1296,32 @@ class LegModule(object):
         self.legGuides.append(toeWiggleLoc)
         pm.parent(toeIkHandle,self.legGuides[-1])
         self.ikRpPvChain.ikCtrl.control.toe_wiggle.connect(self.legGuides[-1].rx)
-         
-        #inside
-        self.ikRpPvChain.ikCtrl.control.side.connect(insideConditionNode.firstTerm)
-        self.ikRpPvChain.ikCtrl.control.side.connect(insideConditionNode.colorIfTrueR)
-        insideConditionNode.operation.set(3)
-        insideConditionNode.outColorR.connect(self.legGuides[-4].rz)
-         
-        #outside
-        self.ikRpPvChain.ikCtrl.control.side.connect(outsideConditionNode.firstTerm)
-        self.ikRpPvChain.ikCtrl.control.side.connect(outsideConditionNode.colorIfTrueR)
-        outsideConditionNode.operation.set(5)
-        outsideConditionNode.outColorR.connect(self.legGuides[-3].rz)
-         
+        
+        ###side
+        if self.side == 'l': 
+            #inside
+            self.ikRpPvChain.ikCtrl.control.side.connect(insideConditionNode.firstTerm)
+            self.ikRpPvChain.ikCtrl.control.side.connect(insideConditionNode.colorIfTrueR)
+            insideConditionNode.operation.set(3)
+            insideConditionNode.outColorR.connect(self.legGuides[-4].rz)
+             
+            #outside
+            self.ikRpPvChain.ikCtrl.control.side.connect(outsideConditionNode.firstTerm)
+            self.ikRpPvChain.ikCtrl.control.side.connect(outsideConditionNode.colorIfTrueR)
+            outsideConditionNode.operation.set(5)
+            outsideConditionNode.outColorR.connect(self.legGuides[-3].rz)
+        elif self.side == 'r':     
+            #inside
+            self.ikRpPvChain.ikCtrl.control.side.connect(insideConditionNode.firstTerm)
+            self.ikRpPvChain.ikCtrl.control.side.connect(insideConditionNode.colorIfTrueR)
+            insideConditionNode.operation.set(5)
+            insideConditionNode.outColorR.connect(self.legGuides[-4].rz)
+             
+            #outside
+            self.ikRpPvChain.ikCtrl.control.side.connect(outsideConditionNode.firstTerm)
+            self.ikRpPvChain.ikCtrl.control.side.connect(outsideConditionNode.colorIfTrueR)
+            outsideConditionNode.operation.set(3)
+            outsideConditionNode.outColorR.connect(self.legGuides[-3].rz)
         #default set
         self.ikRpPvChain.ikCtrl.control.toe_lift.set(35)
         self.ikRpPvChain.ikCtrl.control.toe_straight.set(70)
@@ -1371,7 +1512,7 @@ class LegModule(object):
                             + [self.ikRpPvChain.ikCtrl.control,self.ikRpPvChain.poleVectorCtrl.control]
                             + [fk for fk in self.fkChain.chain])
         metaUtils.addToMeta(self.meta,'skinJoints',[self.hipChain.chain[0],self.legBlendChain.chain[-3],self.legBlendChain.chain[-4]])
-        metaUtils.addToMeta(self.meta,'guideLocator',[mirrorGuide[0] for mirrorGuide in self.mirrorGuideList])
+        metaUtils.addToMeta(self.meta,'guideLocator',[mirrorGuide for mirrorGuide in self.mirrorGuideList])
 #         metaUtils.addToMeta(self.meta,'moduleGrp',[self.legGrp])
 #         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.legBlendChain.chain])
         
@@ -1467,6 +1608,7 @@ class LegModuleUi(object):
             splitT = 0
             
         if mirrorR == 1:
+            metaUtils.metaSel() 
             mirrorT = 'yes'
         elif mirrorR == 2:
             mirrorT = 'no'    
