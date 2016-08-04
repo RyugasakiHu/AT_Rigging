@@ -859,8 +859,7 @@ class LegModule(object):
             pm.parent(self.thighTwistStart,w = 1)
             thighSpIkCurveSkinCluster = pm.skinCluster(self.splitLegUpChain.chain[0],self.splitLegUpChain.chain[1],self.thighTwistIkCurve,n = nameUtils.getSkinName())
             pm.rename(self.thighTwistIkCurve,thighTwistIkCurveName)
-            self.thighTwistIk.poleVector.set(0,0,0)
-            self.thighTwistIk.v.set(0)
+            self.thighTwistIk.poleVector.set(0,0,0)            
              
             #set stretch
             #get last cv:
@@ -956,7 +955,6 @@ class LegModule(object):
             clafSpIkCurveSkinCluster = pm.skinCluster(self.splitLegDownChain.chain[0],self.legBlendChain.chain[2],self.clafTwistIkCurve,n = nameUtils.getSkinName())
             pm.rename(self.clafTwistIkCurve,clafTwistIkCurveName)
             self.clafTwistIk.poleVector.set(0,0,0)
-            self.clafTwistIk.v.set(0)
             
             #set stretch
             #get last cv:
@@ -1012,7 +1010,9 @@ class LegModule(object):
             clafTwistLocStr.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrix)
             clafTwistLocEd.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrixEnd)               
         
-        #twist custom attr        
+        self.thighTwistIk.v.set(0)
+        self.clafTwistIk.v.set(0)
+        #twist custom attr
         #thigh
         control.addFloatAttr(self.footSettingCtrl.control,['thigh_twist'],-180,180)
         
