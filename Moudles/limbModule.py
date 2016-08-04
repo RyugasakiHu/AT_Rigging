@@ -20,7 +20,8 @@ class LimbModule(object):
                  solver = 'ikRPsolver',controlOrient = [0,0,0],
                  metaSpine = None,metaMain = None,mirror = None,
                  shoulder = 0,elbow = 'no',twist = None,
-                 upperTwistNum = None,lowerTwistNum = None): 
+                 upperTwistNum = None,lowerTwistNum = None,
+                 metaMirror = None): 
         #init
         self.baseName = baseName
         self.side = side
@@ -96,14 +97,14 @@ class LimbModule(object):
         self.meta = metaUtils.createMeta(self.side,self.baseName,0)
         self.metaMain = metaMain
         self.metaSpine = metaSpine
-         
+        self.metaMirror = metaMirror
+
     def buildGuides(self):
                 
         self.shoulderGuides = []
         self.shoulderBladeGuides = []        
         self.limbGuides = []
-        self.elbowPartialGuides = []
-        self.totalGuides = []        
+        self.elbowPartialGuides = []    
         
         #limb Guides
         for num,pos in enumerate(self.posLimbArray):
@@ -112,12 +113,6 @@ class LimbModule(object):
             loc.t.set(pos)
             loc.r.set(self.rotLimbArray[num])
             self.limbGuides.append(loc)
-            
-        tempLimbGuides = list(self.limbGuides)
-        tempLimbGuides.reverse()
-        for i in range(len(tempLimbGuides)):
-            if i != (len(tempLimbGuides) - 1):
-                pm.parent(tempLimbGuides[i],tempLimbGuides[i + 1])
         
         #elbow partial
         if self.elbowPartial == 'yes':
@@ -138,13 +133,7 @@ class LimbModule(object):
                 loc = pm.spaceLocator(n = name)
                 loc.t.set(pos)
                 loc.r.set(self.rotShoulderArray[num])
-                self.shoulderGuides.append(loc)
-                
-            tempShoulderGuides = list(self.shoulderGuides)
-            tempShoulderGuides.reverse()
-            for i in range(len(tempShoulderGuides)):
-                if i != (len(tempShoulderGuides) - 1):
-                    pm.parent(tempShoulderGuides[i],tempShoulderGuides[i + 1])  
+                self.shoulderGuides.append(loc)                
                     
             #shoulder Blade
             for num,pos in enumerate(self.posShoulderBladeArray):
@@ -152,17 +141,121 @@ class LimbModule(object):
                 loc = pm.spaceLocator(n = name)
                 loc.t.set(pos)
                 loc.r.set(self.rotShoulderBladeArray[num])
-                self.shoulderBladeGuides.append(loc)
+                self.shoulderBladeGuides.append(loc)                 
+        
+        ###
+        #mirror
+        if self.mirror == 'yes':
+            
+            mirrorMetaNode = pm.ls(self.metaMirror)[0]            
+            leftGuideLocMetaList = pm.connectionInfo(mirrorMetaNode.guideLocator, destinationFromSource=True)
+            
+            for guideLoc in leftGuideLocMetaList:
+                destnation = guideLoc.split('_')
+                print destnation
+                
+#             [u'l', u'armShoulder', u'0', u'gudMirror.meta']
+#             [u'l', u'armShoulder', u'1', u'gudMirror.meta']
+#             [u'l', u'armShoulderBlade', u'0', u'gudMirror.meta']
+#             [u'l', u'armShoulderBlade', u'1', u'gudMirror.meta']     
+                 
+                #arm
+                if str(destnation[1]) + str(destnation[2]) == 'armElbowEBlockStart':
+                    armLocStr = guideLoc.split('.')[0]
+                    pm.select(armLocStr)
+                    armLoc = pm.ls(sl = 1)[0] 
+                    
+                elif str(destnation[1]) == 'arm':
+                    armElbowLocStr = guideLoc.split('.')[0]
+                    pm.select(armElbowLocStr)
+                    armElbowLoc = pm.ls(sl = 1)[0]  
+                    
+                elif str(destnation[1]) + str(destnation[2]) == 'elbowWristEBlockEnd':
+                    elbowWristLocStr = guideLoc.split('.')[0]
+                    pm.select(elbowWristLocStr)
+                    elbowWristLoc = pm.ls(sl = 1)[0]
+            
+                #shoulder
+                elif str(destnation[1]) + str(destnation[2]) == 'armShoulder0':
+                    shoulderStartLocStr = guideLoc.split('.')[0]
+                    pm.select(shoulderStartLocStr)
+                    shoulderStartLoc = pm.ls(sl = 1)[0]
+                    
+                elif str(destnation[1]) + str(destnation[2]) == 'armShoulder1':
+                    shoulderEndLocStr = guideLoc.split('.')[0]
+                    pm.select(shoulderEndLocStr)
+                    shoulderEndLoc = pm.ls(sl = 1)[0]    
+                
+                elif str(destnation[1]) + str(destnation[2]) == 'armShoulderBlade0':
+                    shoulderBladeStartLocStr = guideLoc.split('.')[0]
+                    pm.select(shoulderBladeStartLocStr)
+                    shoulderBladeStartLoc = pm.ls(sl = 1)[0]
+                
+                elif str(destnation[1]) + str(destnation[2]) == 'armShoulderBlade1':
+                    shoulderBladeEndLocStr = guideLoc.split('.')[0]
+                    pm.select(shoulderBladeEndLocStr)
+                    shoulderBladeEndLoc = pm.ls(sl = 1)[0]
+                
+            #arm
+            armLocPos = armLoc.getTranslation(space = 'world')
+            armLocRot = armLoc.getRotation(space = 'world')
+            self.limbGuides[0].t.set(-armLocPos[0],armLocPos[1],armLocPos[2])         
+            self.limbGuides[0].r.set(armLocRot[0],-armLocRot[1],-armLocRot[2])   
+            
+            armElbowLocPos = armElbowLoc.getTranslation(space = 'world')
+            armElbowLocRot = armElbowLoc.getRotation(space = 'world')
+            self.limbGuides[1].t.set(-armElbowLocPos[0],armElbowLocPos[1],armElbowLocPos[2])         
+            self.limbGuides[1].r.set(armElbowLocRot[0],-armElbowLocRot[1],-armElbowLocRot[2])
+            
+            elbowWristPos = elbowWristLoc.getTranslation(space = 'world')
+            elbowWristRot = elbowWristLoc.getRotation(space = 'world')
+            self.limbGuides[2].t.set(-elbowWristPos[0],elbowWristPos[1],elbowWristPos[2])
+            self.limbGuides[2].r.set(elbowWristRot[0],-elbowWristRot[1],-elbowWristRot[2])
+            
+            #shoulder
+            if self.shoulder == 'yes':
+                shoulderStartLocPos = shoulderStartLoc.getTranslation(space = 'world')
+                shoulderStartLocRot = shoulderStartLoc.getRotation(space = 'world')
+                self.shoulderGuides[0].t.set(-shoulderStartLocPos[0],shoulderStartLocPos[1],shoulderStartLocPos[2])         
+                self.shoulderGuides[0].r.set(shoulderStartLocRot[0],-shoulderStartLocRot[1],-shoulderStartLocRot[2])   
+                
+                shoulderEndPos = shoulderEndLoc.getTranslation(space = 'world')
+                shoulderEndRot = shoulderEndLoc.getRotation(space = 'world')
+                self.shoulderGuides[1].t.set(-shoulderEndPos[0],shoulderEndPos[1],shoulderEndPos[2])         
+                self.shoulderGuides[1].r.set(shoulderEndRot[0],-shoulderEndRot[1],-shoulderEndRot[2])
+                
+                shoulderBladeStartPos = shoulderBladeStartLoc.getTranslation(space = 'world')
+                shoulderBladeStartRot = shoulderBladeStartLoc.getRotation(space = 'world')
+                self.shoulderBladeGuides[0].t.set(-shoulderBladeStartPos[0],shoulderBladeStartPos[1],shoulderBladeStartPos[2])
+                self.shoulderBladeGuides[0].r.set(shoulderBladeStartRot[0],-shoulderBladeStartRot[1],-shoulderBladeStartRot[2])
+                
+                shoulderBladeEndPos = shoulderBladeEndLoc.getTranslation(space = 'world')
+                shoulderBladeEndRot = shoulderBladeEndLoc.getRotation(space = 'world')
+                self.shoulderBladeGuides[1].t.set(-shoulderBladeEndPos[0],shoulderBladeEndPos[1],shoulderBladeEndPos[2])
+                self.shoulderBladeGuides[1].r.set(shoulderBladeEndRot[0],-shoulderBladeEndRot[1],-shoulderBladeEndRot[2])                
+        
+        #regroup
+        #arm loc
+        tempLimbGuides = list(self.limbGuides)
+        tempLimbGuides.reverse()
+        for i in range(len(tempLimbGuides)):
+            if i != (len(tempLimbGuides) - 1):
+                pm.parent(tempLimbGuides[i],tempLimbGuides[i + 1])    
+        
+        #shoulder loc
+        if self.shoulder == 'yes':    
+            tempShoulderGuides = list(self.shoulderGuides)
+            tempShoulderGuides.reverse()
+            for i in range(len(tempShoulderGuides)):
+                if i != (len(tempShoulderGuides) - 1):
+                    pm.parent(tempShoulderGuides[i],tempShoulderGuides[i + 1])      
                  
             tempShoulderBladeGuides = list(self.shoulderBladeGuides)
             tempShoulderBladeGuides.reverse()
             for i in range(len(tempShoulderBladeGuides)):
                 if i != (len(tempShoulderBladeGuides) - 1):
                     pm.parent(tempShoulderBladeGuides[i],tempShoulderBladeGuides[i + 1])
-                    
-        for guides in self.limbGuides + self.shoulderGuides + self.shoulderBladeGuides:
-            self.totalGuides.append(guides)
-        
+                
         #clean up
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(em = 1,n = name)
@@ -176,8 +269,46 @@ class LimbModule(object):
                      
     def build(self):
         
-        self.guideGrp.v.set(0)
+        #mirror
+        self.mirrorGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp'))
+        self.mirrorGuideList = []
+        self.mirrorGuideGrp.v.set(0)
+                
+#         self.elbowPartialGuides = None
         
+        for limbGuide in self.limbGuides:
+            mirrorLimbGuide = pm.duplicate(limbGuide)
+            child = pm.listRelatives(mirrorLimbGuide,c = 1,typ = 'transform')
+            if child != None:
+                pm.delete(child)
+            newName = str(limbGuide) + 'Mirror' 
+            renameGuide = pm.rename(mirrorLimbGuide,newName)
+            mirrorLimbGuide[0].setParent(self.mirrorGuideGrp)
+            self.mirrorGuideList.append(renameGuide)
+        
+        for shoulderGuide in self.shoulderGuides:
+            mirrorShoulderGuide = pm.duplicate(shoulderGuide)
+            child = pm.listRelatives(mirrorShoulderGuide,c = 1,typ = 'transform')
+            if child != None:
+                pm.delete(child)
+            newName = str(shoulderGuide) + 'Mirror' 
+            renameGuide = pm.rename(mirrorShoulderGuide,newName)
+            mirrorShoulderGuide[0].setParent(self.mirrorGuideGrp)
+            self.mirrorGuideList.append(renameGuide)
+        
+        for shoulderBladeGuide in self.shoulderBladeGuides:
+            mirrorShoulderGuide = pm.duplicate(shoulderBladeGuide)
+            child = pm.listRelatives(mirrorShoulderGuide,c = 1,typ = 'transform')
+            if child != None:
+                pm.delete(child)
+            newName = str(shoulderBladeGuide) + 'Mirror' 
+            renameGuide = pm.rename(mirrorShoulderGuide,newName)
+            mirrorShoulderGuide[0].setParent(self.mirrorGuideGrp)
+            self.mirrorGuideList.append(renameGuide)
+        
+#         print self.mirrorGuideList
+        #really to roll
+        self.guideGrp.v.set(0)        
         if self.shoulder == 'yes':
             #shoulder set
             #shoulder pos get
@@ -274,7 +405,7 @@ class LimbModule(object):
                 self.__shoulderCtrl() 
             else:
                 OpenMaya.MGlobal.displayError('this version shoulder need come up with ikRP for follow')
-                
+        
         self.__cleanUp()
         self.__buildHooks()
         
@@ -311,7 +442,10 @@ class LimbModule(object):
         pm.pointConstraint(self.limbBlendChain.chain[2],self.handSettingCtrl.controlGrp,mo = 1)
 #         pm.orientConstraint(self.limbBlendChain.chain[2],self.handSettingCtrl.controlGrp,mo = 1)   
         control.lockAndHideAttr(self.handSettingCtrl.control,['tx','ty','tz','rx','ry','rz','sx','sy','sz','v'])
-        self.handSettingCtrl.control.IKFK.set(0) 
+        self.handSettingCtrl.control.IKFK.set(0)
+        
+        if self.twist == 'non_roll':
+            control.addFloatAttr(self.handSettingCtrl.control,['proxy_vis'],0,1) 
      
     def __nonRollSetUp(self):
         
@@ -327,6 +461,9 @@ class LimbModule(object):
          
         self.upperArmTwistJoint = toolModule.SplitJoint(self.upperArmTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
         self.upperArmTwistJoint.splitJointTool()
+         
+        for cube in self.upperArmTwistJoint.cubeList:
+                self.handSettingCtrl.control.proxy_vis.connect(cube[0].v) 
          
         for twistJoints in self.upperArmTwistJoint.joints:
             pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'upperArmTwist','jj'))  
@@ -417,6 +554,9 @@ class LimbModule(object):
         
         self.foreArmTwistJoint = toolModule.SplitJoint(self.foreArmTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
         self.foreArmTwistJoint.splitJointTool()
+        
+        for cube in self.foreArmTwistJoint.cubeList:
+                self.handSettingCtrl.control.proxy_vis.connect(cube[0].v) 
          
         for twistJoints in self.foreArmTwistJoint.joints:
             pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'foreArmTwist','jj'))  
@@ -493,6 +633,9 @@ class LimbModule(object):
         self.__setRibbonSubMidCc()
          
     def __setRibbonUpper(self):
+        
+        #add cc ctrl
+        control.addFloatAttr(self.handSettingCtrl.control,['CC'],0,1) 
         '''
         this function set ribbon for the Upper 
         '''
@@ -960,23 +1103,19 @@ class LimbModule(object):
            
     def __cleanUp(self):
           
-        #add cc ctrl
-        control.addFloatAttr(self.handSettingCtrl.control,['CC'],0,1) 
-          
         #ccDef grp and v
-        self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp'))  
-        self.handSettingCtrl.control.CC.set(0)
-        self.handSettingCtrl.control.CC.connect(self.ccDefGrp.v)
+        self.ccDefGrp = pm.group(empty = 1,n = nameUtils.getUniqueName(self.side,self.baseName + 'Def','grp'))          
         
         if self.twist == 'ribon45hp':
+            self.handSettingCtrl.control.CC.set(0)
+            self.handSettingCtrl.control.CC.connect(self.ccDefGrp.v)
             self.subMidCtrlShoulderElbow.controlGrp.setParent(self.ccDefGrp)
             self.subMidCtrlElbowWrist.controlGrp.setParent(self.ccDefGrp)
             self.subMidCtrlElbow.controlGrp.setParent(self.ccDefGrp)
           
         #cc hierarchy        
         self.cntsGrp = pm.group(self.ikChain.ikCtrl.controlGrp,
-                                n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp'))
-          
+                                n = nameUtils.getUniqueName(self.side,self.baseName + 'CC','grp'))          
   
         self.ccDefGrp.setParent(self.cntsGrp)
         self.handSettingCtrl.controlGrp.setParent(self.cntsGrp)                
@@ -1149,6 +1288,8 @@ class LimbModule(object):
         metaUtils.addToMeta(self.meta,'controls',[self.ikChain.ikCtrl.control] + [self.handSettingCtrl.control]) 
         metaUtils.addToMeta(self.meta,'moduleGrp',[self.limbGrp])
         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.limbBlendChain.chain])
+        metaUtils.addToMeta(self.meta,'guideLocator',[mirrorGuide for mirrorGuide in self.mirrorGuideList])
+
          
         if self.twist == 'non_roll':
             metaUtils.addToMeta(self.meta,'skinJoints',[skinjoint for skinjoint in self.upperArmTwistJoint.joints]
@@ -1202,8 +1343,8 @@ class LimbModule(object):
 #                 linearNode.input2.set(-1)
 #                 linearNode.output.connect(gud.tx)
 #                 
-# #             print oriGuideList
-# #             print mirrorLimb.totalGuides
+#             print oriGuideList
+#             print mirrorLimb.totalGuides
 #             mirrorLimb.build()
 #             mirrorLimb.buildConnections()
 #             
@@ -1229,12 +1370,21 @@ class LimbModuleUi(object):
         self.name = pm.text(l = '**** Limb Module ****')       
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,cl2 = ['left','left'],text = 'arm')
         
+        #size
+        self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
+                                        ad2 = 1,numberOfFields = 1,value1 = 1,p = self.limb)    
+        
         #side
         pm.rowLayout(adj = 1,nc=100,p = self.limb)
         pm.button(l = 'side : ')
-        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)
-        self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],
-                                        ad2 = 1,numberOfFields = 1,value1 = 1,p = self.limb)    
+        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)        
+        
+        #mirror 
+        pm.rowLayout(adj = 1,nc=100,p = self.limb)
+        pm.button(l = 'mirror : ')
+        self.mirrorNodeM = pm.optionMenu(l = 'mirrorMeta : ',p = self.limb)
+        self.mirrorR = pm.radioButtonGrp(nrb = 2,la2 = ['yes','no'],sl = 2,onc = self.__metaReload)        
+        
         
         #shoulder
         self.shoulderMenu = pm.optionMenu(l = 'shoulder : ',p = self.limb)
@@ -1284,31 +1434,49 @@ class LimbModuleUi(object):
         pm.deleteUI(self.mainL)
         self.mainUi.modulesUi.remove(self)
         
+    def __metaReload(self,*arg):
+        
+        oriItem = pm.optionMenu(self.mirrorNodeM,q = 1,ils = 1)        
+        if oriItem != None:
+            for Item in oriItem:
+                pm.deleteUI(Item)
+                
+        selStr = pm.ls('*META*',type = 'lightInfo')     
+        for sel in selStr:
+            pm.menuItem(l = sel,p = self.mirrorNodeM)     
+        
     def getModuleInstance(self):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
         sideR = pm.radioButtonGrp(self.sideR,q = True,sl = True)
+        mirrorR = pm.radioButtonGrp(self.mirrorR,q = True,sl = True)
         
         if sideR == 1:
             sideT = 'l'
         elif sideR == 2:
             sideT = 'r'     
-   
+        
+        if mirrorR == 1:
+            mirrorT = 'yes'
+        elif mirrorR == 2:
+            mirrorT = 'no'        
+            
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         solverV = pm.optionMenu(self.solverMenu, q = 1,v = 1)
         elbowPartialT = pm.optionMenu(self.elbowPartialMenu, q = 1,v = 1)
         shoulderT = pm.optionMenu(self.shoulderMenu, q = 1,v = 1)
-#         mirrorC = pm.radioButtonGrp(self.mirror,q = 1,sl = 1)
         twistT = pm.optionMenu(self.twistModule, q = 1,v = 1)
         upperTwistNumV = pm.intSliderGrp(self.upperNum , q = 1,v = 1)
         lowerTwistNumV = pm.intSliderGrp(self.lowerNum ,q = 1,v = 1)
         mainMetaNode = pm.optionMenu(self.metaMainNodeM,q = 1,v = 1)
         spineMetaNode = pm.optionMenu(self.metaSpineNodeM,q = 1,v = 1)
+        mirrorMetaNode = pm.optionMenu(self.mirrorNodeM,q = 1,v = 1)
         
         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,
                                          shoulder = shoulderT,elbow = elbowPartialT,twist = twistT,
-                                         upperTwistNum = upperTwistNumV,lowerTwistNum = lowerTwistNumV)        
+                                         upperTwistNum = upperTwistNumV,lowerTwistNum = lowerTwistNumV,
+                                         mirror = mirrorT,metaMirror = mirrorMetaNode)    
 #         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
 #                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,mirror = mirrorC)                
         
