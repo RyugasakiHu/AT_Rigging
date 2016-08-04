@@ -132,7 +132,6 @@ class LegModule(object):
 
             for guideLoc in leftGuideLocMetaList:
                 destnation = guideLoc.split('_')
-                print destnation[1]
                 #hip
                 if str(destnation[1]) + str(destnation[2]) == 'hip0':
                     hipZeroLocStr = guideLoc.split('.')[0]
@@ -306,7 +305,6 @@ class LegModule(object):
             self.mirrorGuideList.append(renameGuide)
         
         for legGuide in self.legGuides:
-            print legGuide
             mirrorLegGuide = pm.duplicate(legGuide)
             child = pm.listRelatives(mirrorLegGuide,c = 1,typ = 'transform')
             if child != None:
@@ -1548,11 +1546,8 @@ class LegModuleUi(object):
         #mirror 
         pm.rowLayout(adj = 1,nc=100,p = self.leg)
         pm.button(l = 'mirror : ')
-        self.mirrorR = pm.radioButtonGrp(nrb = 2,la2 = ['yes','no'],sl = 1)
-        
-        #mirror meta
         self.mirrorNodeM = pm.optionMenu(l = 'mirrorMeta : ',p = self.leg)
-        metaUtils.metaSel() 
+        self.mirrorR = pm.radioButtonGrp(nrb = 2,la2 = ['yes','no'],sl = 2,onc = self.__metaReload)        
         
         #split
         pm.rowLayout(adj = 1,nc=100,p = self.leg)
@@ -1590,6 +1585,17 @@ class LegModuleUi(object):
         pm.deleteUI(self.mainL)
         self.mainUi.modulesUi.remove(self)
         
+    def __metaReload(self,*arg):
+        
+        oriItem = pm.optionMenu(self.mirrorNodeM,q = 1,ils = 1)        
+        if oriItem != None:
+            for Item in oriItem:
+                pm.deleteUI(Item)
+                
+        selStr = pm.ls('*META*',type = 'lightInfo')     
+        for sel in selStr:
+            pm.menuItem(l = sel,p = self.mirrorNodeM) 
+            
     def getModuleInstance(self):
         
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
@@ -1608,7 +1614,6 @@ class LegModuleUi(object):
             splitT = 0
             
         if mirrorR == 1:
-            metaUtils.metaSel() 
             mirrorT = 'yes'
         elif mirrorR == 2:
             mirrorT = 'no'    
