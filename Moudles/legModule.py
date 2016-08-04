@@ -425,7 +425,7 @@ class LegModule(object):
                                                                    self.footSettingCtrl.control,'IKFK',self.baseName,self.side)
         for num,joint in enumerate(self.legBlendChain.chain):
             name = nameUtils.getUniqueName(self.side,self.footNameList[num],'jc')
-            pm.rename(joint,name)
+            pm.rename(joint,name)    
              
         #self.footNameList = ['Thigh','Knee','Ankle','Ball','Toe','Heel']       
         pm.rename(self.legBlendChain.chain[-4],nameUtils.getUniqueName(self.side,self.footNameList[-4],'jj'))
@@ -555,6 +555,10 @@ class LegModule(object):
         self.footSettingCtrl.controlGrp.sz.set(self.size / 2)
         pm.makeIdentity(self.footSettingCtrl.controlGrp,apply = True,t = 0,r = 0,s = 1,n = 0,pn = 1)
         
+        #hide fk Chain vis
+        for jointChain in self.fkChain.chain:
+            control.lockAndHideAttr(jointChain,['v','radius'])
+        
         #set pos
         pm.xform(self.footSettingCtrl.controlGrp,ws = 1,matrix = self.legBlendChain.chain[2].worldMatrix.get())
         self.footSettingCtrl.controlGrp.rx.set(0)
@@ -662,6 +666,7 @@ class LegModule(object):
                                                                                              n = thighTwistIkName)
             upperSpIkC = pm.skinCluster(self.legBlendChain.chain[0],self.legBlendChain.chain[1],self.thighTwistIkCurve,
                                        n = nameUtils.getSkinName())
+            self.thighTwistIkCurve.v.set(0)
             pm.rename(self.thighTwistIkCurve,thighTwistIkCurveName)
             self.thighTwistIk.poleVector.set(0,0,0)
             self.thighTwistIk.v.set(0)
@@ -726,7 +731,7 @@ class LegModule(object):
             pm.aimConstraint(nonFlipEdJnt[0],twistInfoJnt,mo = 1,w = 1,aimVector = [1,0,0],upVector = [0,0,1],
                              worldUpType = 'objectrotation',worldUpVector = [0,0,1],
                              worldUpObject = self.legBlendChain.chain[1])
-            twistInfoJnt.rx.connect(self.thighTwistIk.twist)
+#             twistInfoJnt.rx.connect(self.thighTwistIk.twist)
     #         pm.parentConstraint(self.hipChain.chain[0],twistInfoGrpName,mo = 1)
              
             ###
@@ -760,6 +765,7 @@ class LegModule(object):
                                                                                           n = clafTwistIkName)
             thighSpIkCluster = pm.skinCluster(self.legBlendChain.chain[1],self.legBlendChain.chain[2],self.clafTwistIkCurve,n = nameUtils.getSkinName())
             pm.rename(self.clafTwistIkCurve,clafTwistIkCurveName)
+            self.clafTwistIkCurve.v.set(0)
             self.clafTwistIk.poleVector.set(0,0,0)
             self.clafTwistIk.v.set(0)
               
@@ -916,7 +922,7 @@ class LegModule(object):
             pm.aimConstraint(nonFlipEdJnt[0],twistInfoJnt,mo = 1,w = 1,aimVector = [1,0,0],upVector = [0,0,1],
                              worldUpType = 'objectrotation',worldUpVector = [0,0,1],
                              worldUpObject = self.legBlendChain.chain[1])
-            twistInfoJnt.rx.connect(self.thighTwistIk.twist)
+#             twistInfoJnt.rx.connect(self.thighTwistIk.twist)
        
             ###
             #fore Leg
@@ -1005,8 +1011,27 @@ class LegModule(object):
             self.clafTwistIk.dWorldUpVectorEnd.set(0,0,1)
             clafTwistLocStr.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrix)
             clafTwistLocEd.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrixEnd)               
+        
+        #twist custom attr        
+        #thigh
+        control.addFloatAttr(self.footSettingCtrl.control,['thigh_twist'],-180,180)
+        
+        #node perpare
+        thighTwistPMANodeName = nameUtils.getUniqueName(self.side,'thighTwistFix','PMA')
+        thighTwistPMANode = pm.createNode('plusMinusAverage',n = thighTwistPMANodeName)
+        
+        #connect
+        twistInfoJnt.rx.connect(thighTwistPMANode.input1D[0])
+        self.footSettingCtrl.control.thigh_twist.connect(thighTwistPMANode.input1D[1])
+        thighTwistPMANode.output1D.connect(self.thighTwistIk.twist)  
+        
+        #claf                
+        control.addFloatAttr(self.footSettingCtrl.control,['claf_twist'],-180,180) 
+        self.footSettingCtrl.control.claf_twist.connect(self.clafTwistIk.twist)
                                 
     def __setRibbonUpper(self):
+                
+        control.addFloatAttr(self.footSettingCtrl.control,['CC'],0,1) 
         '''
         this function set ribbon for the Upper 
         '''
@@ -1172,8 +1197,7 @@ class LegModule(object):
         self.legBlendChain.chain[2].scaleZ.connect(self.ribon45hp.jj[0].scaleZ)
     
     def __editCtrl(self):
-        
-        control.addFloatAttr(self.footSettingCtrl.control,['CC'],0,1) 
+                
         self.ikRpPvChain.ikCtrl.control.addAttr('foot_roll',at = 'double',min = 0,max = 0,dv = 0)
         pm.setAttr(self.ikRpPvChain.ikCtrl.control + '.foot_roll',e = 0,channelBox = 1)
         self.ikRpPvChain.ikCtrl.control.foot_roll.lock(1)
@@ -1343,7 +1367,7 @@ class LegModule(object):
             self.ribon45hp.main.v.set(0)
             self.ccDefGrp.setParent(self.cntsGrp)
             
-        self.footSettingCtrl.control.IKFK.set(1)
+#         self.footSettingCtrl.control.IKFK.set(1)
         #jj grp
         self.legGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
         self.ikRpChain.stretchStartLoc.setParent(self.legGrp)
@@ -1492,9 +1516,7 @@ class LegModule(object):
                 self.thighTwistInfoGrp.setParent(XTR)
                 self.clafTwistStart[0].setParent(SKL)
                 self.clafTwistGrp.setParent(XTR)
-#                 self.ikRpPvChain.ikCtrl.control.up_twist.connect(self.ikRpPvChain.ikHandle.twist)
-                control.addFloatAttr(self.footSettingCtrl.control,['fore_twist'],-90,90) 
-                self.footSettingCtrl.control.fore_twist.connect(self.clafTwistIk.twist)
+#                 self.ikRpPvChain.ikCtrl.control.up_twist.connect(self.ikRpPvChain.ikHandle.twist)                
             
             print ''
             print 'Info from (' + self.meta + ') has been integrate, ready for next Module'
