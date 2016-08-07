@@ -33,12 +33,21 @@ class ToolModuleUi(object):
         self.mainL = pm.columnLayout(adj = 1) 
         self.name = pm.text(l = '**** Tool Module ****')          
         pm.separator(h = 10)
-  
+                
         #metaSel
-        self.metaSel = pm.frameLayout('meta Select Tool : ',cll=1,p = self.mainL,cl = 1)
-        self.metaMenu = pm.optionMenu(l = 'meta : ')
+        #all
+        self.jointSel = pm.frameLayout('joint Select Tool : ',cll=1,p = self.mainL,cl = 1)
+        #skin Joint
+        self.skinJointSel = pm.frameLayout('skinJoint Select Tool : ',cll=1,p = self.jointSel,cl = 1)
+        self.skinJointMenu = pm.optionMenu(l = 'meta : ')
         metaUtils.metaSel()  
         pm.button(l = 'select Skin Joint',c = self.__selSkinJoint)
+        
+        #partial Joint
+        self.partialSkinJointSel = pm.frameLayout('skinPartialJoint Select Tool : ',cll=1,p = self.jointSel,cl = 1)
+        self.partialSkinJointMenu = pm.optionMenu(l = 'meta : ')
+        metaUtils.metaSel()  
+        pm.button(l = 'select PartialSkin Joint',c = self.__selPartialSkinJoint)
         
         #skinTool
         self.skinAreaTool = pm.frameLayout('skin Area Tool : ',cll=1,p = self.mainL)        
@@ -77,7 +86,9 @@ class ToolModuleUi(object):
         
     def __selSkinJoint(self,*args):
         
-        metaT = pm.optionMenu(self.metaMenu, q = 1,v = 1)  
+        jointList = []
+        
+        metaT = pm.optionMenu(self.skinJointMenu, q = 1,v = 1)  
         meta = pm.ls(metaT)[0]
         jointStrs = pm.connectionInfo(meta.skinJoints, destinationFromSource=True) 
         pm.select(cl = 1) 
@@ -85,9 +96,33 @@ class ToolModuleUi(object):
         for jointStr in jointStrs : 
             joint = jointStr.split('.') 
             pm.select(joint[0],add = 1)
+            jointList.append(joint[0])
                 
-        print 'Skin joint from ' + metaT + ' are ' + str(jointStr.split('.')[0])
-        print 'Number of ' + metaT + ' is ' + str(len(jointStr))    
+        print 'Skin joint from ' + metaT + ' are :'
+        print 
+        print  jointList
+        print 
+        print 'Number of ' + metaT + ' is ' + str(len(jointList))
+        
+    def __selPartialSkinJoint(self,*args):
+        
+        partialJointList = []
+        
+        metaT = pm.optionMenu(self.partialSkinJointMenu, q = 1,v = 1)  
+        meta = pm.ls(metaT)[0]
+        jointStrs = pm.connectionInfo(meta.partialSkinJoints, destinationFromSource=True) 
+        pm.select(cl = 1) 
+         
+        for jointStr in jointStrs : 
+            joint = jointStr.split('.') 
+            pm.select(joint[0],add = 1)
+            partialJointList.append(joint[0])
+                
+        print 'Partial Skin joint from ' + metaT + ' are :'
+        print  
+        print partialJointList
+        print 
+        print 'Number of ' + metaT + ' is ' + str(len(partialJointList))               
             
     def __splitJointButton(self,*args):
         
