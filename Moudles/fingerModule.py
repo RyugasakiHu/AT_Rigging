@@ -516,7 +516,7 @@ class FingerModule(object):
             if num < self.thumbChain.chainLength() - 1:    
                 #create sdk and correct cc name
 #                 cc = control.Control(self.side,self.baseName,size = thumbJointName.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size) 
+                cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0) 
                 cc.circleCtrl()
                 self.thumbCc.append(cc.control)
                 
@@ -554,7 +554,7 @@ class FingerModule(object):
             if num < self.indexChain.chainLength() - 1:
                 #create sdk and correct cc name
 #                 cc = control.Control(self.side,self.baseName,size = indexJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = self.size)
+                cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0)
                 cc.circleCtrl()
                 self.indexCc.append(cc.control)
                 
@@ -593,7 +593,7 @@ class FingerModule(object):
                 if num < self.midChain.chainLength() - 1:                
                     #create sdk and correct cc name
     #                 cc = control.Control(self.side,self.baseName,size = midJoint.getRadius() / 5) 
-                    cc = control.Control(self.side,self.baseName,size = self.size) 
+                    cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0) 
                     cc.circleCtrl()
                     self.midCc.append(cc.control)
                     
@@ -632,7 +632,7 @@ class FingerModule(object):
                 if num < self.ringChain.chainLength() - 1:                
                     #create sdk and correct cc name
     #                 cc = control.Control(self.side,self.baseName,size = ringJoint.getRadius() / 5) 
-                    cc = control.Control(self.side,self.baseName,size = self.size) 
+                    cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0) 
                     cc.circleCtrl()
                     self.ringCc.append(cc.control)                
                     
@@ -671,7 +671,7 @@ class FingerModule(object):
                 if num < self.pinkyChain.chainLength() - 1:                
                     #create sdk and correct cc name
     #                 cc = control.Control(self.side,self.baseName,size = pinkyJoint.getRadius() / 5) 
-                    cc = control.Control(self.side,self.baseName,size = self.size) 
+                    cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0) 
                     cc.circleCtrl()
                     self.pinkyCc.append(cc.control)   
                     
@@ -1727,28 +1727,40 @@ class FingerModule(object):
         for number,valueList in enumerate(indexAppendMaxRotList):
             for value in valueList:
                 for num in [0,1,2]:
-                    val = value[num]
+                    if self.side == 'l':
+                        val = value[num]
+                    elif self.side == 'r':
+                        val = value[num] * float(-1)    
                     indexMainMaxRotList.append(val)
         
         #get mid list
         for number,valueList in enumerate(midAppendMaxRotList):
             for value in valueList:
                 for num in [0,1,2]:
-                    val = value[num]
+                    if self.side == 'l':
+                        val = value[num]
+                    elif self.side == 'r':
+                        val = value[num] * float(-1)   
                     midMainMaxRotList.append(val)
                     
         #get ring list
         for number,valueList in enumerate(ringAppendMaxRotList):
             for value in valueList:
                 for num in [0,1,2]:
-                    val = value[num]
+                    if self.side == 'l':
+                        val = value[num]
+                    elif self.side == 'r':
+                        val = value[num] * float(-1)   
                     ringMainMaxRotList.append(val)                            
 
         #get pinky list
         for number,valueList in enumerate(pinkyAppendMaxRotList):
             for value in valueList:
                 for num in [0,1,2]:
-                    val = value[num]
+                    if self.side == 'l':
+                        val = value[num]
+                    elif self.side == 'r':
+                        val = value[num] * float(-1)   
                     pinkyMainMaxRotList.append(val)        
         
         #set dic max(10) val
@@ -1779,7 +1791,8 @@ class FingerModule(object):
         for number,attrList in enumerate(pinkyRotAttrs):
             pm.setDrivenKeyframe(attrList,v = pinkyMainMaxRotList[number],
                                  cd = self.armControls[0] + '.' + self.attrs[number/12],dv = 10)                                          
-            
+        
+        ###    
         #get/set rotate Min val to main rot list:
         #get thumb list
 #         for number,valueList in enumerate(thumbAppendMinRotList):
@@ -1792,28 +1805,40 @@ class FingerModule(object):
         for number,valueList in enumerate(indexAppendMinRotList):
             for value in valueList:
                 for num in [0,1,2]:
-                    val = value[num]
+                    if self.side == 'l':
+                        val = value[num]
+                    elif self.side == 'r':
+                        val = value[num] * float(-1)   
                     indexMainMinRotList.append(val)
                     
         #get mid list
         for number,valueList in enumerate(midAppendMinRotList):
             for value in valueList:
                 for num in [0,1,2]:
-                    val = value[num]
+                    if self.side == 'l':
+                        val = value[num]
+                    elif self.side == 'r':
+                        val = value[num] * float(-1)   
                     midMainMinRotList.append(val)
                     
         #get ring list
         for number,valueList in enumerate(ringAppendMinRotList):
             for value in valueList:
                 for num in [0,1,2]:
-                    val = value[num]
+                    if self.side == 'l':
+                        val = value[num]
+                    elif self.side == 'r':
+                        val = value[num] * float(-1)   
                     ringMainMinRotList.append(val)
                     
         #get pinky list
         for number,valueList in enumerate(pinkyAppendMinRotList):
             for value in valueList:
                 for num in [0,1,2]:
-                    val = value[num]
+                    if self.side == 'l':
+                        val = value[num]
+                    elif self.side == 'r':
+                        val = value[num] * float(-1)   
                     pinkyMainMinRotList.append(val)                                                            
         
         #set dic min(-3) val
@@ -1857,7 +1882,7 @@ class FingerModule(object):
         metaUtils.addToMeta(self.meta,'partialSkinJoints',[partialJoint for partialJoint in self.thumbPartialSkinJoint]
                             + [partialJoint for partialJoint in self.indexPartialSkinJoint])
                     
-        if self.fingerNum == 3 :
+        if self.fingerNum > 2 :
             self.midGrp.setParent(self.handGrp)
             
             for midSkinJoint in self.midSkinJoint:
@@ -1868,9 +1893,8 @@ class FingerModule(object):
                 midPartialSkinJoint.addAttr('meta',at = 'message')
                 self.meta.partialSkinJoints.connect(midPartialSkinJoint.meta)
             
-        if self.fingerNum == 4 :    
+        if self.fingerNum > 3 :    
             
-            self.midGrp.setParent(self.handGrp)
             self.ringGrp.setParent(self.handGrp)
             
             for ringSkinJoint in self.ringSkinJoint:
@@ -1881,10 +1905,8 @@ class FingerModule(object):
                 ringPartialSkinJoint.addAttr('meta',at = 'message')
                 self.meta.partialSkinJoints.connect(ringPartialSkinJoint.meta)    
             
-        if self.fingerNum == 5 :   
+        if self.fingerNum > 4 :   
             
-            self.midGrp.setParent(self.handGrp)
-            self.ringGrp.setParent(self.handGrp)
             self.pinkyGrp.setParent(self.handGrp)
             
             for pinkySkinJoint in self.pinkySkinJoint:
@@ -2014,12 +2036,15 @@ class FingerModuleUi(object):
         self.name = pm.text(l = '**** Finger Module ****')       
         self.baseNameT = pm.textFieldGrp(l = 'baseName : ',ad2 = 1,text = 'finger',cl2 = ['left','left'])
         
-        #side
-        pm.rowLayout(adj = 1,nc=100,p = self.finger)
-        pm.button(l = 'side : ')   
-        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)
+        #size        
         self.cntSize = pm.floatFieldGrp(l = 'ctrl Size : ',cl2 = ['left','left'],ad2 = 1,nf = 1,
-                                        value1 = 0.5,p = self.finger)  
+                                        value1 = 1,p = self.finger)        
+        
+        #side   
+        pm.rowLayout(adj = 1,nc=100,p = self.finger)
+        pm.button(l = 'side : ')
+        self.sideR = pm.radioButtonGrp(nrb = 2,la2 = ['left','right'],sl = 1)
+        
         
         #mirror 
         pm.rowLayout(adj = 1,nc=100,p = self.finger)
