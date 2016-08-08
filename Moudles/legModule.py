@@ -669,7 +669,7 @@ class LegModule(object):
             self.thighTwistIkCurve.v.set(0)
             pm.rename(self.thighTwistIkCurve,thighTwistIkCurveName)
             self.thighTwistIk.poleVector.set(0,0,0)
-            self.thighTwistIk.v.set(0)
+            
             
             #set stretch
             #get last cv:
@@ -767,7 +767,7 @@ class LegModule(object):
             pm.rename(self.clafTwistIkCurve,clafTwistIkCurveName)
             self.clafTwistIkCurve.v.set(0)
             self.clafTwistIk.poleVector.set(0,0,0)
-            self.clafTwistIk.v.set(0)
+
               
             #set stretch
             #get last cv:
@@ -1010,6 +1010,8 @@ class LegModule(object):
             clafTwistLocStr.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrix)
             clafTwistLocEd.worldMatrix.connect(self.clafTwistIk.dWorldUpMatrixEnd)               
         
+        self.clafTwistIkCurve.v.set(0)
+        self.thighTwistIkCurve.v.set(0)
         self.thighTwistIk.v.set(0)
         self.clafTwistIk.v.set(0)
         #twist custom attr
@@ -1025,7 +1027,9 @@ class LegModule(object):
         self.footSettingCtrl.control.thigh_twist.connect(thighTwistPMANode.input1D[1])
         thighTwistPMANode.output1D.connect(self.thighTwistIk.twist)  
         
-        #claf                
+        #claf
+        control.addFloatAttr(self.footSettingCtrl.control,['claf_roll'],-180,180) 
+        self.footSettingCtrl.control.claf_roll.connect(self.clafTwistIk.roll)
         control.addFloatAttr(self.footSettingCtrl.control,['claf_twist'],-180,180) 
         self.footSettingCtrl.control.claf_twist.connect(self.clafTwistIk.twist)
                                 
@@ -1211,8 +1215,7 @@ class LegModule(object):
         
         self.ikRpPvChain.ikCtrl.control.addAttr('single_roll',at = 'double',min = 0,max = 0,dv = 0)
         pm.setAttr(self.ikRpPvChain.ikCtrl.control + '.single_roll',e = 0,channelBox = 1)
-        self.ikRpPvChain.ikCtrl.control.single_roll.lock(1)     
-#         control.addFloatAttr(self.footSettingCtrl.control,['fore_twist'],-90,90) 
+        self.ikRpPvChain.ikCtrl.control.single_roll.lock(1)
         control.addFloatAttr(self.ikRpPvChain.ikCtrl.control,['ball_roll'],0,90) 
         control.addFloatAttr(self.ikRpPvChain.ikCtrl.control,['toe_roll'],0,90) 
         control.addFloatAttr(self.ikRpPvChain.ikCtrl.control,['heel_roll'],-90,90) 
