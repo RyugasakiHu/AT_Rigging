@@ -152,12 +152,6 @@ class LimbModule(object):
             
             for guideLoc in leftGuideLocMetaList:
                 destnation = guideLoc.split('_')
-                print destnation
-                
-#             [u'l', u'armShoulder', u'0', u'gudMirror.meta']
-#             [u'l', u'armShoulder', u'1', u'gudMirror.meta']
-#             [u'l', u'armShoulderBlade', u'0', u'gudMirror.meta']
-#             [u'l', u'armShoulderBlade', u'1', u'gudMirror.meta']     
                  
                 #arm
                 if str(destnation[1]) + str(destnation[2]) == 'armElbowEBlockStart':
@@ -355,7 +349,6 @@ class LimbModule(object):
         self.ikChain.fromList(self.limbGuidePos,self.limbGuideRot)
         
         #ik cc connect ori
-        control.addFloatAttr(self.ikChain.ikCtrl.control,['up_twist'],-90,90)
         self.ikChain.ikCtrl.control.rx.connect(self.ikChain.chain[-1].rx)
         self.ikChain.ikCtrl.control.ry.connect(self.ikChain.chain[-1].ry)
         self.ikChain.ikCtrl.control.rz.connect(self.ikChain.chain[-1].rz)
@@ -632,24 +625,42 @@ class LimbModule(object):
         foreArmTwistLocStr.worldMatrix.connect(self.foreArmTwistIk.dWorldUpMatrix)
         foreArmTwistLocEd.worldMatrix.connect(self.foreArmTwistIk.dWorldUpMatrixEnd)
         
+        ###
         #clean up
         self.upperArmTwistIkCurve.v.set(0)
         self.foreArmTwistIkCurve.v.set(0)
+        
+        #upperarm
+        #roll custom attr
+#         control.addFloatAttr(self.handSettingCtrl.control,['upperArm_roll'],-180,180)
+#         
+#         #node perpare
+#         upperArmRollFixPMANodeName = nameUtils.getUniqueName(self.side,'upperArmRollFix','PMA')
+#         upperArmRollFixPMANode = pm.createNode('plusMinusAverage',n = upperArmRollFixPMANodeName)
+#         
+#         #connect
+#         twistInfoJnt.rx.connect(upperArmRollFixPMANode.input1D[0])
+#         self.handSettingCtrl.control.upperArm_roll.connect(upperArmRollFixPMANode.input1D[1])
+#         upperArmRollFixPMANode.output1D.connect(self.upperArmTwistIk.roll)  
         
         #twist custom attr
         #thigh
         control.addFloatAttr(self.handSettingCtrl.control,['upperArm_twist'],-180,180)
         
         #node perpare
-        upperArmPMANodeName = nameUtils.getUniqueName(self.side,'upperArmTwistFix','PMA')
-        upperArmPMANode = pm.createNode('plusMinusAverage',n = upperArmPMANodeName)
+        upperArmTwistFixPMANodeName = nameUtils.getUniqueName(self.side,'upperArmTwistFix','PMA')
+        upperArmTwistFixPMANode = pm.createNode('plusMinusAverage',n = upperArmTwistFixPMANodeName)
         
         #connect
-        twistInfoJnt.rx.connect(upperArmPMANode.input1D[0])
-        self.handSettingCtrl.control.upperArm_twist.connect(upperArmPMANode.input1D[1])
-        upperArmPMANode.output1D.connect(self.upperArmTwistIk.twist)  
+        twistInfoJnt.rx.connect(upperArmTwistFixPMANode.input1D[0])
+        self.handSettingCtrl.control.upperArm_twist.connect(upperArmTwistFixPMANode.input1D[1])
+        upperArmTwistFixPMANode.output1D.connect(self.upperArmTwistIk.twist)  
         
-        #claf                
+        #forearm        
+        #roll custom add
+        control.addFloatAttr(self.handSettingCtrl.control,['foreArm_roll'],-180,180) 
+        self.handSettingCtrl.control.foreArm_roll.connect(self.foreArmTwistIk.roll)
+        #twist custom add                
         control.addFloatAttr(self.handSettingCtrl.control,['foreArm_twist'],-180,180) 
         self.handSettingCtrl.control.foreArm_twist.connect(self.foreArmTwistIk.twist)
         
@@ -1289,6 +1300,7 @@ class LimbModule(object):
             self.ikChain.distTransNode.setParent(XTR) 
             self.guideGrp.setParent(GUD)
             self.locWorld.setParent(GUD)
+            self.mirrorGuideGrp.setParent(GUD)
             self.__tempSpaceSwitch.setParent(XTR)
             
             if self.solver == 'ikRPsolver':
@@ -1324,55 +1336,7 @@ class LimbModule(object):
             self.upperArmTwistGrp.setParent(XTR)
             self.upperArmTwistInfoGrp.setParent(XTR)
             self.foreArmTwistStart[0].setParent(SKL)
-            self.foreArmTwistGrp.setParent(XTR)
-            
-#         #mirror part:
-#         if self.mirror == 1:
-#             print ''
-#             print 'mirror selection is active'
-#              
-#             #perpare 
-#             mirrorSide = None
-#             self.mirror = 2
-#             
-#             if self.side == 'l':
-#                 mirrorSide = 'r'
-#              
-#             mirrorLimb = LimbModule(self.baseName,mirrorSide,self.size,self.solver,
-#                                     self.metaSpine,self.metaMain,self.mirror)
-#              
-#             mirrorLimb.buildGuides()
-#             oriGuideList = []
-#             
-#             #mirror guide
-#             for gud in mirrorLimb.totalGuides:
-#                 
-#                 #perpare
-#                 oriName = gud.split('_')
-#                 
-#                 #sl list
-#                 pm.select(self.side + str(gud[1:]))
-#                 oriGuide = pm.selected()[0]
-#                 oriGuideList.append(oriGuide)
-#                  
-#                 #create Node Name
-#                 linearNodeName = nameUtils.getUniqueName(self.side,oriName[1],'MDL')
-#                 
-#                 #create Node
-#                 linearNode = pm.createNode('multDoubleLinear',n = linearNodeName)
-#                 
-#                 #connect Node
-#                 oriGuide.tx.connect(linearNode.input1)
-#                 linearNode.input2.set(-1)
-#                 linearNode.output.connect(gud.tx)
-#                 
-#             print oriGuideList
-#             print mirrorLimb.totalGuides
-#             mirrorLimb.build()
-#             mirrorLimb.buildConnections()
-#             
-#         else :
-#             print 'mirror selection is in_active'        
+            self.foreArmTwistGrp.setParent(XTR)        
         
 def getUi(parent,mainUi):
     
@@ -1407,8 +1371,7 @@ class LimbModuleUi(object):
         pm.button(l = 'mirror : ')
         self.mirrorNodeM = pm.optionMenu(l = 'mirrorMeta : ',p = self.limb)
         self.mirrorR = pm.radioButtonGrp(nrb = 2,la2 = ['yes','no'],sl = 2,onc = self.__metaReload)        
-        
-        
+                
         #shoulder
         self.shoulderMenu = pm.optionMenu(l = 'shoulder : ',p = self.limb)
         pm.menuItem(l = 'yes',p = self.shoulderMenu)
