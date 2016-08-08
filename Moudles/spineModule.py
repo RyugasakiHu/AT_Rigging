@@ -387,6 +387,16 @@ class SpineModule(object):
         self.ribbonJc = []
         self.spineCc = []
         
+        #get loc pos
+        for num,loc in enumerate(self.fkGuides):
+            startLoc = self.fkGuides[0]
+            midLoc = self.fkGuides[(len(self.fkGuides) - 1) / 2]
+            endLoc = self.fkGuides[-1]
+             
+            startLocPos = pm.xform(startLoc,ws = 1,t = 1,q = 1)[1]
+            midLocPos = pm.xform(midLoc,ws = 1,t = 1,q = 1)[1]
+            endLocPos = pm.xform(endLoc,ws = 1,t = 1,q = 1)[1]
+        
         #get Jc pos
         for num in [0,2,4]:
             pos = pm.select(ribbonGeo[0] + '.cv[' + str(num) + '][0:3]',r = 1)
@@ -394,7 +404,17 @@ class SpineModule(object):
             pm.rename(clus[1],nameUtils.getUniqueName(self.side,self.baseName + '_ribbon','cls'))
             ribbonClusList.append(clus)
             pm.select(cl = 1)
-            
+             
+        #set cvpos
+        for vert in [1,3]:
+            for row in range(0,4):
+                cvNum = pm.select(ribbonGeo[0] + '.cv[' + str(vert) + '][' + str(row) + ']',r = 1)
+                oriPos = pm.xform(cvNum,ws = 1,t = 1,q = 1)
+                if vert == 1:
+                    pm.xform(cvNum,ws = 1,t = (oriPos[0],(startLocPos + midLocPos) / 2,oriPos[2]))
+                elif vert == 3:
+                    pm.xform(cvNum,ws = 1,t = (oriPos[0],(endLocPos + midLocPos) / 2,oriPos[2])) 
+             
         #set Jc and Jc ctrl    
         for num,x in enumerate(ribbonClusList):
             jc = pm.joint(p = x[1].getRotatePivot(),
@@ -407,7 +427,8 @@ class SpineModule(object):
             cc = control.Control(self.side,self.baseName + self.nameList[num],size = self.ikSize,aimAxis = self.ctrlAxis)
             cc.circleCtrl()
             pm.makeIdentity(cc.control,apply = True,t=0,r=1,s=0,n=0,pn=1)
-            self.bodyCtrl.control.ik_vis.connect(cc.controlGrp.v)
+#             self.bodyCtrl.control.ik_vis.connect(cc.controlGrp.v)
+            self.bodyCtrl.control.ik_vis.connect(cc.control.getShape().v)
             self.spineCc.append(cc.control)
             control.lockAndHideAttr(cc.control,['sx','sy','sz','v'])
             pm.xform(cc.controlGrp,ws = 1,matrix = jc.worldMatrix.get())
@@ -416,8 +437,15 @@ class SpineModule(object):
         for num,jc in enumerate(self.ribbonJc):
             jc.setParent(self.spineCc[num])
 
-        pm.skinCluster(self.ribbonJc[0],self.ribbonJc[1],self.ribbonJc[2],ribbonGeo[0],
-                       tsb = 1,ih = 1,mi = 3,dr = 4,rui = 1)
+        ribbonSkin = pm.skinCluster(self.ribbonJc[0],self.ribbonJc[1],self.ribbonJc[2],ribbonGeo[0],
+                       tsb = 1,ih = 1,mi = 3,dr = 4,rui = 1,n = nameUtils.getSkinName())
+        
+        #skin 
+        pm.skinPercent(ribbonSkin,ribbonGeo[0] + '.cv[0][0:3]', transformValue=[(self.ribbonJc[0],1)])
+        pm.skinPercent(ribbonSkin,ribbonGeo[0] + '.cv[1][0:3]', transformValue=[(self.ribbonJc[1],0.5),(self.ribbonJc[0],0.5)])
+        pm.skinPercent(ribbonSkin,ribbonGeo[0] + '.cv[2][0:3]', transformValue=[(self.ribbonJc[1],1)])
+        pm.skinPercent(ribbonSkin,ribbonGeo[0] + '.cv[3][0:3]', transformValue=[(self.ribbonJc[1],0.5),(self.ribbonJc[2],0.5)])
+        pm.skinPercent(ribbonSkin,ribbonGeo[0] + '.cv[4][0:3]', transformValue=[(self.ribbonJc[2],1)])    
         
         #set fol
         #create / rename fol
