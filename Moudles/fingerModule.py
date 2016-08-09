@@ -119,10 +119,6 @@ class FingerModule(object):
         self.pinkyGuides = []
         self.mirrorGuideList = []  
         
-        #guide grp       
-        guideName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(em = 1,n = guideName) 
-        
         #num
         if self.fingerNum == 2:
             self.posMiddleArray = []
@@ -299,6 +295,11 @@ class FingerModule(object):
                     pinkyGuide.r.set(rot[0],-rot[1],-rot[2])  
 
         #clean up
+        #guide grp       
+        guideName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
+        self.guideGrp = pm.group(em = 1,n = guideName)
+        tempGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + '_Resize','grp'))                 
+        
         #thumb
         self.tempThumbGuides = list(self.thumbGuides)
         self.tempThumbGuides.reverse()
@@ -308,7 +309,8 @@ class FingerModule(object):
                 pm.parent(self.tempThumbGuides[i],self.tempThumbGuides[i + 1])
         self.tempThumbGuides.reverse()
         self.guides.append(self.tempThumbGuides[0])
-        self.tempThumbGuides[0].setParent(self.guideGrp)    
+#         self.tempThumbGuides[0].setParent(self.guideGrp)
+        self.tempThumbGuides[0].setParent(tempGrp)
         
         #index    
         self.tempIndexGuides = list(self.indexGuides)
@@ -319,7 +321,8 @@ class FingerModule(object):
                 pm.parent(self.tempIndexGuides[i],self.tempIndexGuides[i + 1])
         self.tempIndexGuides.reverse()
         self.guides.append(self.tempIndexGuides[0])
-        self.tempIndexGuides[0].setParent(self.guideGrp)
+#         self.tempIndexGuides[0].setParent(self.guideGrp)
+        self.tempIndexGuides[0].setParent(tempGrp)
 
         #mid
         if len(self.middleGuides) != 0:             
@@ -330,7 +333,8 @@ class FingerModule(object):
                     pm.parent(self.tempMiddleGuides[i],self.tempMiddleGuides[i + 1])
             self.tempMiddleGuides.reverse()
             self.guides.append(self.tempMiddleGuides[0])
-            self.tempMiddleGuides[0].setParent(self.guideGrp) 
+#             self.tempMiddleGuides[0].setParent(self.guideGrp)
+            self.tempMiddleGuides[0].setParent(tempGrp)
 
         #ring
         if len(self.ringGuides) != 0:
@@ -341,7 +345,8 @@ class FingerModule(object):
                     pm.parent(self.tempRingGuides[i],self.tempRingGuides[i + 1])
             self.tempRingGuides.reverse()   
             self.guides.append(self.tempRingGuides[0])
-            self.tempRingGuides[0].setParent(self.guideGrp)
+#             self.tempRingGuides[0].setParent(self.guideGrp)
+            self.tempRingGuides[0].setParent(tempGrp)
         
         #pinky
         if len(self.pinkyGuides) != 0:     
@@ -352,9 +357,20 @@ class FingerModule(object):
                     pm.parent(self.tempPinkyGuides[i],self.tempPinkyGuides[i + 1])
             self.tempPinkyGuides.reverse()   
             self.guides.append(self.tempPinkyGuides[0])
-            self.tempPinkyGuides[0].setParent(self.guideGrp)    
+#             self.tempPinkyGuides[0].setParent(self.guideGrp)
+            self.tempPinkyGuides[0].setParent(tempGrp) 
             
-        self.guideGrp.s.set(self.size,self.size,self.size)     
+#         self.guideGrp.s.set(self.size,self.size,self.size)
+
+        if self.mirror == 'no':
+            
+            tempGrp.s.set(self.size,self.size,self.size)        
+            tempGrp.setParent(self.guideGrp)
+            
+        elif self.mirror == 'yes':
+    
+            tempGrp.setParent(self.guideGrp)  
+
         
     def build(self):
         
