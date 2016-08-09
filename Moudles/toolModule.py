@@ -150,6 +150,9 @@ class ToolModuleUi(object):
         
         pm.scale(scaleValue,scaleValue,scaleValue,r=1)
         pm.select(cl = 1) 
+        
+        for obj in sel:
+            pm.select(obj,add = 1)
  
     def __setXAxis(self,*args):
         
