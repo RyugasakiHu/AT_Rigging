@@ -93,6 +93,7 @@ class LegModule(object):
             loc = pm.spaceLocator(n = name)
             loc.t.set(p)
             loc.r.set(self.rotHipArray[i])
+            loc.localScale.set(self.size,self.size,self.size)
             self.hipGuides.append(loc)
             
         tempHipGuides = list(self.hipGuides)
@@ -105,6 +106,7 @@ class LegModule(object):
             loc = pm.spaceLocator(n = name)
             loc.t.set(p)
             loc.r.set(self.rotLegArray[i])
+            loc.localScale.set(self.size,self.size,self.size)
             self.legGuides.append(loc)
             
         tempLegGuides = list(self.legGuides)
@@ -279,12 +281,27 @@ class LegModule(object):
             self.splitLegGuides[1].setParent(self.legGuides[1])
             self.splitLegGuides.reverse()
         
+        #mirror
+        if self.mirror == 'no':
+            
+            for hipGuide in self.hipGuides:
+                oriTx = hipGuide.tx.get()
+                oriTy = hipGuide.ty.get()
+                oriTz = hipGuide.tz.get()
+                hipGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)
+                
+            for legGuide in self.legGuides:
+                oriTx = legGuide.tx.get()
+                oriTy = legGuide.ty.get()
+                oriTz = legGuide.tz.get()
+                legGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)                   
+        
         #clean up
         guideGrpName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(em = 1,n = guideGrpName)
+        
         self.hipGuides[0].setParent(self.guideGrp)  
         self.legGuides[0].setParent(self.guideGrp)
-        self.guideGrp.s.set(self.size,self.size,self.size)
             
     def build(self):
                 
@@ -603,7 +620,7 @@ class LegModule(object):
         self.legBlendChain.chain[1].rz.connect(splitRotMDNode.input1Z)
         
         splitRotMDNode.input2X.set(-0.5)
-        splitRotMDNode.input2Y.set(-0.5)
+        splitRotMDNode.input2Y.set(1)
         splitRotMDNode.input2Z.set(-0.5)
          
         splitRotMDNode.outputX.connect(self.splitKneeChain.chain[0].rx)
@@ -648,7 +665,7 @@ class LegModule(object):
             pm.delete(tempJoint)
             pm.rename(self.thighTwistEnd,nameUtils.getUniqueName(self.side,'thighTwistE','jj'))
              
-            self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
+            self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool',size = self.size) 
             self.thighTwistJoint.splitJointTool()
             
             for cube in self.thighTwistJoint.cubeList:
@@ -747,7 +764,7 @@ class LegModule(object):
             tempClafTrashNode = pm.listRelatives(self.clafTwistStart,c = 1,typ = 'ikHandle')
             pm.delete(tempClafTrashNode)
             
-            self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
+            self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool',size = self.size) 
             self.clafTwistJoint.splitJointTool()
             
             for cube in self.clafTwistJoint.cubeList:
@@ -838,7 +855,7 @@ class LegModule(object):
             pm.delete(tempJoint)
             pm.rename(self.thighTwistEnd,nameUtils.getUniqueName(self.side,'thighTwistE','jj'))
              
-            self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
+            self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool',size = self.size) 
             self.thighTwistJoint.splitJointTool()
             
             for cube in self.thighTwistJoint.cubeList:
@@ -932,7 +949,7 @@ class LegModule(object):
             self.clafTwistEnd = pm.listRelatives(self.clafTwistStart,c = 1,typ = 'joint')
             pm.parent(self.clafTwistStart,w = 1)
              
-            self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
+            self.clafTwistJoint = toolModule.SplitJoint(self.clafTwistStart,self.lowerTwistNum,box = 1,type = 'tool',size = self.size) 
             self.clafTwistJoint.splitJointTool()
             
             for cube in self.clafTwistJoint.cubeList:
@@ -1370,7 +1387,7 @@ class LegModule(object):
             self.ribon45hp.main.v.set(0)
             self.ccDefGrp.setParent(self.cntsGrp)
             
-#         self.footSettingCtrl.control.IKFK.set(1)
+        self.footSettingCtrl.control.IKFK.set(1)
         #jj grp
         self.legGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName,'grp'))
         self.ikRpChain.stretchStartLoc.setParent(self.legGrp)
