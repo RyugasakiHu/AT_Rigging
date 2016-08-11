@@ -37,20 +37,29 @@ class ToolModuleUi(object):
         #metaSel
         #all
         self.jointSel = pm.frameLayout('joint Select Tool : ',cll=1,p = self.mainL,cl = 1)
+        
         #skin Joint
         self.skinJointSel = pm.frameLayout('skinJoint Select Tool : ',cll=1,p = self.jointSel,cl = 1)
         self.skinJointMenu = pm.optionMenu(l = 'meta : ')
         metaUtils.metaSel()  
-        pm.button(l = 'select Skin Joint',c = self.__selSkinJoint)
-        
+        pm.button(l = 'select Sel Meta Skin Joint',c = self.__selMetaSkinJoint,p = self.skinJointSel)
+        pm.button(l = 'select All Skin Joint',c = self.__selAllMetaSkinJoint,p = self.skinJointSel)
+
         #partial Joint
         self.partialSkinJointSel = pm.frameLayout('skinPartialJoint Select Tool : ',cll=1,p = self.jointSel,cl = 1)
         self.partialSkinJointMenu = pm.optionMenu(l = 'meta : ')
+        metaUtils.metaSel()
+        pm.button(l = 'select PartialSkin Joint',c = self.__selPartialSkinJoint,p = self.partialSkinJointSel)
+        
+        
+        #ctrlShapes
+        self.ctrlShapeSel = pm.frameLayout('ctrl Curve Select Tool : ',cll=1,p = self.mainL,cl = 1)
+        self.ctrlShapeSelMenu = pm.optionMenu(l = 'meta : ')
         metaUtils.metaSel()  
-        pm.button(l = 'select PartialSkin Joint',c = self.__selPartialSkinJoint)
+        pm.button(l = 'select Sel Meta Ctrl Tool',c = self.__selMetaCtrlShape,p = self.ctrlShapeSel)
         
         #skinTool
-        self.skinAreaTool = pm.frameLayout('skin Area Tool : ',cll=1,p = self.mainL)        
+        self.skinAreaTool = pm.frameLayout('skin Area Tool : ',cll=1,p = self.mainL,cl = 1)      
         pm.button('skin Area Weight',c = self.__areaSkin) 
         
         #splitJoint
@@ -84,7 +93,9 @@ class ToolModuleUi(object):
         pm.deleteUI(self.mainL)
         self.mainUi.modulesUi.remove(self) 
         
-    def __selSkinJoint(self,*args):
+    def __selMetaSkinJoint(self,*args):
+        
+        pm.select(cl = 1) 
         
         jointList = []
         
@@ -92,19 +103,67 @@ class ToolModuleUi(object):
         meta = pm.ls(metaT)[0]
         jointStrs = pm.connectionInfo(meta.skinJoints, destinationFromSource=True) 
         pm.select(cl = 1) 
-         
+        
         for jointStr in jointStrs : 
             joint = jointStr.split('.') 
             pm.select(joint[0],add = 1)
             jointList.append(joint[0])
-                
+        
         print 'Skin joint from ' + metaT + ' are :'
         print 
         print  jointList
         print 
         print 'Number of ' + metaT + ' is ' + str(len(jointList))
         
+    def __selAllMetaSkinJoint(self, *args):
+        
+        pm.select(cl = 1) 
+        
+        metaList = []
+        allSkinJoint = []
+        
+        metaStr = pm.ls('*META*',type = 'lightInfo')
+        
+        for meta in metaStr:
+            
+            jointsStr = pm.connectionInfo(meta.skinJoints, destinationFromSource=True)
+             
+            for jointStr in jointsStr:
+                joint = jointStr.split('.') 
+                pm.select(joint[0],add = 1)
+                allSkinJoint.append(joint[0])
+                
+        print 'Skin joint from ALL metas are :'
+        print 
+        print  allSkinJoint
+        print 
+        print 'Number of ALL meta is ' + str(len(allSkinJoint))        
+
+    def __selMetaCtrlShape(self,*args):
+        
+        pm.select(cl = 1) 
+        
+        ctrlList = []
+        
+        metaT = pm.optionMenu(self.ctrlShapeSelMenu, q = 1,v = 1)  
+        meta = pm.ls(metaT)[0]
+        ctrlStrs = pm.connectionInfo(meta.controls, destinationFromSource=True) 
+        pm.select(cl = 1) 
+        
+        for ctrlStr in ctrlStrs : 
+            ctrl = ctrlStr.split('.') 
+            pm.select(ctrl[0],add = 1)
+            ctrlList.append(ctrl[0])
+        
+        print 'ctrlShapes from ' + metaT + ' are :'
+        print 
+        print  ctrlList
+        print 
+        print 'Number of ' + metaT + ' is ' + str(len(ctrlList))
+
     def __selPartialSkinJoint(self,*args):
+        
+        pm.select(cl = 1) 
         
         partialJointList = []
         
@@ -248,14 +307,15 @@ class ToolModuleUi(object):
 
 class SplitJoint(object):
     
-    def __init__(self,splitJoint,num,type,box):
+    def __init__(self,splitJoint,num,type,box,size = 1):
         
         self.splitJoint = splitJoint
         self.num = num 
-        self.box = box
+        self.box = box        
+        self.type = type
+        self.size = size
         self.joints = []
         self.cubeList = None
-        self.type = type
                      
     def splitJointTool(self): 
          
@@ -385,10 +445,14 @@ class SplitJoint(object):
                 pm.select(cube[0])
                 pm.makeIdentity(cube[0],t=1,s=1,r=1,a=1)
                  
-                #go head TAC-com
+                #get ready for next roll
                 a += 1
-                count += 1
-                control.lockAndHideAttr(cube[0],['tx','ty','tz','rx','ry','rz','sx','sy','sz'])     
+                count += 1                
+                 
+        for cube in self.cubeList:
+            cube[0].s.set(1,self.size,self.size)    
+            control.lockAndHideAttr(cube[0],['tx','ty','tz','rx','ry','rz','sx','sy','sz'])
+            
         #break the cycle delete the tail       
         pm.delete(self.cubeList[-1])
         self.cubeList.pop()          
