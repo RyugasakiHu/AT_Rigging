@@ -112,6 +112,7 @@ class LimbModule(object):
             loc = pm.spaceLocator(n = name)
             loc.t.set(pos)
             loc.r.set(self.rotLimbArray[num])
+            loc.localScale.set(self.size,self.size,self.size)
             self.limbGuides.append(loc)
         
         #elbow partial
@@ -121,6 +122,7 @@ class LimbModule(object):
                 loc = pm.spaceLocator(n = name)
                 loc.t.set(pos)
                 loc.r.set(self.rotElbowPartialArray[num])
+                loc.localScale.set(self.size,self.size,self.size)
                 self.elbowPartialGuides.append(loc)
                 loc.setParent(self.limbGuides[0])                    
         
@@ -133,6 +135,7 @@ class LimbModule(object):
                 loc = pm.spaceLocator(n = name)
                 loc.t.set(pos)
                 loc.r.set(self.rotShoulderArray[num])
+                loc.localScale.set(self.size,self.size,self.size)
                 self.shoulderGuides.append(loc)                
                     
             #shoulder Blade
@@ -141,6 +144,7 @@ class LimbModule(object):
                 loc = pm.spaceLocator(n = name)
                 loc.t.set(pos)
                 loc.r.set(self.rotShoulderBladeArray[num])
+                loc.localScale.set(self.size,self.size,self.size)
                 self.shoulderBladeGuides.append(loc)                 
         
         ###
@@ -252,15 +256,34 @@ class LimbModule(object):
                 
         #clean up
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
-        self.guideGrp = pm.group(em = 1,n = name)
-        self.limbGuides[0].setParent(self.guideGrp)        
+        self.guideGrp = pm.group(em = 1,n = name)        
+        self.limbGuides[0].setParent(self.guideGrp)
         
         if self.shoulder == 'yes':
+            
             self.shoulderGuides[0].setParent(self.guideGrp)
             self.shoulderBladeGuides[0].setParent(self.guideGrp)      
                      
-        self.guideGrp.s.set(self.size,self.size,self.size) 
-                     
+        if self.mirror == 'no':
+            
+            for limbGuide in self.limbGuides:
+                oriTx = limbGuide.tx.get()
+                oriTy = limbGuide.ty.get()
+                oriTz = limbGuide.tz.get()
+                limbGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)
+                
+            for shoulderGuide in self.shoulderGuides:     
+                oriTx = shoulderGuide.tx.get()
+                oriTy = shoulderGuide.ty.get()
+                oriTz = shoulderGuide.tz.get()
+                shoulderGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)
+                
+            for shoulderBladeGuide in self.shoulderBladeGuides:
+                oriTx = shoulderBladeGuide.tx.get()
+                oriTy = shoulderBladeGuide.ty.get()
+                oriTz = shoulderBladeGuide.tz.get()
+                shoulderBladeGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)  
+                    
     def build(self):
         
         #mirror
@@ -452,7 +475,7 @@ class LimbModule(object):
         pm.delete(tempJoint)
         pm.rename(self.upperArmTwistEnd,nameUtils.getUniqueName(self.side,'upperArmTwistE','jj'))
          
-        self.upperArmTwistJoint = toolModule.SplitJoint(self.upperArmTwistStart,self.upperTwistNum,box = 1,type = 'tool') 
+        self.upperArmTwistJoint = toolModule.SplitJoint(self.upperArmTwistStart,self.upperTwistNum,box = 1,type = 'tool',size = self.size) 
         self.upperArmTwistJoint.splitJointTool()
          
         for cube in self.upperArmTwistJoint.cubeList:
@@ -545,7 +568,7 @@ class LimbModule(object):
         tempTrashNode = pm.listRelatives(self.foreArmTwistStart,c = 1,typ = 'ikHandle')
         pm.delete(tempTrashNode)
         
-        self.foreArmTwistJoint = toolModule.SplitJoint(self.foreArmTwistStart,self.lowerTwistNum,box = 1,type = 'tool') 
+        self.foreArmTwistJoint = toolModule.SplitJoint(self.foreArmTwistStart,self.lowerTwistNum,box = 1,type = 'tool',size = self.size) 
         self.foreArmTwistJoint.splitJointTool()
         
         for cube in self.foreArmTwistJoint.cubeList:
