@@ -546,7 +546,7 @@ class FingerModule(object):
             if num < self.thumbChain.chainLength() - 1:    
                 #create sdk and correct cc name
 #                 cc = control.Control(self.side,self.baseName,size = thumbJointName.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0) 
+                cc = control.Control(self.side,self.baseName,size = self.size)
                 cc.circleCtrl()
                 self.thumbCc.append(cc.control)
                 
@@ -584,7 +584,7 @@ class FingerModule(object):
             if num < self.indexChain.chainLength() - 1:
                 #create sdk and correct cc name
 #                 cc = control.Control(self.side,self.baseName,size = indexJoint.getRadius() / 5) 
-                cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0)
+                cc = control.Control(self.side,self.baseName,size = self.size)
                 cc.circleCtrl()
                 self.indexCc.append(cc.control)
                 
@@ -623,7 +623,7 @@ class FingerModule(object):
                 if num < self.midChain.chainLength() - 1:                
                     #create sdk and correct cc name
     #                 cc = control.Control(self.side,self.baseName,size = midJoint.getRadius() / 5) 
-                    cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0) 
+                    cc = control.Control(self.side,self.baseName,size = self.size)
                     cc.circleCtrl()
                     self.midCc.append(cc.control)
                     
@@ -662,7 +662,7 @@ class FingerModule(object):
                 if num < self.ringChain.chainLength() - 1:                
                     #create sdk and correct cc name
     #                 cc = control.Control(self.side,self.baseName,size = ringJoint.getRadius() / 5) 
-                    cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0) 
+                    cc = control.Control(self.side,self.baseName,size = self.size)
                     cc.circleCtrl()
                     self.ringCc.append(cc.control)                
                     
@@ -701,7 +701,7 @@ class FingerModule(object):
                 if num < self.pinkyChain.chainLength() - 1:                
                     #create sdk and correct cc name
     #                 cc = control.Control(self.side,self.baseName,size = pinkyJoint.getRadius() / 5) 
-                    cc = control.Control(self.side,self.baseName,size = float(self.size) / 4.0) 
+                    cc = control.Control(self.side,self.baseName,size = self.size)
                     cc.circleCtrl()
                     self.pinkyCc.append(cc.control)   
                     
@@ -2046,6 +2046,9 @@ class FingerModule(object):
         
         #meta
         metaUtils.addToMeta(self.meta,'guideLocator',[mirrorGuide for mirrorGuide in self.mirrorGuideList])        
+        metaUtils.addToMeta(self.meta,'controls',[thumbCc for thumbCc in self.thumbCc] + [indexCc for indexCc in self.indexCc]
+                            + [midCc for midCc in self.midCc] + [ringCc for ringCc in self.ringCc]
+                            + [pinkyCc for pinkyCc in self.pinkyCc])       
 
 def getUi(parent,mainUi):
     
