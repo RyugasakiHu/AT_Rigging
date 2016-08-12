@@ -85,6 +85,7 @@ class LegModule(object):
         
         self.legGuides = []
         self.hipGuides = []       
+        self.splitLegGuides = []
         
         #hipGuides
         #set pos loc    
@@ -114,8 +115,7 @@ class LegModule(object):
         
         ###
         #split
-        if self.split == 1:            
-            self.splitLegGuides = []
+        if self.split == 1:                        
             #splitLegGuides
             #set pos loc    
             for i,p in enumerate(self.posSplitLegArray):
@@ -123,6 +123,7 @@ class LegModule(object):
                 loc = pm.spaceLocator(n = name)
                 loc.t.set(p)
                 loc.r.set(self.rotLegArray[i])
+                loc.localScale.set(self.size,self.size,self.size)
                 self.splitLegGuides.append(loc)
         
         ###
@@ -260,6 +261,7 @@ class LegModule(object):
                 splitLegDownLocRot = splitLegDownLoc.getRotation(space = 'world')
                 self.splitLegGuides[1].t.set(-splitLegDownLocPos[0],splitLegDownLocPos[1],splitLegDownLocPos[2])         
                 self.splitLegGuides[1].r.set(splitLegDownLocRot[0],-splitLegDownLocRot[1],-splitLegDownLocRot[2])
+                
         #regroup
         #set hip loc grp
         for i in range(len(tempHipGuides)):
@@ -284,6 +286,7 @@ class LegModule(object):
         #mirror
         if self.mirror == 'no':
             
+            #correct the size
             for hipGuide in self.hipGuides:
                 oriTx = hipGuide.tx.get()
                 oriTy = hipGuide.ty.get()
@@ -294,7 +297,13 @@ class LegModule(object):
                 oriTx = legGuide.tx.get()
                 oriTy = legGuide.ty.get()
                 oriTz = legGuide.tz.get()
-                legGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)                   
+                legGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)
+             
+            for splitLegGuide in self.splitLegGuides:
+                oriTx = splitLegGuide.tx.get()
+                oriTy = splitLegGuide.ty.get()
+                oriTz = splitLegGuide.tz.get()
+                splitLegGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)                 
         
         #clean up
         guideGrpName = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
@@ -331,18 +340,15 @@ class LegModule(object):
             mirrorLegGuide[0].setParent(self.mirrorGuideGrp)
             self.mirrorGuideList.append(renameGuide)
 
-        ###split     
-        if self.split == 1:                
-            for splitLegGuide in self.splitLegGuides:
-                mirrorSplitLegGuide = pm.duplicate(splitLegGuide)
-                child = pm.listRelatives(mirrorSplitLegGuide,c = 1,typ = 'transform')
-                if child != None:
-                    pm.delete(child)
-#                 self.mirrorGuideList.append(mirrorSplitLegGuide)
-                newName = str(splitLegGuide) + 'Mirror' 
-                renameGuide = pm.rename(mirrorSplitLegGuide,newName)
-                renameGuide.setParent(self.mirrorGuideGrp)
-                self.mirrorGuideList.append(renameGuide)
+        for splitLegGuide in self.splitLegGuides:
+            mirrorSplitLegGuide = pm.duplicate(splitLegGuide)
+            child = pm.listRelatives(mirrorSplitLegGuide,c = 1,typ = 'transform')
+            if child != None:
+                pm.delete(child)
+            newName = str(splitLegGuide) + 'Mirror' 
+            renameGuide = pm.rename(mirrorSplitLegGuide,newName)
+            renameGuide.setParent(self.mirrorGuideGrp)
+            self.mirrorGuideList.append(renameGuide)
                 
         #really ro roll            
         self.guideGrp.v.set(0)
@@ -366,6 +372,7 @@ class LegModule(object):
         
         #split
         if self.split == 1:
+            #all pos
             #split pos
             self.splitKneePos = []
             self.splitKneePos.append(self.legGuidesPos[1])
@@ -375,13 +382,13 @@ class LegModule(object):
             
             #split rot
             self.splitKneeRot = []
-            self.splitKneeRot.append(self.legGuidesPos[1])
+            self.splitKneeRot.append(self.legGuidesRot[1])
             for splitLegGuide in self.splitLegGuides:
                 splitLegGuideRot = splitLegGuide.getRotation(space = 'world')
-                self.splitKneeRot.append(splitLegGuidePos)  
+                self.splitKneeRot.append(splitLegGuideRot)  
             
-            #real pos
-            #up
+            #part pos
+            #up chain pos
             self.splitLegUpPos = []
             self.splitLegUpPos.append(self.legGuidesPos[0])
             self.splitLegUpPos.append(self.splitKneePos[1])
@@ -390,7 +397,7 @@ class LegModule(object):
             self.splitLegUpRot.append(self.legGuidesRot[0])
             self.splitLegUpRot.append(self.splitKneeRot[1])
             
-            #down
+            #down chain pos
             self.splitLegDownPos = []
             self.splitLegDownPos.append(self.splitKneePos[2])
             self.splitLegDownPos.append(self.legGuidesPos[2])
@@ -628,10 +635,10 @@ class LegModule(object):
         splitRotMDNode.outputZ.connect(self.splitKneeChain.chain[0].rz)
         
         #ik handle
-        upIkName = nameUtils.getUniqueName(self.side,'upSplit','iks')
+        upIkName = nameUtils.getUniqueName(self.side,'kneeSplitUp','iks')
         self.upSplitIkHandle,self.upSplitIkEffector = pm.ikHandle(sj = self.splitLegUpChain.chain[0],ee = self.splitLegUpChain.chain[1],solver = 'ikSCsolver',n = upIkName)
         
-        downIkName = nameUtils.getUniqueName(self.side,'downSplit','iks')
+        downIkName = nameUtils.getUniqueName(self.side,'kneeSplitDown','iks')
         self.downSplitIkHandle,self.downSplitIkEffector = pm.ikHandle(sj = self.splitLegDownChain.chain[0],ee = self.splitLegDownChain.chain[1],solver = 'ikSCsolver',n = downIkName)
         
         #cleanUp
@@ -749,7 +756,7 @@ class LegModule(object):
                              worldUpType = 'objectrotation',worldUpVector = [0,0,1],
                              worldUpObject = self.legBlendChain.chain[1])
 #             twistInfoJnt.rx.connect(self.thighTwistIk.twist)
-    #         pm.parentConstraint(self.hipChain.chain[0],twistInfoGrpName,mo = 1)
+#             pm.parentConstraint(self.hipChain.chain[0],twistInfoGrpName,mo = 1)
              
             ###
             #fore Leg
