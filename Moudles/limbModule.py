@@ -13,6 +13,8 @@ class LimbModule(object):
     rotShoulderArray = [[0,0,0],[0,0,0]]
     posShoulderBladeArray = [[0.65,14,-0.6],[0.65,12.5,-0.6]]
     rotShoulderBladeArray = [[0,0,0],[0,0,0]]
+    posElbowSplitArray = [[3.75,14,-0.4],[4.25,14,-0.4]]
+    rotElbowSplitArray = [[0,0,0],[0,0,0]]
     posElbowPartialArray = [[4,14,-1.5]]
     rotElbowPartialArray = [[0,0,0]]
     
@@ -79,6 +81,9 @@ class LimbModule(object):
         self.subMidCtrlElbow = None
         self.ribbonData = ['ShoulderElbow','EblowWrist','Elbow']
         
+        #nameList
+        self.splitNameList = ['SplitUp','SplitDown']
+        
         #AT
         self.ikAtHandle = None
         self.ikAtEffector  = None
@@ -87,7 +92,7 @@ class LimbModule(object):
         
         #Hook
         self.shoulder = shoulder
-        self.elbowPartial = elbow
+        self.elbowMethod = elbow
         self.__tempSpaceSwitch = None
         self.locLocal = None
         self.locWorld = None
@@ -104,7 +109,8 @@ class LimbModule(object):
         self.shoulderGuides = []
         self.shoulderBladeGuides = []        
         self.limbGuides = []
-        self.elbowPartialGuides = []    
+        self.elbowPartialGuides = []
+        self.elbowSplitGuides = []
         
         #limb Guides
         for num,pos in enumerate(self.posLimbArray):
@@ -116,7 +122,17 @@ class LimbModule(object):
             self.limbGuides.append(loc)
         
         #elbow partial
-        if self.elbowPartial == 'yes':
+        if self.elbowMethod == 'split':
+            #set pos loc
+            for i,p in enumerate(self.posElbowSplitArray):
+                name = nameUtils.getUniqueName(self.side,self.baseName + self.splitNameList[i],'gud')
+                loc = pm.spaceLocator(n = name)
+                loc.t.set(p)
+                loc.r.set(self.rotElbowSplitArray[i])
+                loc.localScale.set(self.size,self.size,self.size)
+                self.elbowSplitGuides.append(loc)
+            
+        if self.elbowMethod == 'partial':    
             for num,pos in enumerate(self.posElbowPartialArray):
                 name = nameUtils.getUniqueName(self.side,self.baseName + 'Partial','gud')
                 loc = pm.spaceLocator(n = name)
@@ -125,6 +141,10 @@ class LimbModule(object):
                 loc.localScale.set(self.size,self.size,self.size)
                 self.elbowPartialGuides.append(loc)
                 loc.setParent(self.limbGuides[0])                    
+        
+        if self.elbowMethod == 'nope':
+            
+            pass
         
         #shoulder guides
         if self.shoulder == 'yes':            
@@ -253,7 +273,16 @@ class LimbModule(object):
             for i in range(len(tempShoulderBladeGuides)):
                 if i != (len(tempShoulderBladeGuides) - 1):
                     pm.parent(tempShoulderBladeGuides[i],tempShoulderBladeGuides[i + 1])
-                
+        
+        #split loc        
+        if self.elbowMethod == 'split':
+            #set loc grp
+            pm.parent(self.elbowSplitGuides[1],self.elbowSplitGuides[0])
+            self.elbowSplitGuides.reverse()
+            
+            self.elbowSplitGuides[1].setParent(self.limbGuides[1])
+            self.elbowSplitGuides.reverse()
+                    
         #clean up
         name = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp')
         self.guideGrp = pm.group(em = 1,n = name)        
@@ -283,6 +312,12 @@ class LimbModule(object):
                 oriTy = shoulderBladeGuide.ty.get()
                 oriTz = shoulderBladeGuide.tz.get()
                 shoulderBladeGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)  
+                
+            for elbowSplitGuide in self.elbowSplitGuides: 
+                oriTx = elbowSplitGuide.tx.get()
+                oriTy = elbowSplitGuide.ty.get()
+                oriTz = elbowSplitGuide.tz.get()
+                elbowSplitGuide.t.set(self.size * oriTx,self.size * oriTy,self.size * oriTz)
                     
     def build(self):
         
@@ -290,8 +325,6 @@ class LimbModule(object):
         self.mirrorGuideGrp = pm.group(em = 1,n = nameUtils.getUniqueName(self.side,self.baseName + '_Gud','grp'))
         self.mirrorGuideList = []
         self.mirrorGuideGrp.v.set(0)
-                
-#         self.elbowPartialGuides = None
         
         for limbGuide in self.limbGuides:
             mirrorLimbGuide = pm.duplicate(limbGuide)
@@ -314,18 +347,28 @@ class LimbModule(object):
             self.mirrorGuideList.append(renameGuide)
         
         for shoulderBladeGuide in self.shoulderBladeGuides:
-            mirrorShoulderGuide = pm.duplicate(shoulderBladeGuide)
-            child = pm.listRelatives(mirrorShoulderGuide,c = 1,typ = 'transform')
+            mirrorShoulderBladeGuide = pm.duplicate(shoulderBladeGuide)
+            child = pm.listRelatives(mirrorShoulderBladeGuide,c = 1,typ = 'transform')
             if child != None:
                 pm.delete(child)
             newName = str(shoulderBladeGuide) + 'Mirror' 
-            renameGuide = pm.rename(mirrorShoulderGuide,newName)
-            mirrorShoulderGuide[0].setParent(self.mirrorGuideGrp)
+            renameGuide = pm.rename(mirrorShoulderBladeGuide,newName)
+            mirrorShoulderBladeGuide[0].setParent(self.mirrorGuideGrp)
             self.mirrorGuideList.append(renameGuide)
         
-#         print self.mirrorGuideList
+        for elbowSplitGuide in self.elbowSplitGuides: 
+            mirrorElbowSplitGuide = pm.duplicate(elbowSplitGuide)
+            child = pm.listRelatives(mirrorElbowSplitGuide,c = 1,typ = 'transform')
+            if child != None:
+                pm.delete(child)
+            newName = str(elbowSplitGuide) + 'Mirror' 
+            renameGuide = pm.rename(mirrorElbowSplitGuide,newName)
+            mirrorElbowSplitGuide[0].setParent(self.mirrorGuideGrp)
+            self.mirrorGuideList.append(renameGuide)
+
         #really to roll
         self.guideGrp.v.set(0)        
+        
         if self.shoulder == 'yes':
             #shoulder set
             #shoulder pos get
@@ -348,8 +391,7 @@ class LimbModule(object):
             self.shoulderBladeChain.fromList(self.shoulderBladeGuidePos,self.shoulderBladeGuideRot)
             pm.rename(self.shoulderBladeChain.chain[-1],nameUtils.getUniqueName(self.side,self.baseName + 'ShoulderBlade','je'))
                 
-        ###########################
-        
+        ###########################        
         #limb set
         #limb pos get
         self.limbGuidePos = [x.getTranslation(space = 'world') for x in self.limbGuides]
@@ -362,6 +404,7 @@ class LimbModule(object):
         #fk first 
         self.fkChain = fkChain.FkChain(self.baseName,self.side,self.size)
         self.fkChain.fromList(self.limbGuidePos,self.limbGuideRot,skipLast = 0)
+        
         for chain in self.fkChain.chain:
             pm.setAttr(chain + ".visibility",k = False,cb=False)
             pm.setAttr(chain + ".radi",k = False,cb=False,l=False)
@@ -387,8 +430,8 @@ class LimbModule(object):
         self.blendData = boneChain.BoneChain.blendTwoChains(self.fkChain.chain,self.ikChain.chain,self.limbBlendChain.chain,
                                                             self.handSettingCtrl.control,'IKFK',self.baseName,self.side)
         
-        #elbow partial
-        if self.elbowPartial == 'yes':
+        #elbow method
+        if self.elbowMethod == 'partial':
             
             #pos get
             self.elbowPartialGuidePos = [x.getTranslation(space = 'world') for x in self.elbowPartialGuides]
@@ -406,13 +449,60 @@ class LimbModule(object):
             self.elbowPartialJoint.jointOrientZ.set(0)
 
             #cnst
-            pm.orientConstraint(self.limbBlendChain.chain[1],self.elbowPartialJoint,mo = 1)            
+            pm.orientConstraint(self.limbBlendChain.chain[1],self.elbowPartialJoint,mo = 1)
+            
+        if self.elbowMethod == 'split':
+            #all pos
+            #split pos
+            self.elbowSplitGuidePos = []
+            self.elbowSplitGuidePos.append(self.limbGuidePos[1])
+            for elbowSplitGuide in self.elbowSplitGuides:
+                elbowSplitGuidePos = elbowSplitGuide.getTranslation(space = 'world')
+                self.elbowSplitGuidePos.append(elbowSplitGuidePos)                
+            
+            #split rot
+            self.elbowSplitGuideRot = []
+            self.elbowSplitGuideRot.append(self.limbGuideRot[1])
+            for elbowSplitGuide in self.elbowSplitGuides:
+                elbowSplitGuideRot = elbowSplitGuide.getRotation(space = 'world')
+                self.elbowSplitGuideRot.append(elbowSplitGuideRot)  
+           
+            #part pos
+            #up chain pos
+            self.elbowSplitUpPos = []
+            self.elbowSplitUpPos.append(self.limbGuidePos[0])
+            self.elbowSplitUpPos.append(self.elbowSplitGuidePos[1])
+
+            self.elbowSplitUpRot = []
+            self.elbowSplitUpRot.append(self.limbGuideRot[0])
+            self.elbowSplitUpRot.append(self.elbowSplitGuideRot[1])
+            
+            #down chain pos
+            self.elbowSplitDownPos = []
+            self.elbowSplitDownPos.append(self.elbowSplitGuidePos[2])
+            self.elbowSplitDownPos.append(self.limbGuidePos[2])
+            
+            self.elbowSplitDownRot = []
+            self.elbowSplitDownRot.append(self.elbowSplitGuideRot[2])
+            self.elbowSplitDownRot.append(self.limbGuideRot[2])   
+            
+            #create chain
+            self.elbowSplitChain = boneChain.BoneChain('elbowSplit',self.side,type = 'jc')
+            self.elbowSplitChain.fromList(self.elbowSplitGuidePos,self.elbowSplitGuideRot)
+              
+            self.elbowSplitUpChain = boneChain.BoneChain('elbow' + self.splitNameList[0],self.side,type = 'jc')
+            self.elbowSplitUpChain.fromList(self.elbowSplitUpPos,self.elbowSplitUpRot)
+              
+            self.elbowSplitDownChain = boneChain.BoneChain('elbow' + self.splitNameList[1],self.side,type = 'jc')
+            self.elbowSplitDownChain.fromList(self.elbowSplitDownPos,self.elbowSplitDownRot)
+              
+            self.__splitJointSet()
             
         self.__ikfkBlender()
         
         if self.twist == 'ribon45hp': 
             self.__ribonSetUp()
-        
+         
         if self.twist == 'non_roll':
             self.__nonRollSetUp() 
         
@@ -462,230 +552,309 @@ class LimbModule(object):
         
         if self.twist == 'non_roll':
             control.addFloatAttr(self.handSettingCtrl.control,['proxy_vis'],0,1) 
+    
+    def __splitJointSet(self):
+        
+        self.elbowSplitChain.chain[0].setParent(self.limbBlendChain.chain[0])
+        
+        #create node
+        #pos
+        splitPosMDNodeName = nameUtils.getUniqueName(self.side,'elbowSplitPos','MDN')
+        splitPosMDNode = pm.createNode('multiplyDivide',n = splitPosMDNodeName)
+           
+        #connect
+        self.limbBlendChain.chain[1].tx.connect(splitPosMDNode.input1X)
+        self.limbBlendChain.chain[1].ty.connect(splitPosMDNode.input1Y)
+        self.limbBlendChain.chain[1].tz.connect(splitPosMDNode.input1Z)
+           
+        splitPosMDNode.outputX.connect(self.elbowSplitChain.chain[0].tx)
+        splitPosMDNode.outputY.connect(self.elbowSplitChain.chain[0].ty)
+        splitPosMDNode.outputZ.connect(self.elbowSplitChain.chain[0].tz)        
+                 
+        #rot
+        splitRotMDNodeName = nameUtils.getUniqueName(self.side,'elbowSplitRot','MDN')
+        splitRotMDNode = pm.createNode('multiplyDivide',n = splitRotMDNodeName)
+          
+        #connect
+        self.limbBlendChain.chain[1].rx.connect(splitRotMDNode.input1X)
+        self.limbBlendChain.chain[1].ry.connect(splitRotMDNode.input1Y)
+        self.limbBlendChain.chain[1].rz.connect(splitRotMDNode.input1Z)
+         
+        splitRotMDNode.input2X.set(-0.5)
+        splitRotMDNode.input2Y.set(1)
+        splitRotMDNode.input2Z.set(-0.5)
+          
+        splitRotMDNode.outputX.connect(self.elbowSplitChain.chain[0].rx)
+        splitRotMDNode.outputY.connect(self.elbowSplitChain.chain[0].ry)
+        splitRotMDNode.outputZ.connect(self.elbowSplitChain.chain[0].rz)
+         
+        #ik handle
+        upIkName = nameUtils.getUniqueName(self.side,'elbowSplitUp','iks')
+        self.upSplitIkHandle,self.upSplitIkEffector = pm.ikHandle(sj = self.elbowSplitUpChain.chain[0],ee = self.elbowSplitUpChain.chain[1],solver = 'ikSCsolver',n = upIkName)
+         
+        downIkName = nameUtils.getUniqueName(self.side,'elbowSplitDown','iks')
+        self.downSplitIkHandle,self.downSplitIkEffector = pm.ikHandle(sj = self.elbowSplitDownChain.chain[0],ee = self.elbowSplitDownChain.chain[1],solver = 'ikSCsolver',n = downIkName)
+         
+        #cleanUp
+        #ik
+        self.upSplitIkHandle.setParent(self.elbowSplitChain.chain[1])
+        self.downSplitIkHandle.setParent(self.limbBlendChain.chain[2])
+        self.upSplitIkHandle.v.set(0)
+        self.downSplitIkHandle.v.set(0)
+         
+        #joint
+        self.elbowSplitUpChain.chain[0].setParent(self.limbBlendChain.chain[0])
+        self.elbowSplitDownChain.chain[0].setParent(self.elbowSplitChain.chain[2])     
      
     def __nonRollSetUp(self):
         
-        #upper arm:
-        #create twist arm 
-        self.upperArmTwistStart = pm.duplicate(self.limbBlendChain.chain[0],
-                                               n = nameUtils.getUniqueName(self.side,'upperArmTwistS','jj')) 
-        self.upperArmTwistEnd = pm.listRelatives(self.upperArmTwistStart,c = 1,typ = 'joint')
-        
-        tempJoint = pm.listRelatives(self.upperArmTwistEnd,c = 1,typ = 'joint')
-        pm.delete(tempJoint)
-        pm.rename(self.upperArmTwistEnd,nameUtils.getUniqueName(self.side,'upperArmTwistE','jj'))
-         
-        self.upperArmTwistJoint = toolModule.SplitJoint(self.upperArmTwistStart,self.upperTwistNum,box = 1,type = 'tool',size = self.size) 
-        self.upperArmTwistJoint.splitJointTool()
-         
-        for cube in self.upperArmTwistJoint.cubeList:
-                self.handSettingCtrl.control.proxy_vis.connect(cube[0].v) 
-         
-        for twistJoints in self.upperArmTwistJoint.joints:
-            pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'upperArmTwist','jj'))  
+        if self.elbowMethod != 'split':
+            #upper arm:
+            #create twist arm 
+            self.upperArmTwistStart = pm.duplicate(self.limbBlendChain.chain[0],
+                                                   n = nameUtils.getUniqueName(self.side,'upperArmTwistS','jj')) 
+            self.upperArmTwistEnd = pm.listRelatives(self.upperArmTwistStart,c = 1,typ = 'joint')
+            
+            tempJoint = pm.listRelatives(self.upperArmTwistEnd,c = 1,typ = 'joint')
+            pm.delete(tempJoint)
+            pm.rename(self.upperArmTwistEnd,nameUtils.getUniqueName(self.side,'upperArmTwistE','jj'))
              
-        #create iks      
-        upperArmTwistIkName = nameUtils.getUniqueName(self.side,'upperArmTwist','iks')  
-        upperArmTwistIkCurveName = nameUtils.getUniqueName(self.side,'upperArmTwist','ikc')  
-        self.upperArmTwistIk,self.upperArmTwistIkEffector,self.upperArmTwistIkCurve = pm.ikHandle(sj = self.upperArmTwistStart[0],
-                                                                                                  ee = self.upperArmTwistEnd[0],
-                                                                                                  solver = 'ikSplineSolver',
-                                                                                                  n = upperArmTwistIkName)
-        upperSpIkC = pm.skinCluster(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.upperArmTwistIkCurve,
-                                    n = nameUtils.getSkinName())
-        pm.rename(self.upperArmTwistIkCurve,upperArmTwistIkCurveName)
-        self.upperArmTwistIk.poleVector.set(0,0,0)
-        self.upperArmTwistIk.v.set(0)
-        
-        #set stretch
-        #get last cv:
-        pm.select(self.upperArmTwistIkCurve + '.cv[*]')
-        upperIkCLastCv = pm.ls(sl = 1)[0][-1]
-        pm.skinPercent(upperSpIkC,upperIkCLastCv,tv = [(self.limbBlendChain.chain[1],1)])
-        
-        #get cv length
-        upperArmTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'upperArmTwist','cvINFO')
-        upperArmTwistIkCurveInfoNode = pm.createNode('curveInfo',n = upperArmTwistIkCurveInfoName)
-        self.upperArmTwistIkCurve.getShape().worldSpace[0].connect(upperArmTwistIkCurveInfoNode.inputCurve)
-        
-        #create main Node
-        upperArmTwistCurveMDNName = nameUtils.getUniqueName(self.side,'upperArmTwistCur','MDN')
-        upperArmTwistCurveMDNNode = pm.createNode('multiplyDivide',n = upperArmTwistCurveMDNName)
-        
-        upperArmTwistIkCurveInfoNode.arcLength.connect(upperArmTwistCurveMDNNode.input1.input1X)
-        upperArmTwistCurveMDNNode.input2.input2X.set(self.limbBlendChain.chain[1].tx.get())
-        upperArmTwistCurveMDNNode.operation.set(2)
-        
-        for num,twistJoints in enumerate(self.upperArmTwistJoint.joints):
-            tempNodeName = nameUtils.getUniqueName(self.side,'upperArmTwistJnt','MDN')
-            tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
-            if num > 0 :
-                tempNode.input1.input1X.set(twistJoints.tx.get())
-                upperArmTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
-                tempNode.outputX.connect(twistJoints.tx)
-        
-        #create upperTwistGrp
-        upperArmTwistGrpName = nameUtils.getUniqueName(self.side,'upperArmTwist','grp')
-        self.upperArmTwistGrp = pm.group(em = 1,n = upperArmTwistGrpName) 
-        self.upperArmTwistIk.setParent(self.upperArmTwistGrp) 
-        self.upperArmTwistIkCurve.setParent(self.upperArmTwistGrp) 
-        
-        #create upperTwistInfoGrp 
-        twistInfoGrpName = nameUtils.getUniqueName(self.side,'upperArmTwistInfo','grp')
-        self.upperArmTwistInfoGrp = pm.group(em = 1,n = twistInfoGrpName)
-        
-        #nonFlip Jnt
-        nonFlipStJnt = pm.duplicate(self.limbBlendChain.chain[1],
-                                    n = nameUtils.getUniqueName(self.side,'upperArmNonFlip','jc'))
-        nonFlipEdJnt = pm.listRelatives(nonFlipStJnt,c = 1,typ = 'joint')
-        pm.rename(nonFlipEdJnt,nameUtils.getUniqueName(self.side,self.baseName + 'upperArmNonFlip','je'))
-        nonFlipStJnt[0].setParent(self.upperArmTwistInfoGrp)
-        nonFlipIks,nonFlipIksEffector = pm.ikHandle(sj = nonFlipStJnt[0],ee = nonFlipEdJnt[0],solver = 'ikRPsolver',
-                                                    n = nameUtils.getUniqueName(self.side,'upperArmNonFlip','iks'))
-        nonFlipIks.setParent(self.limbBlendChain.chain[1])
-        nonFlipIks.poleVector.set(0,0,0)
-        nonFlipIks.r.set(0,0,0)
-        nonFlipIks.v.set(0)
-        pm.pointConstraint(self.limbBlendChain.chain[1],nonFlipStJnt,mo = 1)
-        
-        #twist info jnt
-        twistInfoJnt = pm.joint(n = nameUtils.getUniqueName(self.side,'upperArmTwistInfo','jc'))
-        twistInfoJnt.setParent(nonFlipStJnt)
-        twistInfoJnt.t.set(0,0,0)
-        pm.aimConstraint(nonFlipEdJnt[0],twistInfoJnt,mo = 1,w = 1,aimVector = [1,0,0],upVector = [0,0,1],
-                         worldUpType = 'objectrotation',worldUpVector = [0,0,1],
-                         worldUpObject = self.limbBlendChain.chain[1])
-#         twistInfoJnt.rx.connect(self.upperArmTwistIk.twist)
-#         pm.parentConstraint(self.shoulderChain.chain[0],twistInfoGrpName,mo = 1)
-        
-        ###
-        #fore arm
-        self.foreArmTwistStart = pm.duplicate(self.limbBlendChain.chain[1],
-                                              n = nameUtils.getUniqueName(self.side,'foreArmTwistS','jj'))
-        self.foreArmTwistEnd = pm.listRelatives(self.foreArmTwistStart,c = 1,typ = 'joint')
-        pm.parent(self.foreArmTwistStart,w = 1)
-        
-        tempTrashNode = pm.listRelatives(self.foreArmTwistStart,c = 1,typ = 'ikHandle')
-        pm.delete(tempTrashNode)
-        
-        self.foreArmTwistJoint = toolModule.SplitJoint(self.foreArmTwistStart,self.lowerTwistNum,box = 1,type = 'tool',size = self.size) 
-        self.foreArmTwistJoint.splitJointTool()
-        
-        for cube in self.foreArmTwistJoint.cubeList:
-                self.handSettingCtrl.control.proxy_vis.connect(cube[0].v) 
-         
-        for twistJoints in self.foreArmTwistJoint.joints:
-            pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'foreArmTwist','jj'))  
+            self.upperArmTwistJoint = toolModule.SplitJoint(self.upperArmTwistStart,self.upperTwistNum,box = 1,type = 'tool',size = self.size) 
+            self.upperArmTwistJoint.splitJointTool()
              
-        #create iks      
-        foreArmTwistIkName = nameUtils.getUniqueName(self.side,'foreArmTwist','iks')  
-        foreArmTwistIkCurveName = nameUtils.getUniqueName(self.side,'foreArmTwist','ikc')  
-        self.foreArmTwistIk,self.foreArmTwistIkEffector,self.foreArmTwistIkCurve = pm.ikHandle(sj = self.foreArmTwistStart[0],
-                                                                                               ee = self.foreArmTwistEnd[0],
-                                                                                               solver = 'ikSplineSolver',
-                                                                                               n = foreArmTwistIkName)
-        foreSpIkC = pm.skinCluster(self.limbBlendChain.chain[1],self.limbBlendChain.chain[2],self.foreArmTwistIkCurve,n = nameUtils.getSkinName())
-        pm.rename(self.foreArmTwistIkCurve,foreArmTwistIkCurveName)
-        self.foreArmTwistIk.poleVector.set(0,0,0)
-        self.foreArmTwistIk.v.set(0)
+            for cube in self.upperArmTwistJoint.cubeList:
+                    self.handSettingCtrl.control.proxy_vis.connect(cube[0].v) 
+             
+            for twistJoints in self.upperArmTwistJoint.joints:
+                pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'upperArmTwist','jj'))  
+                 
+            #create iks      
+            upperArmTwistIkName = nameUtils.getUniqueName(self.side,'upperArmTwist','iks')  
+            upperArmTwistIkCurveName = nameUtils.getUniqueName(self.side,'upperArmTwist','ikc')  
+            self.upperArmTwistIk,self.upperArmTwistIkEffector,self.upperArmTwistIkCurve = pm.ikHandle(sj = self.upperArmTwistStart[0],
+                                                                                                      ee = self.upperArmTwistEnd[0],
+                                                                                                      solver = 'ikSplineSolver',
+                                                                                                      n = upperArmTwistIkName)
+            upperSpIkC = pm.skinCluster(self.limbBlendChain.chain[0],self.limbBlendChain.chain[1],self.upperArmTwistIkCurve,
+                                        n = nameUtils.getSkinName())
+            pm.rename(self.upperArmTwistIkCurve,upperArmTwistIkCurveName)
+            self.upperArmTwistIk.poleVector.set(0,0,0)
+            self.upperArmTwistIk.v.set(0)
+            
+            #set stretch
+            #get last cv:
+            pm.select(self.upperArmTwistIkCurve + '.cv[*]')
+            upperIkCLastCv = pm.ls(sl = 1)[0][-1]
+            pm.skinPercent(upperSpIkC,upperIkCLastCv,tv = [(self.limbBlendChain.chain[1],1)])
+            
+            #get cv length
+            upperArmTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'upperArmTwist','cvINFO')
+            upperArmTwistIkCurveInfoNode = pm.createNode('curveInfo',n = upperArmTwistIkCurveInfoName)
+            self.upperArmTwistIkCurve.getShape().worldSpace[0].connect(upperArmTwistIkCurveInfoNode.inputCurve)
+            
+            #create main Node
+            upperArmTwistCurveMDNName = nameUtils.getUniqueName(self.side,'upperArmTwistCur','MDN')
+            upperArmTwistCurveMDNNode = pm.createNode('multiplyDivide',n = upperArmTwistCurveMDNName)
+            
+            upperArmTwistIkCurveInfoNode.arcLength.connect(upperArmTwistCurveMDNNode.input1.input1X)
+            upperArmTwistCurveMDNNode.input2.input2X.set(self.limbBlendChain.chain[1].tx.get())
+            upperArmTwistCurveMDNNode.operation.set(2)
+            
+            for num,twistJoints in enumerate(self.upperArmTwistJoint.joints):
+                tempNodeName = nameUtils.getUniqueName(self.side,'upperArmTwistJnt','MDN')
+                tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
+                if num > 0 :
+                    tempNode.input1.input1X.set(twistJoints.tx.get())
+                    upperArmTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
+                    tempNode.outputX.connect(twistJoints.tx)
+            
+            #create upperTwistGrp
+            upperArmTwistGrpName = nameUtils.getUniqueName(self.side,'upperArmTwist','grp')
+            self.upperArmTwistGrp = pm.group(em = 1,n = upperArmTwistGrpName) 
+            self.upperArmTwistIk.setParent(self.upperArmTwistGrp) 
+            self.upperArmTwistIkCurve.setParent(self.upperArmTwistGrp) 
+            
+            #create upperTwistInfoGrp 
+            twistInfoGrpName = nameUtils.getUniqueName(self.side,'upperArmTwistInfo','grp')
+            self.upperArmTwistInfoGrp = pm.group(em = 1,n = twistInfoGrpName)
+            
+            #nonFlip Jnt
+            nonFlipStJnt = pm.duplicate(self.limbBlendChain.chain[1],
+                                        n = nameUtils.getUniqueName(self.side,'upperArmNonFlip','jc'))
+            nonFlipEdJnt = pm.listRelatives(nonFlipStJnt,c = 1,typ = 'joint')
+            pm.rename(nonFlipEdJnt,nameUtils.getUniqueName(self.side,self.baseName + 'upperArmNonFlip','je'))
+            nonFlipStJnt[0].setParent(self.upperArmTwistInfoGrp)
+            nonFlipIks,nonFlipIksEffector = pm.ikHandle(sj = nonFlipStJnt[0],ee = nonFlipEdJnt[0],solver = 'ikRPsolver',
+                                                        n = nameUtils.getUniqueName(self.side,'upperArmNonFlip','iks'))
+            nonFlipIks.setParent(self.limbBlendChain.chain[1])
+            nonFlipIks.poleVector.set(0,0,0)
+            nonFlipIks.r.set(0,0,0)
+            nonFlipIks.v.set(0)
+            pm.pointConstraint(self.limbBlendChain.chain[1],nonFlipStJnt,mo = 1)
+            
+            #twist info jnt
+            twistInfoJnt = pm.joint(n = nameUtils.getUniqueName(self.side,'upperArmTwistInfo','jc'))
+            twistInfoJnt.setParent(nonFlipStJnt)
+            twistInfoJnt.t.set(0,0,0)
+            pm.aimConstraint(nonFlipEdJnt[0],twistInfoJnt,mo = 1,w = 1,aimVector = [1,0,0],upVector = [0,0,1],
+                             worldUpType = 'objectrotation',worldUpVector = [0,0,1],
+                             worldUpObject = self.limbBlendChain.chain[1])
+    #         twistInfoJnt.rx.connect(self.upperArmTwistIk.twist)
+    #         pm.parentConstraint(self.shoulderChain.chain[0],twistInfoGrpName,mo = 1)
+            
+            ###
+            #fore arm
+            self.foreArmTwistStart = pm.duplicate(self.limbBlendChain.chain[1],
+                                                  n = nameUtils.getUniqueName(self.side,'foreArmTwistS','jj'))
+            self.foreArmTwistEnd = pm.listRelatives(self.foreArmTwistStart,c = 1,typ = 'joint')
+            pm.parent(self.foreArmTwistStart,w = 1)
+            
+            tempTrashNode = pm.listRelatives(self.foreArmTwistStart,c = 1,typ = 'ikHandle')
+            pm.delete(tempTrashNode)
+            
+            self.foreArmTwistJoint = toolModule.SplitJoint(self.foreArmTwistStart,self.lowerTwistNum,box = 1,type = 'tool',size = self.size) 
+            self.foreArmTwistJoint.splitJointTool()
+            
+            for cube in self.foreArmTwistJoint.cubeList:
+                    self.handSettingCtrl.control.proxy_vis.connect(cube[0].v) 
+             
+            for twistJoints in self.foreArmTwistJoint.joints:
+                pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'foreArmTwist','jj'))  
+                 
+            #create iks      
+            foreArmTwistIkName = nameUtils.getUniqueName(self.side,'foreArmTwist','iks')  
+            foreArmTwistIkCurveName = nameUtils.getUniqueName(self.side,'foreArmTwist','ikc')  
+            self.foreArmTwistIk,self.foreArmTwistIkEffector,self.foreArmTwistIkCurve = pm.ikHandle(sj = self.foreArmTwistStart[0],
+                                                                                                   ee = self.foreArmTwistEnd[0],
+                                                                                                   solver = 'ikSplineSolver',
+                                                                                                   n = foreArmTwistIkName)
+            foreSpIkC = pm.skinCluster(self.limbBlendChain.chain[1],self.limbBlendChain.chain[2],self.foreArmTwistIkCurve,n = nameUtils.getSkinName())
+            pm.rename(self.foreArmTwistIkCurve,foreArmTwistIkCurveName)
+            self.foreArmTwistIk.poleVector.set(0,0,0)
+            self.foreArmTwistIk.v.set(0)
+            
+            #set stretch
+            #get First cv:
+            pm.select(self.foreArmTwistIkCurve + '.cv[*]')
+            foreIkCFristCv = pm.ls(sl = 1)[0][0]
+            pm.skinPercent(foreSpIkC,foreIkCFristCv,tv = [(self.limbBlendChain.chain[1],1)])
+            
+            #get last cv:
+            pm.select(self.foreArmTwistIkCurve + '.cv[*]')
+            foreIkCLastCv = pm.ls(sl = 1)[0][-1]
+            pm.skinPercent(foreSpIkC,foreIkCLastCv,tv = [(self.limbBlendChain.chain[2],1)])
+            
+            #get cv length
+            foreArmTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'foreArmTwist','cvINFO')
+            foreArmTwistIkCurveInfoNode = pm.createNode('curveInfo',n = foreArmTwistIkCurveInfoName)
+            self.foreArmTwistIkCurve.getShape().worldSpace[0].connect(foreArmTwistIkCurveInfoNode.inputCurve)
+            
+            #create main Node
+            foreArmTwistCurveMDNName = nameUtils.getUniqueName(self.side,'foreArmTwistCur','MDN')
+            foreArmTwistCurveMDNNode = pm.createNode('multiplyDivide',n = foreArmTwistCurveMDNName)
+            
+            foreArmTwistIkCurveInfoNode.arcLength.connect(foreArmTwistCurveMDNNode.input1.input1X)
+            foreArmTwistCurveMDNNode.input2.input2X.set(self.limbBlendChain.chain[2].tx.get())
+            foreArmTwistCurveMDNNode.operation.set(2)
+            
+            for num,twistJoints in enumerate(self.foreArmTwistJoint.joints):
+                tempNodeName = nameUtils.getUniqueName(self.side,'foreArmTwistJnt','MDN')
+                tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
+                if num > 0 :
+                    tempNode.input1.input1X.set(twistJoints.tx.get())
+                    foreArmTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
+                    tempNode.outputX.connect(twistJoints.tx)
+            
+            #create foreTwistGrp
+            foreArmTwistGrpName = nameUtils.getUniqueName(self.side,'foreArmTwist','grp')
+            self.foreArmTwistGrp = pm.group(em = 1,n = foreArmTwistGrpName) 
+            self.foreArmTwistIk.setParent(self.foreArmTwistGrp) 
+            self.foreArmTwistIkCurve.setParent(self.foreArmTwistGrp) 
+            
+            #lowerTwist
+            foreArmTwistLocStr = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'foreArmTwistStart','loc'))
+            foreArmTwistLocEd = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'foreArmTwistEnd','loc'))
+            
+            foreArmTwistLocStr.setParent(self.limbBlendChain.chain[1])
+            foreArmTwistLocEd.setParent(self.limbBlendChain.chain[2])
+            foreArmTwistLocStr.t.set(0,0,0)
+            foreArmTwistLocStr.r.set(0,0,0)
+            foreArmTwistLocEd.t.set(0,0,0)
+            foreArmTwistLocEd.r.set(0,0,0)
+            foreArmTwistLocStr.v.set(0)
+            foreArmTwistLocEd.v.set(0)
+            
+            self.foreArmTwistIk.dTwistControlEnable.set(1)
+            self.foreArmTwistIk.dWorldUpType.set(4)
+            self.foreArmTwistIk.dWorldUpAxis.set(3)
+            self.foreArmTwistIk.dWorldUpVector.set(0,0,1)
+            self.foreArmTwistIk.dWorldUpVectorEnd.set(0,0,1)
+            foreArmTwistLocStr.worldMatrix.connect(self.foreArmTwistIk.dWorldUpMatrix)
+            foreArmTwistLocEd.worldMatrix.connect(self.foreArmTwistIk.dWorldUpMatrixEnd)
+            
+            ###
+            #clean up
+            self.upperArmTwistIkCurve.v.set(0)
+            self.foreArmTwistIkCurve.v.set(0)
+            
+            #upperarm
+            #roll custom attr
+    #         control.addFloatAttr(self.handSettingCtrl.control,['upperArm_roll'],-180,180)
+    #         
+    #         #node perpare
+    #         upperArmRollFixPMANodeName = nameUtils.getUniqueName(self.side,'upperArmRollFix','PMA')
+    #         upperArmRollFixPMANode = pm.createNode('plusMinusAverage',n = upperArmRollFixPMANodeName)
+    #         
+    #         #connect
+    #         twistInfoJnt.rx.connect(upperArmRollFixPMANode.input1D[0])
+    #         self.handSettingCtrl.control.upperArm_roll.connect(upperArmRollFixPMANode.input1D[1])
+    #         upperArmRollFixPMANode.output1D.connect(self.upperArmTwistIk.roll)  
+            
+            #twist custom attr
+            #thigh
+            control.addFloatAttr(self.handSettingCtrl.control,['upperArm_twist'],-180,180)
+            
+            #node perpare
+            upperArmTwistFixPMANodeName = nameUtils.getUniqueName(self.side,'upperArmTwistFix','PMA')
+            upperArmTwistFixPMANode = pm.createNode('plusMinusAverage',n = upperArmTwistFixPMANodeName)
+            
+            #connect
+            twistInfoJnt.rx.connect(upperArmTwistFixPMANode.input1D[0])
+            self.handSettingCtrl.control.upperArm_twist.connect(upperArmTwistFixPMANode.input1D[1])
+            upperArmTwistFixPMANode.output1D.connect(self.upperArmTwistIk.twist)  
+            
+            #forearm        
+            #roll custom add
+            control.addFloatAttr(self.handSettingCtrl.control,['foreArm_roll'],-180,180) 
+            self.handSettingCtrl.control.foreArm_roll.connect(self.foreArmTwistIk.roll)
+            #twist custom add                
+            control.addFloatAttr(self.handSettingCtrl.control,['foreArm_twist'],-180,180) 
+            self.handSettingCtrl.control.foreArm_twist.connect(self.foreArmTwistIk.twist)
+            
+        elif self.elbowMethod == 'split':
+            
+            #thigh:
+            #non roll up            
+            #create twist Leg
+            self.elbowTwistStart = pm.duplicate(self.splitLegUpChain.chain[0],
+                                                n = nameUtils.getUniqueName(self.side,'thighTwistS','jj'))
+            tempThighTrashEffNode = pm.listRelatives(self.thighTwistStart,c = 1,typ = 'ikEffector')
+            pm.delete(tempThighTrashEffNode)
+            self.thighTwistEnd = pm.listRelatives(self.thighTwistStart,c = 1,typ = 'joint')
+            
+            tempJoint = pm.listRelatives(self.thighTwistEnd,c = 1,typ = 'joint')
+            pm.delete(tempJoint)
+            pm.rename(self.thighTwistEnd,nameUtils.getUniqueName(self.side,'thighTwistE','jj'))
+             
+            self.thighTwistJoint = toolModule.SplitJoint(self.thighTwistStart,self.upperTwistNum,box = 1,type = 'tool',size = self.size) 
+            self.thighTwistJoint.splitJointTool()
+            
+            for cube in self.thighTwistJoint.cubeList:
+                self.footSettingCtrl.control.proxy_vis.connect(cube[0].v)
+             
+            for twistJoints in self.thighTwistJoint.joints:
+                pm.rename(twistJoints, nameUtils.getUniqueName(self.side,'thighTwist','jj'))
         
-        #set stretch
-        #get First cv:
-        pm.select(self.foreArmTwistIkCurve + '.cv[*]')
-        foreIkCFristCv = pm.ls(sl = 1)[0][0]
-        pm.skinPercent(foreSpIkC,foreIkCFristCv,tv = [(self.limbBlendChain.chain[1],1)])
-        
-        #get last cv:
-        pm.select(self.foreArmTwistIkCurve + '.cv[*]')
-        foreIkCLastCv = pm.ls(sl = 1)[0][-1]
-        pm.skinPercent(foreSpIkC,foreIkCLastCv,tv = [(self.limbBlendChain.chain[2],1)])
-        
-        #get cv length
-        foreArmTwistIkCurveInfoName = nameUtils.getUniqueName(self.side,'foreArmTwist','cvINFO')
-        foreArmTwistIkCurveInfoNode = pm.createNode('curveInfo',n = foreArmTwistIkCurveInfoName)
-        self.foreArmTwistIkCurve.getShape().worldSpace[0].connect(foreArmTwistIkCurveInfoNode.inputCurve)
-        
-        #create main Node
-        foreArmTwistCurveMDNName = nameUtils.getUniqueName(self.side,'foreArmTwistCur','MDN')
-        foreArmTwistCurveMDNNode = pm.createNode('multiplyDivide',n = foreArmTwistCurveMDNName)
-        
-        foreArmTwistIkCurveInfoNode.arcLength.connect(foreArmTwistCurveMDNNode.input1.input1X)
-        foreArmTwistCurveMDNNode.input2.input2X.set(self.limbBlendChain.chain[2].tx.get())
-        foreArmTwistCurveMDNNode.operation.set(2)
-        
-        for num,twistJoints in enumerate(self.foreArmTwistJoint.joints):
-            tempNodeName = nameUtils.getUniqueName(self.side,'foreArmTwistJnt','MDN')
-            tempNode = pm.createNode('multiplyDivide',n = tempNodeName)
-            if num > 0 :
-                tempNode.input1.input1X.set(twistJoints.tx.get())
-                foreArmTwistCurveMDNNode.outputX.connect(tempNode.input2.input2X)
-                tempNode.outputX.connect(twistJoints.tx)
-        
-        #create foreTwistGrp
-        foreArmTwistGrpName = nameUtils.getUniqueName(self.side,'foreArmTwist','grp')
-        self.foreArmTwistGrp = pm.group(em = 1,n = foreArmTwistGrpName) 
-        self.foreArmTwistIk.setParent(self.foreArmTwistGrp) 
-        self.foreArmTwistIkCurve.setParent(self.foreArmTwistGrp) 
-        
-        #lowerTwist
-        foreArmTwistLocStr = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'foreArmTwistStart','loc'))
-        foreArmTwistLocEd = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'foreArmTwistEnd','loc'))
-        
-        foreArmTwistLocStr.setParent(self.limbBlendChain.chain[1])
-        foreArmTwistLocEd.setParent(self.limbBlendChain.chain[2])
-        foreArmTwistLocStr.t.set(0,0,0)
-        foreArmTwistLocStr.r.set(0,0,0)
-        foreArmTwistLocEd.t.set(0,0,0)
-        foreArmTwistLocEd.r.set(0,0,0)
-        foreArmTwistLocStr.v.set(0)
-        foreArmTwistLocEd.v.set(0)
-        
-        self.foreArmTwistIk.dTwistControlEnable.set(1)
-        self.foreArmTwistIk.dWorldUpType.set(4)
-        self.foreArmTwistIk.dWorldUpAxis.set(3)
-        self.foreArmTwistIk.dWorldUpVector.set(0,0,1)
-        self.foreArmTwistIk.dWorldUpVectorEnd.set(0,0,1)
-        foreArmTwistLocStr.worldMatrix.connect(self.foreArmTwistIk.dWorldUpMatrix)
-        foreArmTwistLocEd.worldMatrix.connect(self.foreArmTwistIk.dWorldUpMatrixEnd)
-        
-        ###
-        #clean up
-        self.upperArmTwistIkCurve.v.set(0)
-        self.foreArmTwistIkCurve.v.set(0)
-        
-        #upperarm
-        #roll custom attr
-#         control.addFloatAttr(self.handSettingCtrl.control,['upperArm_roll'],-180,180)
-#         
-#         #node perpare
-#         upperArmRollFixPMANodeName = nameUtils.getUniqueName(self.side,'upperArmRollFix','PMA')
-#         upperArmRollFixPMANode = pm.createNode('plusMinusAverage',n = upperArmRollFixPMANodeName)
-#         
-#         #connect
-#         twistInfoJnt.rx.connect(upperArmRollFixPMANode.input1D[0])
-#         self.handSettingCtrl.control.upperArm_roll.connect(upperArmRollFixPMANode.input1D[1])
-#         upperArmRollFixPMANode.output1D.connect(self.upperArmTwistIk.roll)  
-        
-        #twist custom attr
-        #thigh
-        control.addFloatAttr(self.handSettingCtrl.control,['upperArm_twist'],-180,180)
-        
-        #node perpare
-        upperArmTwistFixPMANodeName = nameUtils.getUniqueName(self.side,'upperArmTwistFix','PMA')
-        upperArmTwistFixPMANode = pm.createNode('plusMinusAverage',n = upperArmTwistFixPMANodeName)
-        
-        #connect
-        twistInfoJnt.rx.connect(upperArmTwistFixPMANode.input1D[0])
-        self.handSettingCtrl.control.upperArm_twist.connect(upperArmTwistFixPMANode.input1D[1])
-        upperArmTwistFixPMANode.output1D.connect(self.upperArmTwistIk.twist)  
-        
-        #forearm        
-        #roll custom add
-        control.addFloatAttr(self.handSettingCtrl.control,['foreArm_roll'],-180,180) 
-        self.handSettingCtrl.control.foreArm_roll.connect(self.foreArmTwistIk.roll)
-        #twist custom add                
-        control.addFloatAttr(self.handSettingCtrl.control,['foreArm_twist'],-180,180) 
-        self.handSettingCtrl.control.foreArm_twist.connect(self.foreArmTwistIk.twist)
         
     def __ribonSetUp(self):
         self.__setRibbonUpper()
@@ -1401,15 +1570,15 @@ class LimbModuleUi(object):
         pm.menuItem(l = 'no',p = self.shoulderMenu)        
         
         #elbow
-        self.elbowPartialMenu = pm.optionMenu(l = 'elbow Partial : ',p = self.limb)
-        pm.menuItem(l = 'no',p = self.elbowPartialMenu)
-        pm.menuItem(l = 'yes',p = self.elbowPartialMenu)
+        self.elbowMenu = pm.optionMenu(l = 'elbow Method : ',p = self.limb)
+        pm.menuItem(l = 'split',p = self.elbowMenu)
+        pm.menuItem(l = 'partial',p = self.elbowMenu)
+        pm.menuItem(l = 'nope',p = self.elbowMenu)
         
         #slover 
         self.solverMenu = pm.optionMenu(l = 'solver : ',p = self.limb)
         pm.menuItem(l = 'ikRPsolver',p = self.solverMenu)
-        pm.menuItem(l = 'ikSCsolver',p = self.solverMenu)
-#         self.mirror = pm.radioButtonGrp('mirror',nrb = 2,label = 'Mirror:',la2 = ['yes','no'],sl = 1)    
+        pm.menuItem(l = 'ikSCsolver',p = self.solverMenu) 
         
         #twist
         self.twistModule = pm.optionMenu(l = 'twist module : ',p = self.limb)
@@ -1472,7 +1641,7 @@ class LimbModuleUi(object):
             
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         solverV = pm.optionMenu(self.solverMenu, q = 1,v = 1)
-        elbowPartialT = pm.optionMenu(self.elbowPartialMenu, q = 1,v = 1)
+        elbowT = pm.optionMenu(self.elbowMenu, q = 1,v = 1)
         shoulderT = pm.optionMenu(self.shoulderMenu, q = 1,v = 1)
         twistT = pm.optionMenu(self.twistModule, q = 1,v = 1)
         upperTwistNumV = pm.intSliderGrp(self.upperNum , q = 1,v = 1)
@@ -1483,7 +1652,7 @@ class LimbModuleUi(object):
         
         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
                                          metaSpine = spineMetaNode,metaMain = mainMetaNode,
-                                         shoulder = shoulderT,elbow = elbowPartialT,twist = twistT,
+                                         shoulder = shoulderT,elbow = elbowT,twist = twistT,
                                          upperTwistNum = upperTwistNumV,lowerTwistNum = lowerTwistNumV,
                                          mirror = mirrorT,metaMirror = mirrorMetaNode)    
 #         self.__pointerClass = LimbModule(baseNameT,sideT,size = cntSizeV,solver = solverV,
@@ -1493,8 +1662,14 @@ class LimbModuleUi(object):
     
     def __clusLoc(self,*arg):
         
-        '''create a clus base on edges'''        
-        sideT = pm.textFieldGrp(self.sideT,q = 1,text = 1)
+        '''create a clus base on edges'''
+        sideR = pm.radioButtonGrp(self.sideR,q = True,sl = True)
+        
+        if sideR == 1:
+            sideT = 'l'
+        elif sideR == 2:
+            sideT = 'r'    
+            
         cntSizeV = pm.floatFieldGrp(self.cntSize,q = 1,value1 = 1)
         baseNameT = pm.textFieldGrp(self.baseNameT,q = 1,text = 1)
 
