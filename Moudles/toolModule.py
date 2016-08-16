@@ -51,12 +51,13 @@ class ToolModuleUi(object):
         metaUtils.metaSel()
         pm.button(l = 'select PartialSkin Joint',c = self.__selPartialSkinJoint,p = self.partialSkinJointSel)
         
-        
-        #ctrlShapes
-        self.ctrlShapeSel = pm.frameLayout('ctrl Curve Select Tool : ',cll=1,p = self.mainL,cl = 1)
-        self.ctrlShapeSelMenu = pm.optionMenu(l = 'meta : ')
-        metaUtils.metaSel()  
-        pm.button(l = 'select Sel Meta Ctrl Tool',c = self.__selMetaCtrlShape,p = self.ctrlShapeSel)
+        #blendShape
+        self.mirrorBlendShapeTool = pm.frameLayout('mirror Blend Shape',cl=1,cll=1,p = self.mainL)
+        self.baseShapeSel = pm.textFieldGrp(l = 'baseShape : ',ad2 = 1,text = 'plz sel base shape',cl2 = ['left','left'],ed = 0)
+        pm.button(l = 'load Base Shape',c = self.__loadBaseShapeSelection,p = self.mirrorBlendShapeTool)
+        self.sculptedShapeSel = pm.textFieldGrp(l = 'sculptedShape : ',ad2 = 1,text = 'plz sel scuplted shape',cl2 = ['left','left'],ed = 0)
+        pm.button(l = 'load Final Shape',c = self.__loadSculptedShapeSelection,p = self.mirrorBlendShapeTool)
+        pm.button('Mirror',c = self.__mirrorBlendShape,p = self.mirrorBlendShapeTool)
         
         #skinTool
         self.skinAreaTool = pm.frameLayout('skin Area Tool : ',cll=1,p = self.mainL,cl = 1)      
@@ -75,7 +76,13 @@ class ToolModuleUi(object):
         pm.text('mirror Axis : ')
         self.xAxis = pm.button('X axis ',c = self.__setXAxis)
         self.zAxis = pm.button('Z axis ',c = self.__setZAxis)
-
+        
+        #ctrlShapes
+        self.ctrlShapeSel = pm.frameLayout('ctrl Curve Select Tool : ',cll=1,p = self.mainL,cl = 1)
+        self.ctrlShapeSelMenu = pm.optionMenu(l = 'meta : ')
+        metaUtils.metaSel()  
+        pm.button(l = 'select Sel Meta Ctrl Tool',c = self.__selMetaCtrlShape,p = self.ctrlShapeSel)        
+        
         #scaleCurve
         self.sizeLayout = pm.rowLayout(p = self.shapeLayout,adj = 1,nc = 10)
         pm.button('scale curve',c = self.__scaleCv) 
@@ -88,7 +95,7 @@ class ToolModuleUi(object):
         
         self.__pointerClass = None
  
-    def __removeInstance(self,*arg):
+    def __removeInstance(self,*args):
         
         pm.deleteUI(self.mainL)
         self.mainUi.modulesUi.remove(self) 
@@ -139,27 +146,45 @@ class ToolModuleUi(object):
         print 
         print 'Number of ALL meta is ' + str(len(allSkinJoint))        
 
-    def __selMetaCtrlShape(self,*args):
+    def __loadBaseShapeSelection(self,*args):
         
-        pm.select(cl = 1) 
+        sel = pm.ls(sl = 1)
+        self.baseShape = sel[0]
+        pm.textFieldGrp(self.baseShapeSel, edit=True,text=sel[0])  
+
+    def __loadSculptedShapeSelection(self,*args):
         
-        ctrlList = []
+        sel = pm.ls(sl = 1)
+        self.sculptedShape = sel[0]
+        pm.textFieldGrp(self.sculptedShapeSel, edit=True,text=sel[0]) 
+
+    def __mirrorBlendShape(self,*args):
         
-        metaT = pm.optionMenu(self.ctrlShapeSelMenu, q = 1,v = 1)  
-        meta = pm.ls(metaT)[0]
-        ctrlStrs = pm.connectionInfo(meta.controls, destinationFromSource=True) 
-        pm.select(cl = 1) 
+        pm.select(self.baseShape)
+        baseShape = pm.ls(sl = 1)[0]
         
-        for ctrlStr in ctrlStrs : 
-            ctrl = ctrlStr.split('.') 
-            pm.select(ctrl[0],add = 1)
-            ctrlList.append(ctrl[0])
+        pm.select(self.sculptedShape)
+        sculptedShape = pm.ls(sl = 1)[0]
+
+        baseWarp = pm.duplicate(baseShape,n = nameUtils.setUniqueName(baseShape + 'Warp','geo'))
+        baseScaleNeg = pm.duplicate(baseShape,n = nameUtils.setUniqueName(baseShape + 'ScaleNeg','geo'))
         
-        print 'ctrlShapes from ' + metaT + ' are :'
-        print 
-        print  ctrlList
-        print 
-        print 'Number of ' + metaT + ' is ' + str(len(ctrlList))
+        #flip scale
+        pm.setAttr(baseScaleNeg[0] + '.scaleX', -1)
+        tempBlend = pm.blendShape(sculptedShape,baseScaleNeg[0],n = nameUtils.setUniqueName(sculptedShape + 'TempBlend','geo'))
+
+        #create warp between warp and neg 
+        pm.select(cl=True)
+        pm.select(baseWarp)
+        pm.select(baseScaleNeg,add = 1)
+        pm.runtime.CreateWrap()
+        pm.setAttr(tempBlend[0] + '.' + sculptedShape, 1)
+
+        #Duplicate Wrapped shape for final result
+        pm.duplicate(baseWarp)
+        
+        #Clean up setup
+        pm.delete(baseWarp,baseScaleNeg)
 
     def __selPartialSkinJoint(self,*args):
         
@@ -188,8 +213,30 @@ class ToolModuleUi(object):
         sel = pm.ls(sl = 1)
         splitJoint = sel[0] 
         num = pm.intSliderGrp(self.splitNum,q = 1,v = 1)
-        splitJoint =  SplitJoint(splitJoint,num,box = 1,type = 'tool')   
+        splitJoint =  SplitJoint(splitJoint,num,box = 1,type = 'tool')
         splitJoint.splitJointTool()
+
+    def __selMetaCtrlShape(self,*args):
+        
+        pm.select(cl = 1) 
+        
+        ctrlList = []
+        
+        metaT = pm.optionMenu(self.ctrlShapeSelMenu, q = 1,v = 1)  
+        meta = pm.ls(metaT)[0]
+        ctrlStrs = pm.connectionInfo(meta.controls, destinationFromSource=True) 
+        pm.select(cl = 1) 
+        
+        for ctrlStr in ctrlStrs : 
+            ctrl = ctrlStr.split('.') 
+            pm.select(ctrl[0],add = 1)
+            ctrlList.append(ctrl[0])
+        
+        print 'ctrlShapes from ' + metaT + ' are :'
+        print 
+        print  ctrlList
+        print 
+        print 'Number of ' + metaT + ' is ' + str(len(ctrlList))
         
     def __scaleCv(self,*args):
         
@@ -218,7 +265,8 @@ class ToolModuleUi(object):
         self.axis = [-1,1,1]
         self.__mirrorShape()
         
-    def __setZAxis(self,*args):     
+    def __setZAxis(self,*args):
+
     
         self.axis = [1,1,-1]
         self.__mirrorShape()
@@ -233,7 +281,7 @@ class ToolModuleUi(object):
         tempPosList = []
         
         if len(sel) < 2:
-            mel.eval('warning "Please cmds.select two Curve!"')
+            mel.eval('warning "Please pm.t two Curve!"')
             return
         
         oriCur = sel[0] 
