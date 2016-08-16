@@ -38,6 +38,7 @@ class LegModule(object):
         self.ikBlendChain = None
         self.fkChain = None
         self.legBlendChain = None
+        self.footPartialChain = None
         self.hipChain = None
         self.blendData = None   
         self.legGrp = None
@@ -350,8 +351,9 @@ class LegModule(object):
             renameGuide.setParent(self.mirrorGuideGrp)
             self.mirrorGuideList.append(renameGuide)
                 
-        #really ro roll            
+        #really to roll            
         self.guideGrp.v.set(0)
+        
         ###pos
         #create hip pos
         self.hipGuidesPos = [x.getTranslation(space = 'world') for x in self.hipGuides]
@@ -455,8 +457,8 @@ class LegModule(object):
         pm.rename(self.legBlendChain.chain[-4],nameUtils.getUniqueName(self.side,self.footNameList[-4],'jj'))
         pm.rename(self.legBlendChain.chain[-3],nameUtils.getUniqueName(self.side,self.footNameList[-3],'jj'))
         pm.rename(self.legBlendChain.chain[-2],nameUtils.getUniqueName(self.side,self.footNameList[-2],'je'))
-        pm.rename(self.legBlendChain.chain[-1],nameUtils.getUniqueName(self.side,self.footNameList[-1],'je'))
-          
+        pm.rename(self.legBlendChain.chain[-1],nameUtils.getUniqueName(self.side,self.footNameList[-1],'je'))        
+        
         self.ikBlendChain.chain[-1].setParent(self.ikBlendChain.chain[-4])
         self.fkChain.chain[-1].setParent(self.fkChain.chain[-4])
         self.legBlendChain.chain[-1].setParent(self.legBlendChain.chain[-4])
@@ -1246,6 +1248,65 @@ class LegModule(object):
 
     def __ikFootSet(self):
         
+        #foot partial        
+        self.footPartialChain = []
+        
+        anklePartialChain = pm.duplicate(self.legBlendChain.chain[2],n = nameUtils.getUniqueName(self.side,'AnklePartial','jj'))
+        tempTrashes = pm.listRelatives(anklePartialChain,c = 1)
+        
+        for tempTrash in tempTrashes:
+            pm.delete(tempTrash)
+        self.footPartialChain.append(anklePartialChain)
+        
+        ballPartialChain = pm.duplicate(self.legBlendChain.chain[3],n = nameUtils.getUniqueName(self.side,'BallPartial','jj'))
+        tempTrashes = pm.listRelatives(ballPartialChain,c = 1)
+        
+        for tempTrash in tempTrashes:
+            pm.delete(tempTrash)
+        self.footPartialChain.append(ballPartialChain)
+        
+        #prepare node
+        ankleMultipleNodeName = nameUtils.getUniqueName(self.side,'AnklePartial','MDN')
+        ankleRemapValueNodeName = nameUtils.getUniqueName(self.side,'AnklePartial','RV') 
+        ballMultipleNodeName = nameUtils.getUniqueName(self.side,'BallPartial','MDN')
+        ballRemapValueNodeName = nameUtils.getUniqueName(self.side,'BallPartial','RV')
+        
+        #create Node
+        ankleMultipleNode = pm.createNode('multiplyDivide',n = ankleMultipleNodeName)
+        ankleRemapValueNode = pm.createNode('remapValue',n = ankleRemapValueNodeName)  
+        ballMultipleNode = pm.createNode('multiplyDivide',n = ballMultipleNodeName)
+        ballRemapValueNode = pm.createNode('remapValue',n = ballRemapValueNodeName)
+        
+        #connect
+        #ankle mdn
+        self.legBlendChain.chain[2].r.connect(ankleMultipleNode.input1)
+        ankleMultipleNode.input2X.set(0.5)
+        ankleMultipleNode.input2Y.set(0.5)
+        ankleMultipleNode.input2Z.set(0.5)
+        ankleMultipleNode.output.connect(anklePartialChain[0].r)
+        
+        #ball mdn
+        self.legBlendChain.chain[3].r.connect(ballMultipleNode.input1)
+        ballMultipleNode.input2X.set(0.5)
+        ballMultipleNode.input2Y.set(0.5)
+        ballMultipleNode.input2Z.set(0.5)
+        ballMultipleNode.output.connect(ballPartialChain[0].r)
+                
+        #ankle rv
+        ankleLength = (anklePartialChain[0].tx.get()) / 20
+        self.legBlendChain.chain[2].rz.connect(ankleRemapValueNode.inputValue)
+        ankleRemapValueNode.inputMax.set(40)
+        ankleRemapValueNode.outputMax.set(ankleLength)
+        ankleRemapValueNode.outValue.connect(anklePartialChain[0].ty)
+        
+        #ball rv
+        self.legBlendChain.chain[3].rz.connect(ballRemapValueNode.inputValue)
+        ballRemapValueNode.inputMax.set(-30)
+        ballRemapValueNode.outputMin.set(1)
+        ballRemapValueNode.outputMax.set(1.15)
+        ballRemapValueNode.outValue.connect(ballPartialChain[0].sz)
+        
+        #ikfoot
         #add toe wiggle loc
         toeWiggleLoc = pm.spaceLocator(n = nameUtils.getUniqueName(self.side,'toeWiggle','gud'))
         pm.xform(toeWiggleLoc,ws = 1,matrix = self.legGuides[-1].worldMatrix.get())
@@ -1551,7 +1612,8 @@ class LegModule(object):
             
         else:
             OpenMaya.MGlobal.displayError('Target :' + self.metaMain + ' is NOT exist')
-            
+        
+        print self.legBlendChain
         #create package send for next part
         #template:
         #metaUtils.addToMeta(self.meta,'attr', objs)
@@ -1559,6 +1621,7 @@ class LegModule(object):
                             + [self.ikRpPvChain.ikCtrl.control,self.ikRpPvChain.poleVectorCtrl.control]
                             + [fk for fk in self.fkChain.chain])
         metaUtils.addToMeta(self.meta,'skinJoints',[self.hipChain.chain[0],self.legBlendChain.chain[-3],self.legBlendChain.chain[-4]])
+        metaUtils.addToMeta(self.meta,'partialSkinJoints',[partialJoint[0] for partialJoint in self.footPartialChain])
         metaUtils.addToMeta(self.meta,'guideLocator',[mirrorGuide for mirrorGuide in self.mirrorGuideList])
 #         metaUtils.addToMeta(self.meta,'moduleGrp',[self.legGrp])
 #         metaUtils.addToMeta(self.meta,'chain', [ik for ik in self.ikChain.chain] + [ori for ori in self.legBlendChain.chain])
