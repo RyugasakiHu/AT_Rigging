@@ -142,9 +142,9 @@ class LimbModule(object):
                 self.elbowPartialGuides.append(loc)
                 loc.setParent(self.limbGuides[0])                    
         
-        if self.elbowMethod == 'nope':
-            
-            pass
+#         if self.elbowMethod == 'nope':
+#             
+#             pass
         
         #shoulder guides
         if self.shoulder == 'yes':            
@@ -631,7 +631,7 @@ class LimbModule(object):
      
     def __nonRollSetUp(self):
         
-        if self.elbowMethod != 'split':
+        if self.elbowMethod == 'nope':
             #upper arm:
             #create twist arm 
             self.upperArmTwistStart = pm.duplicate(self.limbBlendChain.chain[0],
@@ -831,28 +831,7 @@ class LimbModule(object):
     #         #connect
     #         twistInfoJnt.rx.connect(upperArmRollFixPMANode.input1D[0])
     #         self.handSettingCtrl.control.upperArm_roll.connect(upperArmRollFixPMANode.input1D[1])
-    #         upperArmRollFixPMANode.output1D.connect(self.upperArmTwistIk.roll)  
-            
-            #twist custom attr
-            #upperArm
-            control.addFloatAttr(self.handSettingCtrl.control,['upperArm_twist'],-180,180)
-            
-            #node perpare
-            upperArmTwistFixPMANodeName = nameUtils.getUniqueName(self.side,'upperArmTwistFix','PMA')
-            upperArmTwistFixPMANode = pm.createNode('plusMinusAverage',n = upperArmTwistFixPMANodeName)
-            
-            #connect
-            twistInfoJnt.rx.connect(upperArmTwistFixPMANode.input1D[0])
-            self.handSettingCtrl.control.upperArm_twist.connect(upperArmTwistFixPMANode.input1D[1])
-            upperArmTwistFixPMANode.output1D.connect(self.upperArmTwistIk.twist)  
-            
-            #forearm        
-            #roll custom add
-            control.addFloatAttr(self.handSettingCtrl.control,['foreArm_roll'],-180,180) 
-            self.handSettingCtrl.control.foreArm_roll.connect(self.foreArmTwistIk.roll)
-            #twist custom add                
-            control.addFloatAttr(self.handSettingCtrl.control,['foreArm_twist'],-180,180) 
-            self.handSettingCtrl.control.foreArm_twist.connect(self.foreArmTwistIk.twist)
+    #         upperArmRollFixPMANode.output1D.connect(self.upperArmTwistIk.roll)              
             
         elif self.elbowMethod == 'split':
             
